@@ -328,6 +328,10 @@
       return new Intl.NumberFormat("en-PH", { style:"currency", currency:"PHP", maximumFractionDigits:0 }).format(value || 0);
     }
 
+    function money2(value) {
+      return new Intl.NumberFormat("en-PH", { style:"currency", currency:"PHP", minimumFractionDigits:2, maximumFractionDigits:2 }).format(value || 0);
+    }
+
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
     }
@@ -353,23 +357,27 @@
       const discount = financing ? 0 : (Number(vehicle.discount) || 0);
       const netPrice = srp - discount;
       const dpRate = Number($("quoteDownpayment").value) / 100;
-      const dpAmount = Math.round(srp * dpRate);
-      const balance = srp - dpAmount;
+      const hasDpOverride = vehicle.hasDownpaymentOverride === true && vehicle.downpaymentOverride !== null && vehicle.downpaymentOverride !== undefined;
+      // Display the Price List peso override when present; otherwise use the selected DP percentage.
+      const dpAmount = hasDpOverride ? Number(vehicle.downpaymentOverride) : Math.round(srp * dpRate * 100) / 100;
+      // Financing balance and amortization always follow the selected DP percentage,
+      // regardless of a ZERO DP or reduced peso amount shown as the actual downpayment.
+      const balance = Math.round(srp * (1 - dpRate) * 100) / 100;
       const freebies = $("quoteFreebies").value.trim();
       const validity = Math.max(1, Math.min(90, Number($("quoteValidity").value) || 7));
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
-      rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${money(srp)}</strong></div>`);
+      rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
       if (!financing) {
         rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
       } else {
-        rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong>${money(dpAmount)}</strong></div>`);
-        rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money(balance)}</strong></div>`);
+        rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong>${money2(dpAmount)}</strong></div>`);
+        rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money2(balance)}</strong></div>`);
         const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
         terms.forEach(t => {
-          const monthly = Math.ceil((srp * (1-dpRate) * t.factor) / t.months);
+          const monthly = Math.ceil((balance * t.factor) / t.months);
           rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`);
         });
       }
