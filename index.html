@@ -272,7 +272,7 @@
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Credit Application</h2>
-          <p class="app-caption">Fill in the application details. Customer information is used temporarily to generate the PDF and is not added to TEAM RER records.</p>
+          <p class="app-caption">Fill in the application details. Customer information is only used temporarily to generate the PDF.</p>
           <button id="prefillCreditBtn" class="secondary" type="button">Use Current Vehicle Quotation</button>
           <div id="creditFormFields"></div>
           <button id="generateCreditBtn" type="button">Generate Application PDF</button>
@@ -453,7 +453,7 @@
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1500);
         clearCreditForm();
-        setMessage($("creditMessage"), "Application PDF generated and saved to the Hyundai Price List PDFs Drive folder. Temporary customer details have been cleared from the form.", "success");
+        setMessage($("creditMessage"), "Application PDF generated. Temporary customer details have been cleared from the form.", "success");
         if (result.driveUrl) {
           const driveLink = document.createElement("a");
           driveLink.href = result.driveUrl;
