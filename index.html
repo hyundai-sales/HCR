@@ -222,7 +222,7 @@
   "Source matches:", event.source === bridgeFrame.contentWindow,
   "Data:", event.data
 );
-      if (event.source !== bridgeFrame.contentWindow) return;
+      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
       if (!event.data || event.data.nonce !== pendingNonce) return;
 
       pendingNonce = null;
