@@ -453,7 +453,18 @@
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1500);
         clearCreditForm();
-        setMessage($("creditMessage"), "Application PDF generated. Temporary customer details have been cleared from the form.", "success");
+        setMessage($("creditMessage"), "Application PDF generated and saved to the Hyundai Price List PDFs Drive folder. Temporary customer details have been cleared from the form.", "success");
+        if (result.driveUrl) {
+          const driveLink = document.createElement("a");
+          driveLink.href = result.driveUrl;
+          driveLink.target = "_blank";
+          driveLink.rel = "noopener";
+          driveLink.textContent = "Open saved PDF in Google Drive";
+          driveLink.style.display = "inline-block";
+          driveLink.style.marginTop = "8px";
+          $("creditMessage").appendChild(document.createElement("br"));
+          $("creditMessage").appendChild(driveLink);
+        }
         $("generateCreditBtn").disabled = false;
         return;
       }
