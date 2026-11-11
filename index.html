@@ -48,6 +48,7 @@
     .app-nav button { min-height:58px; padding:12px 8px; font-size:14px; }
     .credit-section { margin:18px 0 8px; padding:14px; border:1px solid #d8e1eb; border-radius:10px; text-align:left; }
     .credit-section h3 { margin:0 0 12px; color:#003b70; font-size:15px; }
+    .credit-field[hidden] { display:none !important; }
     .credit-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .credit-field { min-width:0; }
     .credit-field.full { grid-column:1 / -1; }
@@ -550,7 +551,7 @@
     const creditInputFields = [
       { section:"Application Details", fields:[
         ["U7:W7","Source","select",["FB BOOSTING","AutoDeals PH"]], ["U9:W9","TIN","text"],
-        ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Variant","select",[]],
+        ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Vehicle Color","text"],
         ["E16","Vehicle Type","text"], ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
         ["V18:W18","Terms","select",["1 YR","2 YRS","3 YRS","4 YRS","5 YRS"]]
       ]},
@@ -607,13 +608,14 @@
           if (cell === "T71:W71" || cell === "T73:W73") el.placeholder = "Monthly amount (PHP)";
           wrap.appendChild(el); grid.appendChild(wrap);
         });
-        section.appendChild(grid);
         if (group.section === "Application Details") {
-          const colorWrap = document.createElement("div"); colorWrap.className = "credit-field full";
-          const colorLabel = document.createElement("label"); colorLabel.textContent = "Vehicle Color"; colorLabel.htmlFor = "credit_vehicle_color";
-          const colorInput = document.createElement("input"); colorInput.id = "credit_vehicle_color"; colorInput.type = "text"; colorInput.placeholder = "Enter vehicle color"; colorInput.dataset.temporaryOnly = "true";
-          colorWrap.append(colorLabel, colorInput); grid.appendChild(colorWrap);
+          const variantWrap = document.createElement("div"); variantWrap.className = "credit-field";
+          const variantLabel = document.createElement("label"); variantLabel.textContent = "Vehicle Variant"; variantLabel.htmlFor = "credit_vehicle_variant";
+          const variantSelect = document.createElement("select"); variantSelect.id = "credit_vehicle_variant"; variantSelect.dataset.vehicleVariant = "true";
+          const blankVariant = document.createElement("option"); blankVariant.value = ""; blankVariant.textContent = "Choose variant"; variantSelect.appendChild(blankVariant);
+          variantWrap.append(variantLabel, variantSelect); grid.appendChild(variantWrap);
         }
+        section.appendChild(grid);
         if (group.section === "Spouse / Co-maker Details") {
           const naWrap = document.createElement("div"); naWrap.className = "credit-field full credit-choice";
           const naLabel = document.createElement("label"); const naInput = document.createElement("input");
@@ -640,17 +642,62 @@
       root.dataset.built="yes";
       applySpouseNaState();
       const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
-      const variantSelect = root.querySelector('[data-cell="K14"]');
+      const variantSelect = root.querySelector('[data-vehicle-variant="true"]');
       if (vehicleSelect && variantSelect) {
-        vehicleSelect.addEventListener("change", () => {
-          refreshCreditVehicleDropdowns();
-          updateCreditPriceFields();
-        });
+        vehicleSelect.addEventListener("change", () => { refreshCreditVehicleDropdowns(); updateCreditPriceFields(); });
         variantSelect.addEventListener("change", updateCreditPriceFields);
         const dpSelect = root.querySelector('[data-cell="N16"]');
         if (dpSelect) dpSelect.addEventListener("change", updateCreditPriceFields);
         refreshCreditVehicleDropdowns();
       }
+      buildRepeatableCreditFields();
+    }
+
+    function buildRepeatableCreditFields() {
+      const root = $("creditFormFields");
+      if (root.querySelector('[data-repeat-group="income"]')) return;
+      const makeSection = (title, groupName, rows, columns, buttonText) => {
+        const section = document.createElement("section"); section.className = "credit-section";
+        section.dataset.repeatGroup = groupName;
+        const heading = document.createElement("h3"); heading.textContent = title; section.appendChild(heading);
+        const grid = document.createElement("div"); grid.className = "credit-grid";
+        rows.forEach((row, index) => {
+          const rowWrap = document.createElement("div"); rowWrap.className = "credit-field full";
+          rowWrap.dataset.repeatIndex = String(index);
+          if (index > 0) rowWrap.hidden = true;
+          const rowGrid = document.createElement("div"); rowGrid.className = "credit-grid";
+          row.forEach(([cell,label,type]) => {
+            const wrap = document.createElement("div"); wrap.className = "credit-field";
+            const lab = document.createElement("label"); lab.textContent = label; lab.htmlFor = "credit_" + cell.replace(/[^A-Z0-9]/gi,"_");
+            const input = document.createElement("input"); input.id = lab.htmlFor; input.type = type || "text"; input.dataset.cell = cell;
+            if (type === "number") { input.min = "0"; input.step = "0.01"; }
+            wrap.append(lab,input); rowGrid.appendChild(wrap);
+          });
+          rowWrap.appendChild(rowGrid); grid.appendChild(rowWrap);
+        });
+        section.appendChild(grid);
+        const add = document.createElement("button"); add.type = "button"; add.className = "secondary"; add.textContent = buttonText;
+        add.addEventListener("click", () => {
+          const next = [...section.querySelectorAll('[data-repeat-index]')].find(el => el.hidden);
+          if (next) { next.hidden = false; if (![...section.querySelectorAll('[data-repeat-index]')].some(el => el.hidden)) add.hidden = true; }
+        });
+        section.appendChild(add); root.appendChild(section);
+      };
+      makeSection("Other Sources of Income", "income", [
+        [["B73","Source of Income","text"]],
+        [["B75","Source of Income 2","text"]],
+        [["B77","Source of Income 3","text"]]
+      ], 1, "Add another source of income");
+      makeSection("Other Income Amount", "income-amount", [
+        [["T75","Other Income Amount","number"]]
+      ], 1, "");
+      makeSection("Bank Accounts", "banks", [
+        [["G83","Bank","text"],["M82","Branch","text"],["U82","Balance","number"]],
+        [["G84","Bank 2","text"],["M84","Branch 2","text"],["U84","Balance 2","number"]],
+        [["G87","Bank 3","text"],["M86","Branch 3","text"],["U86","Balance 3","number"]]
+      ], 3, "Add another bank");
+      const amountSection = root.querySelector('[data-repeat-group="income-amount"]');
+      const amountButton = amountSection?.querySelector("button"); if (amountButton) amountButton.remove();
     }
 
     const spouseNaCells = [
@@ -681,7 +728,7 @@
     function refreshCreditVehicleDropdowns() {
       const root = $("creditFormFields");
       const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
-      const variantSelect = root.querySelector('[data-cell="K14"]');
+      const variantSelect = root.querySelector('[data-vehicle-variant="true"]');
       if (!vehicleSelect || !variantSelect) return;
       const currentModel = vehicleSelect.value;
       const currentVariant = variantSelect.value;
@@ -697,7 +744,7 @@
       // The live Google Sheet template already contains formulas in P14, P16 and P18.
       // The backend temporarily supplies verified SRP/DP/balance values before PDF export.
       const modelEl = document.querySelector('#creditFormFields [data-cell="E14:I14"]');
-      const variantEl = document.querySelector('#creditFormFields [data-cell="K14"]');
+      const variantEl = document.querySelector('#creditFormFields [data-vehicle-variant="true"]');
       const dpEl = document.querySelector('#creditFormFields [data-cell="N16"]');
       if (!modelEl || !variantEl || !dpEl) return;
       const match = quotationVehicles.find(v => v.model === modelEl.value && v.variant === variantEl.value);
@@ -712,7 +759,7 @@
     function clearCreditForm() {
       $("creditFormFields").querySelectorAll("[data-cell]").forEach(el => { el.value = ""; el.disabled = false; });
       $("creditFormFields").querySelectorAll("input[type=radio],input[type=checkbox]").forEach(el => { el.checked = false; el.disabled = false; });
-      const color = $("credit_vehicle_color"); if (color) color.value = "";
+      const variant = $("credit_vehicle_variant"); if (variant) variant.value = "";
     }
 
     function prefillCreditFromQuote() {
@@ -720,7 +767,7 @@
       const model=$("quoteModel").value; const variant=$("quoteVariant").value;
       const dp=$("quoteDownpayment").value;
       const modelEl=document.querySelector('[data-cell="E14:I14"]');
-      const variantEl=document.querySelector('[data-cell="K14"]');
+      const variantEl=document.querySelector('[data-vehicle-variant="true"]');
       const dpEl=document.querySelector('[data-cell="N16"]');
       if(modelEl) { modelEl.value = model; modelEl.dispatchEvent(new Event("change")); }
       if(variantEl) variantEl.value = variant;
@@ -739,8 +786,9 @@
       });
       const spouseNa = $("credit_spouse_na")?.checked === true;
       if (spouseNa) spouseNaCells.forEach(cell => { values[cell] = "N/A"; });
-      const vehicleColor = $("credit_vehicle_color") ? $("credit_vehicle_color").value : "";
-      return {values,checkboxes,vehicleColor,spouseNa};
+      const vehicleModel = document.querySelector('#creditFormFields [data-cell="E14:I14"]')?.value || "";
+      const vehicleVariant = document.querySelector('#creditFormFields [data-vehicle-variant="true"]')?.value || "";
+      return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa};
     }
 
     $("creditTabBtn").addEventListener("click",()=>{
@@ -750,8 +798,9 @@
     $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
-      const required=["E25:H25","L25:P25","T29:W29","E14:I14","K14"];
+      const required=["E25:H25","L25:P25","T29:W29","E14:I14"];
       const missing=required.filter(key=>!String(data.values[key]||"").trim());
+      if (!data.vehicleVariant) missing.push("Vehicle Variant");
       if(missing.length){setMessage($("creditMessage"),"Please complete the borrower name, mobile number, vehicle model, and variant.","error");return;}
       $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
       try { await submitRequest("creditApplication",{applicationData:data}); }
