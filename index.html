@@ -3,34 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#003b70">
   <title>TEAM RER | Hyundai PDF Generator</title>
+
   <style>
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: #f2f5f9;
+      padding: 20px;
+      background: #eef3f8;
       font-family: Arial, sans-serif;
+      color: #172b43;
     }
+
     .card {
+      width: 100%;
+      max-width: 410px;
+      padding: 34px 26px;
       background: white;
-      padding: 32px;
-      border-radius: 16px;
-      width: min(85%, 380px);
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
       text-align: center;
-      box-shadow: 0 5px 24px #00000012;
     }
-    h1 { color: #003b70; }
-    p { color: #64748b; }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 15px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      background: #003b70;
+      color: white;
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin: 0;
+      color: #003b70;
+      font-size: 27px;
+    }
+
+    .subtitle {
+      margin: 9px 0 25px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 9px;
+      background: #003b70;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .google {
+      background: white;
+      color: #24364b;
+      border: 1px solid #d5dce5;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .hidden { display: none; }
+
+    .footer {
+      margin-top: 25px;
+      color: #94a3b8;
+      font-size: 11px;
+    }
   </style>
 </head>
+
 <body>
   <main class="card">
+    <div class="logo">RER</div>
+
     <h1>TEAM RER</h1>
-    <p>Hyundai Price List PDF Generator</p>
-    <p>Welcome to our new mobile application.</p>
-    <p>Secure Google Sign-In coming soon.</p>
+    <p class="subtitle">Hyundai Price List PDF Generator</p>
+
+    <section id="loginSection">
+      <button id="loginBtn" class="google">
+        Sign in with Google
+      </button>
+      <div id="loginMessage" class="message">
+        Sign in using your authorized TEAM RER Gmail account.
+      </div>
+    </section>
+
+    <section id="userSection" class="hidden">
+      <p><strong>Google account detected</strong></p>
+      <div id="userEmail" class="message"></div>
+      <div class="message">
+        Login successful. Checking TEAM RER authorization will be added in the next stage.
+      </div>
+      <button id="logoutBtn">Sign Out</button>
+    </section>
+
+    <div class="footer">
+      TEAM RER • Hyundai Cainta
+    </div>
   </main>
+
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut
+    } from
+      "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyACEuFMX0ly0p4RpkqJCIhL6TTfIrsrEiA",
+      authDomain: "team-rer-hyundai.firebaseapp.com",
+      projectId: "team-rer-hyundai",
+      storageBucket: "team-rer-hyundai.firebasestorage.app",
+      messagingSenderId: "419126543512",
+      appId: "1:419126543512:web:3b5e11657efa4cc7417ced",
+      measurementId: "G-EB98RG1VYH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account"
+    });
+
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const loginMessage = document.getElementById("loginMessage");
+    const loginSection = document.getElementById("loginSection");
+    const userSection = document.getElementById("userSection");
+    const userEmail = document.getElementById("userEmail");
+
+    loginBtn.addEventListener("click", async () => {
+      loginBtn.disabled = true;
+      loginMessage.textContent = "Connecting to Google...";
+
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error(error);
+        loginMessage.textContent =
+          "Sign-in failed: " + error.message;
+      } finally {
+        loginBtn.disabled = false;
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginSection.classList.add("hidden");
+        userSection.classList.remove("hidden");
+        userEmail.textContent = user.email || "Email unavailable";
+      } else {
+        userSection.classList.add("hidden");
+        loginSection.classList.remove("hidden");
+      }
+    });
+  </script>
 </body>
 </html>
