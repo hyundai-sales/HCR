@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#003b70">
-  <title>TEAM RER | Hyundai PDF Generator</title>
+  <title>TEAM RER | Hyundai Sales Tools</title>
   <style>
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; padding:18px; background:#eef3f8; font-family:Arial,sans-serif; color:#172b43; }
@@ -33,6 +33,28 @@
     .userline { margin:0 0 14px; font-size:13px; color:#475569; line-height:1.5; }
     .footer { margin-top:20px; text-align:center; color:#94a3b8; font-size:11px; }
     .section-title { margin:22px 0 4px; color:#003b70; font-size:16px; text-align:left; }
+    .app-nav { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 18px; }
+    .app-nav button { min-height:42px; padding:10px; font-size:13px; }
+    .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
+    .quote-panel { border:1px solid #d8e1eb; border-radius:12px; padding:15px; margin-top:14px; }
+    .quote-preview { margin-top:16px; border:1px solid #cbd5e1; border-radius:10px; padding:20px; background:#fff; text-align:left; }
+    .quote-preview h2 { color:#003b70; text-align:center; margin:5px 0 2px; font-size:20px; }
+    .quote-preview .quote-sub { text-align:center; color:#64748b; font-size:12px; margin:0 0 18px; }
+    .quote-line { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #e2e8f0; font-size:13px; }
+    .quote-line strong { text-align:right; }
+    .quote-total { margin-top:10px; padding:12px; background:#eef4fa; border-radius:8px; color:#003b70; font-size:17px; font-weight:bold; display:flex; justify-content:space-between; gap:10px; }
+    .quote-contact { margin-top:20px; padding-top:12px; border-top:2px solid #003b70; font-size:12px; line-height:1.6; }
+    .quote-terms { margin-top:15px; color:#475569; font-size:11px; line-height:1.5; }
+    @media print {
+      body.printing-quote { background:#fff; padding:0; }
+      body.printing-quote .wrap { max-width:none; margin:0; }
+      body.printing-quote .card { padding:0; box-shadow:none; border-radius:0; }
+      body.printing-quote .brand, body.printing-quote #loginSection, body.printing-quote #userDetails,
+      body.printing-quote #appNav, body.printing-quote #pdfPage, body.printing-quote #quoteControls,
+      body.printing-quote .footer, body.printing-quote #logoutBtn, body.printing-quote #printQuoteBtn { display:none !important; }
+      body.printing-quote #appSection, body.printing-quote #quotePage, body.printing-quote #quotePreview { display:block !important; }
+      body.printing-quote #quotePreview { border:0; padding:0; }
+    }
     @media(max-width:420px) { body{padding:12px;} .wrap{margin:8px auto;} .card{padding:20px 17px;} }
   </style>
 </head>
@@ -43,7 +65,7 @@
         <img class="logo" src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai logo">
         <h1>Hyundai Cainta</h1>
         <p class="subtitle">TEAM RER</p>
-        <p class="app-caption">Hyundai Price List PDF Generator</p>
+        <p class="app-caption">Hyundai Sales Tools</p>
       </header>
 
       <section id="loginSection">
@@ -53,6 +75,12 @@
 
       <section id="appSection" class="hidden">
         <p class="userline" id="userDetails"></p>
+        <nav class="app-nav" id="appNav">
+          <button id="pdfTabBtn" class="active" type="button">PDF Generator</button>
+          <button id="quoteTabBtn" type="button">Vehicle Quotation</button>
+        </nav>
+
+        <section id="pdfPage">
         <h2 class="section-title">Generate PDF</h2>
 
         <div class="field">
@@ -89,6 +117,52 @@
         </div>
 
         <a id="downloadLink" class="link hidden" rel="noopener">Download PDF</a>
+        </section>
+
+        <section id="quotePage" class="hidden">
+          <h2 class="section-title">Vehicle Quotation</h2>
+          <div id="quoteControls" class="quote-panel">
+            <div class="field">
+              <label for="quoteModel">Vehicle model</label>
+              <select id="quoteModel"><option value="">Loading vehicles...</option></select>
+            </div>
+            <div class="field">
+              <label for="quoteVariant">Variant</label>
+              <select id="quoteVariant"><option value="">Select variant</option></select>
+            </div>
+            <div class="field">
+              <label for="quoteType">Quotation type</label>
+              <select id="quoteType"><option value="cash">CASH</option><option value="financing">BANK FINANCING</option></select>
+            </div>
+            <div class="field" id="quoteDpField">
+              <label for="quoteDownpayment">Downpayment</label>
+              <select id="quoteDownpayment">
+                <option value="20">20%</option><option value="25">25%</option><option value="30">30%</option>
+                <option value="35">35%</option><option value="40">40%</option><option value="45">45%</option><option value="50">50%</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="quoteFreebies">Freebies / inclusions</label>
+              <input id="quoteFreebies" type="text" placeholder="Enter freebies or inclusions">
+            </div>
+            <div class="field">
+              <label for="quoteValidity">Quotation validity (days)</label>
+              <input id="quoteValidity" type="number" min="1" max="90" value="7">
+            </div>
+            <div class="field">
+              <label for="quoteInsurance">Insurance</label>
+              <select id="quoteInsurance"><option value="Included">Included</option><option value="Not included">Not included</option></select>
+            </div>
+            <div class="field">
+              <label for="quoteLto">LTO registration</label>
+              <select id="quoteLto"><option value="Included">Included</option><option value="Not included">Not included</option></select>
+            </div>
+          </div>
+          <div id="quotePreview" class="quote-preview" aria-live="polite">
+            <p>Select a vehicle to preview the quotation.</p>
+          </div>
+          <button id="printQuoteBtn" type="button" style="margin-top:14px">Print / Save as PDF</button>
+        </section>
         <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
       </section>
     </div>
@@ -133,6 +207,7 @@
     let authorizedUser = null;
     let pendingAction = null;
     let previewLoadPending = false;
+    let quotationVehicles = [];
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
@@ -226,6 +301,9 @@
           $("consultantField").classList.add("hidden");
           $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
         }
+        quotationVehicles = data.vehicles || [];
+        const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
+        fillSelect($("quoteModel"), models, "Choose vehicle model");
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         return;
       }
@@ -245,6 +323,82 @@
         $("generateBtn").disabled = false;
       }
     });
+
+    function money(value) {
+      return new Intl.NumberFormat("en-PH", { style:"currency", currency:"PHP", maximumFractionDigits:0 }).format(value || 0);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    }
+
+    function refreshQuoteVariants() {
+      const model = $("quoteModel").value;
+      const variants = quotationVehicles.filter(v => v.model === model).map(v => v.variant);
+      fillSelect($("quoteVariant"), variants, "Choose variant");
+      updateQuotePreview();
+    }
+
+    function updateQuotePreview() {
+      const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
+      const preview = $("quotePreview");
+      const financing = $("quoteType").value === "financing";
+      $("quoteDpField").classList.toggle("hidden", !financing);
+      if (!vehicle) {
+        preview.innerHTML = "<p>Select a vehicle and variant to preview the quotation.</p>";
+        return;
+      }
+
+      const srp = Number(vehicle.srp) || 0;
+      const discount = financing ? 0 : (Number(vehicle.discount) || 0);
+      const netPrice = srp - discount;
+      const dpRate = Number($("quoteDownpayment").value) / 100;
+      const dpAmount = Math.round(srp * dpRate);
+      const balance = srp - dpAmount;
+      const freebies = $("quoteFreebies").value.trim();
+      const validity = Math.max(1, Math.min(90, Number($("quoteValidity").value) || 7));
+      const rows = [];
+      rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
+      rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${money(srp)}</strong></div>`);
+      if (!financing) {
+        rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
+        rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
+      } else {
+        rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong>${money(dpAmount)}</strong></div>`);
+        rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money(balance)}</strong></div>`);
+        const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
+        rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
+        terms.forEach(t => {
+          const monthly = Math.ceil((srp * (1-dpRate) * t.factor) / t.months);
+          rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`);
+        });
+      }
+      rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
+      rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
+      if (freebies) rows.push(`<div class="quote-line"><span>Freebies / Inclusions</span><strong>${escapeHtml(freebies)}</strong></div>`);
+      preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : "CASH TRANSACTION"}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
+    }
+
+    $("pdfTabBtn").addEventListener("click", () => {
+      $("pdfPage").classList.remove("hidden"); $("quotePage").classList.add("hidden");
+      $("pdfTabBtn").classList.add("active"); $("quoteTabBtn").classList.remove("active");
+    });
+    $("quoteTabBtn").addEventListener("click", () => {
+      $("pdfPage").classList.add("hidden"); $("quotePage").classList.remove("hidden");
+      $("quoteTabBtn").classList.add("active"); $("pdfTabBtn").classList.remove("active");
+      updateQuotePreview();
+    });
+    ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    $("quoteFreebies").addEventListener("input", updateQuotePreview);
+    $("quoteModel").addEventListener("change", refreshQuoteVariants);
+    $("printQuoteBtn").addEventListener("click", () => {
+      if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
+        alert("Please select a vehicle model and variant first."); return;
+      }
+      document.body.classList.add("printing-quote");
+      window.print();
+    });
+    window.addEventListener("afterprint", () => document.body.classList.remove("printing-quote"));
 
     $("loginBtn").addEventListener("click", async () => {
       $("loginBtn").disabled = true;
