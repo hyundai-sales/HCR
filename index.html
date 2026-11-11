@@ -551,16 +551,16 @@
       { section:"Application Details", fields:[
         ["U7:W7","Source","select",["FB BOOSTING","AutoDeals PH"]], ["U9:W9","TIN","text"],
         ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Variant","select",[]],
-        ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
+        ["E16","Vehicle Type","text"], ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
         ["V18:W18","Terms","select",["1 YR","2 YRS","3 YRS","4 YRS","5 YRS"]]
       ]},
       { section:"Borrower Details", fields:[
         ["E25:H25","Last Name","text"], ["L25:P25","First Name","text"], ["T25:W25","Middle Name","text"],
-        ["E29:G29","Birthday","date"], ["O29:R29","Citizenship","text"], ["T29:W29","Mobile Number","tel"]
+        ["E29:G29","Birthday","date"], ["O29:R29","Citizenship","text"], ["T29:W29","Mobile Number","tel"], ["E43","Email Address","email"]
       ]},
       { section:"Spouse / Co-maker Details", fields:[
         ["E33:H33","Last Name","text"], ["L33:P33","First Name","text"], ["T33:W33","Middle Name","text"],
-        ["E35:G35","Birthday","date"], ["O35:R35","Citizenship","text"], ["T35:W35","Mobile Number","tel"]
+        ["E35:G35","Birthday","text"], ["O35:R35","Citizenship","text"], ["T35:W35","Mobile Number","tel"]
       ]},
       { section:"Address and Residence", fields:[
         ["F37:P39","Home Address","textarea"], ["T37:W37","Telephone Number","tel"],
@@ -577,7 +577,7 @@
         ["G61:W61","Company / Business Address","textarea"]
       ]},
       { section:"Monthly Income", fields:[
-        ["T71:W71","Principal Borrower","number"], ["T73:W73","Spouse / Co-maker","number"]
+        ["T71:W71","Principal Borrower","number"], ["T73:W73","Spouse / Co-maker","text"]
       ]}
     ];
     const creditChoiceGroups = [
@@ -619,10 +619,7 @@
           const naLabel = document.createElement("label"); const naInput = document.createElement("input");
           naInput.type = "checkbox"; naInput.id = "credit_spouse_na";
           naLabel.append(naInput, document.createTextNode(" N/A — No spouse / co-maker")); naWrap.appendChild(naLabel); grid.prepend(naWrap);
-          naInput.addEventListener("change", () => {
-            section.querySelectorAll("[data-cell]").forEach(el => { el.disabled = naInput.checked; if (naInput.checked) el.value = ""; });
-            section.querySelectorAll('input[type="radio"]').forEach(el => { el.disabled = naInput.checked; if (naInput.checked) el.checked = false; });
-          });
+          naInput.addEventListener("change", applySpouseNaState);
         }
         root.appendChild(section);
       });
@@ -639,10 +636,9 @@
       });
       const spouseNa = $("credit_spouse_na");
       const spouseRelationshipInputs = root.querySelectorAll('input[name="credit_choice_2"]');
-      if (spouseNa) spouseNa.addEventListener("change", () => {
-        spouseRelationshipInputs.forEach(el => { el.disabled = spouseNa.checked; if (spouseNa.checked) el.checked = false; });
-      });
+      if (spouseNa) spouseNa.addEventListener("change", applySpouseNaState);
       root.dataset.built="yes";
+      applySpouseNaState();
       const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
       const variantSelect = root.querySelector('[data-cell="K14"]');
       if (vehicleSelect && variantSelect) {
@@ -655,6 +651,31 @@
         if (dpSelect) dpSelect.addEventListener("change", updateCreditPriceFields);
         refreshCreditVehicleDropdowns();
       }
+    }
+
+    const spouseNaCells = [
+      "E33:H33","L33:P33","T33:W33","E35:G35","O35:R35","T35:W35",
+      "G57:W57","E59:H59","O59:P59","U59:W59","G61:W61","T73:W73"
+    ];
+
+    function applySpouseNaState() {
+      const root = $("creditFormFields");
+      const na = $("credit_spouse_na")?.checked === true;
+      spouseNaCells.forEach(cell => {
+        const field = root.querySelector(`[data-cell="${cell}"]`);
+        if (!field) return;
+        if (na) {
+          field.value = "N/A";
+          field.disabled = true;
+        } else {
+          if (field.value === "N/A") field.value = "";
+          field.disabled = false;
+        }
+      });
+      root.querySelectorAll('input[name="credit_choice_2"]').forEach(field => {
+        field.disabled = na;
+        if (na) field.checked = false;
+      });
     }
 
     function refreshCreditVehicleDropdowns() {
@@ -716,8 +737,10 @@
         const selected=document.querySelector('input[name="credit_choice_'+index+'"]:checked');
         group.options.forEach(([cell])=>{checkboxes[cell]=!!selected && selected.value===cell;});
       });
+      const spouseNa = $("credit_spouse_na")?.checked === true;
+      if (spouseNa) spouseNaCells.forEach(cell => { values[cell] = "N/A"; });
       const vehicleColor = $("credit_vehicle_color") ? $("credit_vehicle_color").value : "";
-      return {values,checkboxes,vehicleColor};
+      return {values,checkboxes,vehicleColor,spouseNa};
     }
 
     $("creditTabBtn").addEventListener("click",()=>{
