@@ -222,6 +222,12 @@
   "Source matches:", event.source === bridgeFrame.contentWindow,
   "Data:", event.data
 );
+      console.log("TEAM RER validation:", {
+  originAllowed: /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/i.test(event.origin),
+  nonceMatches: !!event.data && event.data.nonce === pendingNonce,
+  hasPendingNonce: !!pendingNonce,
+  authorizationSuccess: !!event.data?.success
+});
       if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
       if (!event.data || event.data.nonce !== pendingNonce) return;
 
