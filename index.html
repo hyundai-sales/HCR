@@ -436,8 +436,13 @@
       const discount = financing ? 0 : (Number(vehicle.discount) || 0);
       const netPrice = srp - discount;
       const dpRate = Number($("quoteDownpayment").value) / 100;
-      const hasDpOverride = vehicle.hasDownpaymentOverride === true && vehicle.downpaymentOverride !== null && vehicle.downpaymentOverride !== undefined;
-      // Display the Price List peso override when present; otherwise use the selected DP percentage.
+      // Price List Downpayment entries are applicable only to the 20% DP quotation.
+      const usePriceListDownpayment = Math.abs(dpRate - 0.20) < 0.000001;
+      const hasDpOverride = usePriceListDownpayment &&
+        vehicle.hasDownpaymentOverride === true &&
+        vehicle.downpaymentOverride !== null &&
+        vehicle.downpaymentOverride !== undefined;
+      // For DP selections above/below 20%, calculate the displayed amount from SRP.
       const dpAmount = hasDpOverride ? Number(vehicle.downpaymentOverride) : Math.round(srp * dpRate * 100) / 100;
       // Financing balance and amortization always follow the selected DP percentage,
       // regardless of a ZERO DP or reduced peso amount shown as the actual downpayment.
@@ -451,7 +456,7 @@
         rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
       } else {
-        const dpDisplay = vehicle.downpaymentIsZeroDp === true ? "ZERO" : money2(dpAmount);
+        const dpDisplay = usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true ? "ZERO" : money2(dpAmount);
         rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong>${dpDisplay}</strong></div>`);
         rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money2(balance)}</strong></div>`);
         const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
