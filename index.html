@@ -42,6 +42,7 @@
     .quote-preview .quote-sub { text-align:center; color:#64748b; font-size:12px; margin:0 0 18px; }
     .quote-line { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #e2e8f0; font-size:13px; }
     .quote-line strong { text-align:right; }
+    .quote-dp-adjusted { color:#B8860B; font-weight:700; }
     .quote-total { margin-top:10px; padding:12px; background:#eef4fa; border-radius:8px; color:#003b70; font-size:17px; font-weight:bold; display:flex; justify-content:space-between; gap:10px; }
     .quote-contact { margin-top:20px; padding-top:12px; border-top:2px solid #003b70; font-size:12px; line-height:1.6; }
     .quote-terms { margin-top:15px; color:#475569; font-size:11px; line-height:1.5; }
@@ -457,7 +458,8 @@
         rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
       } else {
         const dpDisplay = usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true ? "ZERO" : money2(dpAmount);
-        rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong>${dpDisplay}</strong></div>`);
+        const dpClass = usePriceListDownpayment ? "" : "quote-dp-adjusted";
+        rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong class="${dpClass}">${dpDisplay}</strong></div>`);
         rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money2(balance)}</strong></div>`);
         const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
