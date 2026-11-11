@@ -216,6 +216,12 @@
     }
 
     window.addEventListener("message", event => {
+      console.log(
+  "TEAM RER bridge diagnostic:",
+  "Origin:", event.origin,
+  "Source matches:", event.source === bridgeFrame.contentWindow,
+  "Data:", event.data
+);
       if (event.source !== bridgeFrame.contentWindow) return;
       if (!event.data || event.data.nonce !== pendingNonce) return;
 
