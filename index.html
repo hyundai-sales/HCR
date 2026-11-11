@@ -44,8 +44,19 @@
     .userline { margin:0 0 14px; font-size:13px; color:#475569; line-height:1.5; }
     .footer { margin-top:20px; text-align:center; color:#94a3b8; font-size:11px; }
     .section-title { margin:22px 0 4px; color:#003b70; font-size:16px; text-align:left; }
-    .app-nav { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 18px; }
-    .app-nav button { min-height:58px; padding:14px 10px; font-size:15px; }
+    .app-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:14px 0 18px; }
+    .app-nav button { min-height:58px; padding:12px 8px; font-size:14px; }
+    .credit-section { margin:18px 0 8px; padding:14px; border:1px solid #d8e1eb; border-radius:10px; text-align:left; }
+    .credit-section h3 { margin:0 0 12px; color:#003b70; font-size:15px; }
+    .credit-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .credit-field { min-width:0; }
+    .credit-field.full { grid-column:1 / -1; }
+    .credit-field label { font-size:12px; }
+    .credit-field input,.credit-field select { min-height:42px; font-size:14px; }
+    .credit-choice { display:flex; flex-wrap:wrap; gap:12px; font-size:13px; }
+    .credit-choice label { display:flex; align-items:center; gap:5px; font-weight:normal; margin:0; }
+    .credit-choice input { width:auto; min-height:0; }
+    @media(max-width:420px){ .credit-grid{grid-template-columns:1fr;} .credit-field.full{grid-column:auto;} }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
     .quote-panel { border:1px solid #d8e1eb; border-radius:12px; padding:15px; margin-top:14px; }
     .quote-preview { margin-top:16px; border:1px solid #cbd5e1; border-radius:10px; padding:20px; background:#fff; text-align:left; }
@@ -169,6 +180,7 @@
         <nav class="app-nav" id="appNav">
           <button id="pdfTabBtn" type="button">Price List</button>
           <button id="quoteTabBtn" type="button">Vehicle Quotation</button>
+          <button id="creditTabBtn" type="button">Credit Application</button>
         </nav>
 
         <section id="pdfPage" class="hidden">
@@ -256,6 +268,16 @@
           </div>
           <button id="printQuoteBtn" type="button" style="margin-top:14px">Print / Save as PDF</button>
         </section>
+        <section id="creditPage" class="hidden">
+          <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Credit Application</h2>
+          <p class="app-caption">Fill in the application details. Customer information is used temporarily to generate the PDF and is not added to TEAM RER records.</p>
+          <button id="prefillCreditBtn" class="secondary" type="button">Use Current Vehicle Quotation</button>
+          <div id="creditFormFields"></div>
+          <button id="generateCreditBtn" type="button">Generate Application PDF</button>
+          <div id="creditMessage" class="message hidden" aria-live="polite"></div>
+        </section>
+
         <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
       </section>
     </div>
@@ -271,6 +293,8 @@
     <input type="hidden" name="worksheet" id="worksheetField">
     <input type="hidden" name="downpayment" id="downpaymentField">
     <input type="hidden" name="consultant" id="consultantRequestField">
+    <input type="hidden" name="applicationData" id="applicationDataField">
+    <input type="hidden" name="vehicle" id="vehicleField">
   </form>
 
   <script type="module">
@@ -301,6 +325,7 @@
     let pendingAction = null;
     let previewLoadPending = false;
     let quotationVehicles = [];
+    let creditModels = [];
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
@@ -325,6 +350,8 @@
       $("worksheetField").value = extra.worksheet || "";
       $("downpaymentField").value = extra.downpayment || "";
       $("consultantRequestField").value = extra.consultant || "";
+      $("applicationDataField").value = extra.applicationData ? JSON.stringify(extra.applicationData) : "";
+      $("vehicleField").value = extra.vehicle || "";
       $("bridgeForm").submit();
     }
 
@@ -367,8 +394,13 @@
         const error = event.data.error || "Request failed.";
         if (action === "authorize") showLoginError(error);
         else {
-          setMessage($("resultMessage"), error, "error");
-          $("generateBtn").disabled = false;
+          if (action === "creditApplication" || action === "creditVariants") {
+            setMessage($("creditMessage"), error, "error");
+            if (action === "creditApplication") $("generateCreditBtn").disabled = false;
+          } else {
+            setMessage($("resultMessage"), error, "error");
+            $("generateBtn").disabled = false;
+          }
         }
         return;
       }
@@ -384,6 +416,7 @@
         $("appNav").classList.remove("hidden");
         $("pdfPage").classList.add("hidden");
         $("quotePage").classList.add("hidden");
+        $("creditPage").classList.add("hidden");
         loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
         return;
       }
@@ -400,9 +433,34 @@
           $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
         }
         quotationVehicles = data.vehicles || [];
+        creditModels = data.creditModels || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
+        return;
+      }
+
+      if (action === "creditVariants") {
+        const colorSelect = document.querySelector('[data-cell="K14"]');
+        if (colorSelect) fillSelect(colorSelect, event.data.colors || [], "Choose color");
+        return;
+      }
+
+      if (action === "creditApplication") {
+        const result = event.data;
+        const bytes = Uint8Array.from(atob(result.pdfBase64 || ""), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = result.fileName || "Hyundai-Credit-Application.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        clearCreditForm();
+        setMessage($("creditMessage"), "Application PDF generated. Temporary customer details have been cleared from the form.", "success");
+        $("generateCreditBtn").disabled = false;
         return;
       }
 
@@ -495,25 +553,159 @@
       preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : "CASH TRANSACTION"}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
     }
 
+
+    const creditInputFields = [
+      { section:"Application Details", fields:[
+        ["U7:W7","Source","select",["FB BOOSTING","AutoDeals PH"]], ["U9:W9","TIN","text"],
+        ["E14:I14","Vehicle / Variant","select",creditModels], ["K14","Vehicle Color","select",[]],
+        ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
+        ["V18:W18","Terms","select",["1 YR","2 YRS","3 YRS","4 YRS","5 YRS"]]
+      ]},
+      { section:"Borrower Details", fields:[
+        ["E25:H25","Last Name","text"], ["L25:P25","First Name","text"], ["T25:W25","Middle Name","text"],
+        ["E29:G29","Birthday","date"], ["T29:W29","Mobile Number","tel"]
+      ]},
+      { section:"Spouse / Co-maker Details", fields:[
+        ["E33:H33","Last Name","text"], ["L33:P33","First Name","text"], ["T33:W33","Middle Name","text"],
+        ["E35:G35","Birthday","date"], ["O35:R35","Citizenship","text"], ["T35:W35","Mobile Number","tel"]
+      ]},
+      { section:"Address and Residence", fields:[
+        ["F37:P39","Home Address","textarea"], ["T37:W37","Telephone Number","tel"],
+        ["T39:W39","Length of Stay","text"], ["J41:P41","Mortgagee (if mortgaged)","text"]
+      ]},
+      { section:"Principal Borrower Employment", fields:[
+        ["G49:W49","Employer / Business Name","text"], ["E51:H51","Position / Title","text"],
+        ["O51:P51","Length of Stay / Establishment","text"], ["U51:W51","Company Telephone","tel"],
+        ["G53:W53","Company / Business Address","textarea"]
+      ]},
+      { section:"Spouse / Co-maker Employment", fields:[
+        ["G57:W57","Employer / Business Name","text"], ["E59:H59","Position / Title","text"],
+        ["O59:P59","Length of Stay / Establishment","text"], ["U59:W59","Company Telephone","tel"],
+        ["G61:W61","Company / Business Address","textarea"]
+      ]},
+      { section:"Monthly Income", fields:[
+        ["T71:W71","Principal Borrower","number"], ["T73:W73","Spouse / Co-maker","number"]
+      ]}
+    ];
+    const creditChoiceGroups = [
+      { title:"Purpose", options:[["G20","Private"],["J20","Public"],["L20","Business"]] },
+      { title:"Marital Status", options:[["E27","Single"],["G27","Married"],["J27","Separated"],["L27","Widowed"]] },
+      { title:"Spouse / Co-maker Relationship", options:[["J31","Son/Daughter"],["L31","Parents"],["O31","Siblings"],["R31","Partner"],["T31","Common-law"]] },
+      { title:"Residence Status", options:[["E41","Owned"],["G41","Mortgaged"],["R41","Rented"],["T41","Living with Relatives"]] },
+      { title:"Own Car", options:[["E65","Yes"],["E67","No"]] },
+      { title:"Own House", options:[["J65","Yes"],["J67","No"]] }
+    ];
+
+    function buildCreditForm() {
+      const root = $("creditFormFields");
+      if (root.dataset.built === "yes") return;
+      creditInputFields.forEach(group => {
+        const section = document.createElement("section"); section.className = "credit-section";
+        const heading = document.createElement("h3"); heading.textContent = group.section; section.appendChild(heading);
+        const grid = document.createElement("div"); grid.className = "credit-grid";
+        group.fields.forEach(([cell,label,type,options]) => {
+          const wrap = document.createElement("div"); wrap.className = "credit-field";
+          if (type === "textarea") wrap.classList.add("full");
+          const lab = document.createElement("label"); lab.textContent = label; lab.htmlFor = "credit_" + cell.replace(/[^A-Z0-9]/gi,"_"); wrap.appendChild(lab);
+          const el = type === "textarea" ? document.createElement("textarea") : document.createElement(type === "select" ? "select" : "input");
+          el.id = "credit_" + cell.replace(/[^A-Z0-9]/gi,"_"); el.dataset.cell = cell;
+          if (type === "select") { const blank=document.createElement("option"); blank.value=""; blank.textContent="Select"; el.appendChild(blank); (options || []).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=cell==="N16"?v+"%":v;el.appendChild(o);}); }
+          else if (type !== "textarea") el.type = type;
+          if (cell === "T71:W71" || cell === "T73:W73") el.placeholder = "Monthly amount (PHP)";
+          wrap.appendChild(el); grid.appendChild(wrap);
+        });
+        section.appendChild(grid); root.appendChild(section);
+      });
+      creditChoiceGroups.forEach((group,index)=>{
+        const section=document.createElement("section"); section.className="credit-section";
+        const heading=document.createElement("h3"); heading.textContent=group.title; section.appendChild(heading);
+        const choices=document.createElement("div"); choices.className="credit-choice";
+        group.options.forEach(([cell,label])=>{
+          const lab=document.createElement("label"); const input=document.createElement("input");
+          input.type="radio"; input.name="credit_choice_"+index; input.value=cell; input.dataset.checkboxCell=cell;
+          lab.appendChild(input); lab.appendChild(document.createTextNode(label)); choices.appendChild(lab);
+        });
+        section.appendChild(choices); root.appendChild(section);
+      });
+      root.dataset.built="yes";
+      const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
+      if (vehicleSelect) vehicleSelect.addEventListener("change", async () => {
+        const colorSelect = root.querySelector('[data-cell="K14"]');
+        if (colorSelect) fillSelect(colorSelect, [], "Loading colors...");
+        try { await submitRequest("creditVariants", { vehicle: vehicleSelect.value }); }
+        catch (error) { setMessage($("creditMessage"), error.message, "error"); }
+      });
+    }
+
+    function clearCreditForm() {
+      $("creditFormFields").querySelectorAll("[data-cell]").forEach(el => { el.value = ""; });
+      $("creditFormFields").querySelectorAll("input[type=radio]").forEach(el => { el.checked = false; });
+    }
+
+    function prefillCreditFromQuote() {
+      buildCreditForm();
+      const model=$("quoteModel").value; const variant=$("quoteVariant").value;
+      const dp=$("quoteDownpayment").value;
+      const modelEl=document.querySelector('[data-cell="E14:I14"]');
+      const variantEl=document.querySelector('[data-cell="K14"]');
+      const dpEl=document.querySelector('[data-cell="N16"]');
+      if(modelEl) {
+        const match = Array.from(modelEl.options).find(o => o.value === variant || o.value === model);
+        if (match) { modelEl.value = match.value; modelEl.dispatchEvent(new Event("change")); }
+      }
+      if(dpEl) dpEl.value=dp;
+      setMessage($("creditMessage"), model && variant ? "Vehicle details copied where available. Select the vehicle color before generating." : "Select a vehicle model and variant in Vehicle Quotation first.", model && variant ? "success" : "error");
+    }
+
+    function collectCreditApplication() {
+      const values={};
+      document.querySelectorAll("#creditFormFields [data-cell]").forEach(el=>{ values[el.dataset.cell]=el.value; });
+      const checkboxes={};
+      creditChoiceGroups.forEach((group,index)=>{
+        const selected=document.querySelector('input[name="credit_choice_'+index+'"]:checked');
+        group.options.forEach(([cell])=>{checkboxes[cell]=!!selected && selected.value===cell;});
+      });
+      return {values,checkboxes};
+    }
+
+    $("creditTabBtn").addEventListener("click",()=>{
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); buildCreditForm();
+    });
+    $("backToMenuFromCredit").addEventListener("click",()=>{ $("creditPage").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("appNav").classList.remove("hidden"); });
+    $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
+    $("generateCreditBtn").addEventListener("click",async()=>{
+      const data=collectCreditApplication();
+      const required=["E25:H25","L25:P25","T29:W29","E14:I14","K14"];
+      const missing=required.filter(key=>!String(data.values[key]||"").trim());
+      if(missing.length){setMessage($("creditMessage"),"Please complete the borrower name, mobile number, vehicle / variant, and vehicle color.","error");return;}
+      $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
+      try { await submitRequest("creditApplication",{applicationData:data}); }
+      catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
+    });
+
     $("pdfTabBtn").addEventListener("click", () => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.remove("hidden");
       $("quotePage").classList.add("hidden");
+      $("creditPage").classList.add("hidden");
     });
     $("quoteTabBtn").addEventListener("click", () => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.remove("hidden");
+      $("creditPage").classList.add("hidden");
       updateQuotePreview();
     });
     $("backToMenuFromPdf").addEventListener("click", () => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
+      $("creditPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
     });
     $("backToMenuFromQuote").addEventListener("click", () => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
+      $("creditPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
     });
     ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
@@ -622,6 +814,9 @@
         $("downloadLink").classList.add("hidden");
         $("viewBtn").classList.add("hidden");
         $("previewWrap").classList.add("hidden");
+        $("creditPage").classList.add("hidden");
+        $("creditFormFields").replaceChildren();
+        $("creditFormFields").dataset.built = "";
       }
     });
   </script>
