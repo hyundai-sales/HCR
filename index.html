@@ -45,15 +45,94 @@
     .quote-total { margin-top:10px; padding:12px; background:#eef4fa; border-radius:8px; color:#003b70; font-size:17px; font-weight:bold; display:flex; justify-content:space-between; gap:10px; }
     .quote-contact { margin-top:20px; padding-top:12px; border-top:2px solid #003b70; font-size:12px; line-height:1.6; }
     .quote-terms { margin-top:15px; color:#475569; font-size:11px; line-height:1.5; }
+    @page {
+      size: A4 portrait;
+      margin: 12mm;
+    }
     @media print {
-      body.printing-quote { background:#fff; padding:0; }
-      body.printing-quote .wrap { max-width:none; margin:0; }
-      body.printing-quote .card { padding:0; box-shadow:none; border-radius:0; }
+      html, body { width:100%; height:auto; }
+      body.printing-quote {
+        background:#fff;
+        padding:0 !important;
+        margin:0 !important;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+      }
+      body.printing-quote .wrap {
+        width:100% !important;
+        max-width:none !important;
+        margin:0 !important;
+      }
+      body.printing-quote .card {
+        width:100% !important;
+        padding:0 !important;
+        margin:0 !important;
+        box-shadow:none !important;
+        border:0 !important;
+        border-radius:0 !important;
+      }
       body.printing-quote .brand, body.printing-quote #loginSection, body.printing-quote #userDetails,
       body.printing-quote #appNav, body.printing-quote #pdfPage, body.printing-quote #quoteControls,
-      body.printing-quote .footer, body.printing-quote #logoutBtn, body.printing-quote #printQuoteBtn { display:none !important; }
-      body.printing-quote #appSection, body.printing-quote #quotePage, body.printing-quote #quotePreview { display:block !important; }
-      body.printing-quote #quotePreview { border:0; padding:0; }
+      body.printing-quote .footer, body.printing-quote #logoutBtn, body.printing-quote #printQuoteBtn {
+        display:none !important;
+      }
+      body.printing-quote #appSection,
+      body.printing-quote #quotePage,
+      body.printing-quote #quotePreview {
+        display:block !important;
+        visibility:visible !important;
+      }
+      body.printing-quote #quotePage {
+        margin:0 !important;
+        padding:0 !important;
+      }
+      body.printing-quote #quotePreview {
+        width:100% !important;
+        max-width:none !important;
+        margin:0 !important;
+        padding:5mm 6mm !important;
+        border:0 !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        font-size:10pt !important;
+        page-break-inside:avoid !important;
+        break-inside:avoid-page !important;
+      }
+      body.printing-quote #quotePreview h2 {
+        margin:2mm 0 1mm !important;
+        font-size:16pt !important;
+        line-height:1.15 !important;
+      }
+      body.printing-quote #quotePreview .quote-sub {
+        margin:0 0 5mm !important;
+        font-size:9pt !important;
+      }
+      body.printing-quote #quotePreview .quote-line {
+        padding:2.3mm 0 !important;
+        font-size:9.5pt !important;
+        line-height:1.2 !important;
+        break-inside:avoid !important;
+      }
+      body.printing-quote #quotePreview .quote-total {
+        margin-top:3mm !important;
+        padding:3mm !important;
+        font-size:12pt !important;
+      }
+      body.printing-quote #quotePreview .quote-terms {
+        margin-top:4mm !important;
+        font-size:8pt !important;
+        line-height:1.3 !important;
+      }
+      body.printing-quote #quotePreview .quote-contact {
+        margin-top:5mm !important;
+        padding-top:3mm !important;
+        font-size:9pt !important;
+        line-height:1.35 !important;
+      }
+      body.printing-quote #quotePreview img {
+        width:58px !important;
+        height:32px !important;
+      }
     }
     @media(max-width:420px) { body{padding:12px;} .wrap{margin:8px auto;} .card{padding:20px 17px;} }
   </style>
