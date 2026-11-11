@@ -41,6 +41,18 @@
     .google { background: white; color: #24364b; border: 1px solid #cbd5e1; }
     .secondary { margin-top: 10px; background: #e8eef5; color: #173a5e; }
     .link { margin-top: 10px; }
+    .preview-wrap {
+      margin-top: 16px; border: 1px solid #cbd5e1; border-radius: 10px;
+      overflow: hidden; background: #e2e8f0;
+    }
+    .preview-head {
+      padding: 10px 12px; background: #f1f5f9; color: #334155;
+      font-size: 13px; font-weight: bold; text-align: left;
+    }
+    #pdfPreview {
+      display: block; width: 100%; height: 70vh; min-height: 420px;
+      border: 0; background: white;
+    }
     .message {
       margin-top: 15px; padding: 12px; border-radius: 8px;
       background: #f1f5f9; color: #475569; font-size: 13px;
@@ -89,7 +101,8 @@
 
         <div class="field">
           <label for="downpayment">Downpayment (optional)</label>
-          <input id="downpayment" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Enter downpayment amount">
+          <input id="downpayment" type="number" min="0" step="0.01"
+            inputmode="decimal" placeholder="Enter downpayment amount">
         </div>
 
         <div class="field hidden" id="consultantField">
@@ -102,48 +115,38 @@
         <div class="message" id="roleNote"></div>
         <button id="generateBtn" type="button">Generate PDF</button>
         <div id="resultMessage" class="message hidden" aria-live="polite"></div>
-        <a id="downloadLink" class="link hidden" target="_blank" rel="noopener">Download PDF</a>
-        <a id="viewLink" class="link secondary hidden" target="_blank" rel="noopener">View PDF</a>
+
+        <button id="viewBtn" class="secondary hidden" type="button">View PDF</button>
+
+        <div id="previewWrap" class="preview-wrap hidden">
+          <div class="preview-head">PDF Preview</div>
+          <iframe id="pdfPreview" title="Generated PDF preview"></iframe>
+        </div>
+
+        <a id="downloadLink" class="link hidden" target="_blank" rel="noopener">
+          Download PDF
+        </a>
+
         <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
       </section>
     </div>
     <div class="footer">TEAM RER • Hyundai Cainta</div>
   </main>
 
-  <iframe id="bridgeFrame" name="bridgeFrame" class="hidden" title="TEAM RER secure request"></iframe>
+  <iframe id="bridgeFrame" name="bridgeFrame" class="hidden"
+    title="TEAM RER secure request"></iframe>
+
   <form id="bridgeForm" method="POST" target="bridgeFrame"
     action="https://script.google.com/macros/s/AKfycbyoEk3ZaWlq0veoamAAns3pKuyXoQ39IfeY9BY-8SWNeAHn382-ZwwsAuKiEzIQph8/exec">
+
     <input type="hidden" name="action" id="actionField">
     <input type="hidden" name="idToken" id="tokenField">
     <input type="hidden" name="nonce" id="nonceField">
     <input type="hidden" name="worksheet" id="worksheetField">
     <input type="hidden" name="downpayment" id="downpaymentField">
     <input type="hidden" name="consultant" id="consultantRequestField">
-  </form>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import {
-      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyACEuFMX0ly0p4RpkqJCIhL6TTfIrsrEiA",
-      authDomain: "team-rer-hyundai.firebaseapp.com",
-      projectId: "team-rer-hyundai",
-      storageBucket: "team-rer-hyundai.firebasestorage.app",
-      messagingSenderId: "419126543512",
-      appId: "1:419126543512:web:3b5e11657efa4cc7417ced",
-      measurementId: "G-EB98RG1VYH"
-    };
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoEk3ZaWlq0veoamAAns3pKuyXoQ39IfeY9BY-8SWNeAHn382-ZwwsAuKiEzIQph8/exec";
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-
     const $ = id => document.getElementById(id);
+
     let pendingNonce = null;
     let currentUser = null;
     let authorizedUser = null;
@@ -152,18 +155,26 @@
     function setMessage(element, message, type = "") {
       element.textContent = message;
       element.classList.remove("hidden", "success", "error");
-      if (type) element.classList.add(type);
+
+      if (type) {
+        element.classList.add(type);
+      }
     }
 
     function makeNonce() {
-      return Array.from(crypto.getRandomValues(new Uint8Array(24)))
-        .map(v => v.toString(16).padStart(2, "0")).join("");
+      return Array.from(
+        crypto.getRandomValues(new Uint8Array(24))
+      ).map(value => value.toString(16).padStart(2, "0")).join("");
     }
 
     async function submitRequest(action, extra = {}) {
-      if (!currentUser) throw new Error("Please sign in again.");
+      if (!currentUser) {
+        throw new Error("Please sign in again.");
+      }
+
       const token = await currentUser.getIdToken(true);
       const nonce = makeNonce();
+
       pendingNonce = nonce;
       pendingAction = action;
 
@@ -186,10 +197,12 @@
 
     function fillSelect(select, items, placeholder) {
       select.replaceChildren();
+
       const first = document.createElement("option");
       first.value = "";
       first.textContent = placeholder;
       select.appendChild(first);
+
       items.forEach(item => {
         const option = document.createElement("option");
         option.value = item;
@@ -204,114 +217,241 @@
     }
 
     window.addEventListener("message", event => {
-      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
-      if (!event.data || event.data.nonce !== pendingNonce) return;
+      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) {
+        return;
+      }
+
+      if (!event.data || event.data.nonce !== pendingNonce) {
+        return;
+      }
 
       const action = pendingAction;
+
       pendingNonce = null;
       pendingAction = null;
+
       $("tokenField").value = "";
       $("nonceField").value = "";
 
       if (!event.data.success) {
         const error = event.data.error || "Request failed.";
-        if (action === "authorize") showLoginError(error);
-        else setMessage($("resultMessage"), error, "error");
+
+        if (action === "authorize") {
+          showLoginError(error);
+        } else {
+          setMessage($("resultMessage"), error, "error");
+          $("generateBtn").disabled = false;
+        }
+
         return;
       }
 
       if (action === "authorize") {
         authorizedUser = event.data.user;
+
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
+
         $("userDetails").textContent =
           `${authorizedUser.name} • ${authorizedUser.role} • ${authorizedUser.email}`;
-        loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
+
+        loadAppData().catch(error => {
+          setMessage($("resultMessage"), error.message, "error");
+        });
+
         return;
       }
 
       if (action === "appData") {
         const data = event.data.appData;
+
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
+
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
-          fillSelect($("consultant"), data.consultants || [], "Select consultant");
-          $("roleNote").textContent = "Admin access: select the sales consultant for this PDF.";
+
+          fillSelect(
+            $("consultant"),
+            data.consultants || [],
+            "Select consultant"
+          );
+
+          $("roleNote").textContent =
+            "Admin access: select the sales consultant for this PDF.";
         } else {
           $("consultantField").classList.add("hidden");
-          $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
+
+          $("roleNote").textContent =
+            "Your registered TEAM RER name will be used as the sales consultant.";
         }
-        setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
+
+        setMessage(
+          $("resultMessage"),
+          "Workspace ready. Select a worksheet to continue.",
+          "success"
+        );
+
         return;
       }
 
       if (action === "generate") {
         const result = event.data;
-        setMessage($("resultMessage"), result.message || "PDF generated successfully.", "success");
+
+        setMessage(
+          $("resultMessage"),
+          result.message || "PDF generated successfully.",
+          "success"
+        );
+
         $("downloadLink").href = result.downloadUrl;
-        $("viewLink").href = result.viewUrl;
-        $("downloadLink").classList.remove("hidden");
-        $("viewLink").classList.remove("hidden");
+        $("downloadLink").classList.add("hidden");
+
+        $("viewBtn").dataset.viewUrl = result.viewUrl;
+        $("viewBtn").classList.remove("hidden");
+        $("viewBtn").disabled = false;
+        $("viewBtn").textContent = "View PDF";
+
+        $("previewWrap").classList.add("hidden");
+        $("pdfPreview").src = "about:blank";
+
         $("generateBtn").disabled = false;
       }
     });
 
     $("loginBtn").addEventListener("click", async () => {
       $("loginBtn").disabled = true;
+
       setMessage($("loginMessage"), "Connecting to Google...");
+
       try {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
+
         await submitRequest("authorize");
+
       } catch (error) {
         console.error(error);
         showLoginError("Sign-in failed: " + error.message);
       }
     });
 
+    $("viewBtn").addEventListener("click", () => {
+      const viewUrl = $("viewBtn").dataset.viewUrl || "";
+
+      if (!viewUrl) {
+        return;
+      }
+
+      const fileIdMatch = viewUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+
+      const previewUrl = fileIdMatch
+        ? `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`
+        : viewUrl;
+
+      $("downloadLink").classList.add("hidden");
+      $("previewWrap").classList.remove("hidden");
+
+      $("pdfPreview").src = previewUrl;
+
+      $("viewBtn").disabled = true;
+      $("viewBtn").textContent = "Loading preview...";
+    });
+
+    $("pdfPreview").addEventListener("load", () => {
+      if (!$("previewWrap").classList.contains("hidden")) {
+        $("viewBtn").disabled = false;
+        $("viewBtn").textContent = "Refresh PDF Preview";
+
+        $("downloadLink").classList.remove("hidden");
+      }
+    });
+
     $("generateBtn").addEventListener("click", async () => {
       const worksheet = $("worksheet").value;
-      if (!worksheet) {
-        setMessage($("resultMessage"), "Please select a worksheet.", "error");
-        return;
-      }
-      const downpayment = $("downpayment").value.trim();
-      if (downpayment && Number(downpayment) < 0) {
-        setMessage($("resultMessage"), "Downpayment cannot be negative.", "error");
-        return;
-      }
-      const consultant = authorizedUser && authorizedUser.role.toLowerCase() === "admin"
-        ? $("consultant").value : "";
 
-      if (authorizedUser && authorizedUser.role.toLowerCase() === "admin" && !consultant) {
-        setMessage($("resultMessage"), "Please select a sales consultant.", "error");
+      if (!worksheet) {
+        setMessage(
+          $("resultMessage"),
+          "Please select a worksheet.",
+          "error"
+        );
+        return;
+      }
+
+      const downpayment = $("downpayment").value.trim();
+
+      if (downpayment && Number(downpayment) < 0) {
+        setMessage(
+          $("resultMessage"),
+          "Downpayment cannot be negative.",
+          "error"
+        );
+        return;
+      }
+
+      const consultant =
+        authorizedUser && authorizedUser.role.toLowerCase() === "admin"
+          ? $("consultant").value
+          : "";
+
+      if (
+        authorizedUser &&
+        authorizedUser.role.toLowerCase() === "admin" &&
+        !consultant
+      ) {
+        setMessage(
+          $("resultMessage"),
+          "Please select a sales consultant.",
+          "error"
+        );
         return;
       }
 
       $("generateBtn").disabled = true;
+
       $("downloadLink").classList.add("hidden");
-      $("viewLink").classList.add("hidden");
-      setMessage($("resultMessage"), "Generating PDF. Please wait...");
+      $("viewBtn").classList.add("hidden");
+      $("previewWrap").classList.add("hidden");
+      $("pdfPreview").src = "about:blank";
+
+      setMessage(
+        $("resultMessage"),
+        "Generating PDF. Please wait..."
+      );
+
       try {
-        await submitRequest("generate", { worksheet, downpayment, consultant });
+        await submitRequest("generate", {
+          worksheet,
+          downpayment,
+          consultant
+        });
+
       } catch (error) {
         $("generateBtn").disabled = false;
-        setMessage($("resultMessage"), error.message, "error");
+
+        setMessage(
+          $("resultMessage"),
+          error.message,
+          "error"
+        );
       }
     });
 
     $("logoutBtn").addEventListener("click", async () => {
       authorizedUser = null;
       currentUser = null;
+
       await signOut(auth);
     });
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
+
       if (!user) {
         authorizedUser = null;
         pendingNonce = null;
         pendingAction = null;
+
         $("appSection").classList.add("hidden");
         $("loginSection").classList.remove("hidden");
         $("loginBtn").disabled = false;
