@@ -325,7 +325,6 @@
     let pendingAction = null;
     let previewLoadPending = false;
     let quotationVehicles = [];
-    let creditVehicles = [];
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
@@ -433,9 +432,9 @@
           $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
         }
         quotationVehicles = data.vehicles || [];
-        creditVehicles = data.creditVehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
+        if ($("creditFormFields").dataset.built === "yes") refreshCreditVehicleDropdowns();
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         return;
       }
@@ -551,7 +550,7 @@
     const creditInputFields = [
       { section:"Application Details", fields:[
         ["U7:W7","Source","select",["FB BOOSTING","AutoDeals PH"]], ["U9:W9","TIN","text"],
-        ["E14:I14","Vehicle Model","select",[...new Set(creditVehicles.map(v => v.model))].sort()], ["K14","Variant","select",[]],
+        ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Variant","select",[]],
         ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
         ["V18:W18","Terms","select",["1 YR","2 YRS","3 YRS","4 YRS","5 YRS"]]
       ]},
@@ -648,9 +647,44 @@
       const variantSelect = root.querySelector('[data-cell="K14"]');
       if (vehicleSelect && variantSelect) {
         vehicleSelect.addEventListener("change", () => {
-          const variants = [...new Set(creditVehicles.filter(v => v.model === vehicleSelect.value).map(v => v.variant))].sort();
-          fillSelect(variantSelect, variants, "Choose variant");
+          refreshCreditVehicleDropdowns();
+          updateCreditPriceFields();
         });
+        variantSelect.addEventListener("change", updateCreditPriceFields);
+        const dpSelect = root.querySelector('[data-cell="N16"]');
+        if (dpSelect) dpSelect.addEventListener("change", updateCreditPriceFields);
+        refreshCreditVehicleDropdowns();
+      }
+    }
+
+    function refreshCreditVehicleDropdowns() {
+      const root = $("creditFormFields");
+      const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
+      const variantSelect = root.querySelector('[data-cell="K14"]');
+      if (!vehicleSelect || !variantSelect) return;
+      const currentModel = vehicleSelect.value;
+      const currentVariant = variantSelect.value;
+      const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
+      fillSelect(vehicleSelect, models, "Choose vehicle model");
+      if (models.includes(currentModel)) vehicleSelect.value = currentModel;
+      const variants = [...new Set(quotationVehicles.filter(v => v.model === vehicleSelect.value).map(v => v.variant))].sort();
+      fillSelect(variantSelect, variants, "Choose variant");
+      if (variants.includes(currentVariant)) variantSelect.value = currentVariant;
+    }
+
+    function updateCreditPriceFields() {
+      // The live Google Sheet template already contains formulas in P14, P16 and P18.
+      // The backend temporarily supplies verified SRP/DP/balance values before PDF export.
+      const modelEl = document.querySelector('#creditFormFields [data-cell="E14:I14"]');
+      const variantEl = document.querySelector('#creditFormFields [data-cell="K14"]');
+      const dpEl = document.querySelector('#creditFormFields [data-cell="N16"]');
+      if (!modelEl || !variantEl || !dpEl) return;
+      const match = quotationVehicles.find(v => v.model === modelEl.value && v.variant === variantEl.value);
+      const message = $("creditMessage");
+      if (match) {
+        message.dataset.selectedSrp = String(Number(match.srp) || 0);
+      } else {
+        delete message.dataset.selectedSrp;
       }
     }
 
@@ -669,8 +703,9 @@
       const dpEl=document.querySelector('[data-cell="N16"]');
       if(modelEl) { modelEl.value = model; modelEl.dispatchEvent(new Event("change")); }
       if(variantEl) variantEl.value = variant;
-      if(dpEl) dpEl.value=dp;
-      setMessage($("creditMessage"), model && variant ? "Vehicle model and variant copied. Enter the vehicle color manually." : "Select a vehicle model and variant in Vehicle Quotation first.", model && variant ? "success" : "error");
+      if(dpEl) { dpEl.value=dp; dpEl.dispatchEvent(new Event("change")); }
+      updateCreditPriceFields();
+      setMessage($("creditMessage"), model && variant ? "Vehicle model, variant, and downpayment copied. SRP and amount financed will be filled in the PDF." : "Select a vehicle model and variant in Vehicle Quotation first.", model && variant ? "success" : "error");
     }
 
     function collectCreditApplication() {
