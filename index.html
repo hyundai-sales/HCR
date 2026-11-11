@@ -102,7 +102,6 @@
 <body>
   <main class="card">
     <div class="logo">RER</div>
-
     <h1>TEAM RER</h1>
     <p class="subtitle">Hyundai Price List PDF Generator</p>
 
@@ -116,18 +115,31 @@
     </section>
 
     <section id="userSection" class="hidden">
-      <p><strong>Google account detected</strong></p>
-      <div id="userEmail" class="message"></div>
-      <div class="message">
-        Login successful. Checking TEAM RER authorization will be added in the next stage.
-      </div>
+      <p><strong>TEAM RER access confirmed</strong></p>
+      <div id="userDetails" class="message"></div>
       <button id="logoutBtn">Sign Out</button>
     </section>
 
-    <div class="footer">
-      TEAM RER • Hyundai Cainta
-    </div>
+    <div class="footer">TEAM RER • Hyundai Cainta</div>
   </main>
+
+  <iframe
+    id="bridgeFrame"
+    name="bridgeFrame"
+    class="hidden"
+    title="TEAM RER authorization">
+  </iframe>
+
+  <form
+    id="bridgeForm"
+    method="POST"
+    target="bridgeFrame"
+    action="https://script.google.com/macros/s/AKfycbyoEk3ZaWlq0veoamAAns3pKuyXoQ39IfeY9BY-8SWNeAHn382-ZwwsAuKiEzIQph8/exec">
+
+    <input type="hidden" name="action" value="authorize">
+    <input type="hidden" name="idToken" id="tokenField">
+    <input type="hidden" name="nonce" id="nonceField">
+  </form>
 
   <script type="module">
     import { initializeApp } from
@@ -152,52 +164,109 @@
       measurementId: "G-EB98RG1VYH"
     };
 
+    const SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbyoEk3ZaWlq0veoamAAns3pKuyXoQ39IfeY9BY-8SWNeAHn382-ZwwsAuKiEzIQph8/exec";
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    provider.setCustomParameters({
-      prompt: "select_account"
-    });
+    provider.setCustomParameters({ prompt: "select_account" });
 
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const loginMessage = document.getElementById("loginMessage");
     const loginSection = document.getElementById("loginSection");
     const userSection = document.getElementById("userSection");
-    const userEmail = document.getElementById("userEmail");
+    const userDetails = document.getElementById("userDetails");
+
+    const bridgeForm = document.getElementById("bridgeForm");
+    const tokenField = document.getElementById("tokenField");
+    const nonceField = document.getElementById("nonceField");
+    const bridgeFrame = document.getElementById("bridgeFrame");
+
+    let pendingNonce = null;
+    let authorizedUser = null;
+
+    function showError(message) {
+      loginSection.classList.remove("hidden");
+      userSection.classList.add("hidden");
+      loginMessage.textContent = message;
+      loginBtn.disabled = false;
+    }
+
+    function requestAuthorization(user) {
+      loginBtn.disabled = true;
+      loginMessage.textContent = "Checking TEAM RER access...";
+
+      user.getIdToken(true).then(token => {
+        const nonce = Array.from(
+          crypto.getRandomValues(new Uint8Array(24))
+        ).map(value => value.toString(16).padStart(2, "0")).join("");
+
+        pendingNonce = nonce;
+        tokenField.value = token;
+        nonceField.value = nonce;
+
+        bridgeForm.submit();
+      }).catch(error => {
+        console.error(error);
+        showError("Unable to verify your sign-in. Please try again.");
+      });
+    }
+
+    window.addEventListener("message", event => {
+      if (event.source !== bridgeFrame.contentWindow) return;
+      if (!event.data || event.data.nonce !== pendingNonce) return;
+
+      pendingNonce = null;
+      tokenField.value = "";
+      nonceField.value = "";
+
+      if (!event.data.success) {
+        authorizedUser = null;
+        showError(event.data.error || "TEAM RER access denied.");
+        return;
+      }
+
+      authorizedUser = event.data.user;
+
+      loginSection.classList.add("hidden");
+      userSection.classList.remove("hidden");
+
+      userDetails.textContent =
+        "Name: " + authorizedUser.name +
+        " | Role: " + authorizedUser.role +
+        " | Email: " + authorizedUser.email;
+
+      loginBtn.disabled = false;
+    });
 
     loginBtn.addEventListener("click", async () => {
       loginBtn.disabled = true;
       loginMessage.textContent = "Connecting to Google...";
 
       try {
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        requestAuthorization(result.user);
       } catch (error) {
         console.error(error);
-        loginMessage.textContent =
-          "Sign-in failed: " + error.message;
-      } finally {
-        loginBtn.disabled = false;
+        showError("Sign-in failed: " + error.message);
       }
     });
 
     logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error(error);
-      }
+      authorizedUser = null;
+      await signOut(auth);
     });
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginSection.classList.add("hidden");
-        userSection.classList.remove("hidden");
-        userEmail.textContent = user.email || "Email unavailable";
-      } else {
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        authorizedUser = null;
+        pendingNonce = null;
         userSection.classList.add("hidden");
         loginSection.classList.remove("hidden");
+        loginBtn.disabled = false;
       }
     });
   </script>
