@@ -7,68 +7,32 @@
   <title>TEAM RER | Hyundai PDF Generator</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; padding: 18px;
-      background: #eef3f8; font-family: Arial, sans-serif; color: #172b43;
-    }
-    .wrap { width: 100%; max-width: 560px; margin: 24px auto; }
-    .card {
-      background: #fff; border-radius: 16px; padding: 24px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.08);
-    }
-    .brand { text-align: center; margin-bottom: 22px; }
-    .logo {
-      width: 54px; height: 54px; margin: 0 auto 12px; display: grid;
-      place-items: center; border-radius: 14px; background: #003b70;
-      color: white; font-size: 22px; font-weight: bold;
-    }
-    h1 { margin: 0; color: #003b70; font-size: 25px; }
-    .subtitle { margin: 8px 0 0; color: #64748b; font-size: 13px; }
-    .field { margin: 16px 0; text-align: left; }
-    label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: bold; }
-    input, select {
-      width: 100%; min-height: 46px; padding: 11px 12px;
-      border: 1px solid #cbd5e1; border-radius: 8px;
-      background: white; color: #172b43; font-size: 15px;
-    }
-    button, .link {
-      display: block; width: 100%; min-height: 46px; padding: 13px;
-      border: 0; border-radius: 8px; background: #003b70; color: white;
-      font-size: 15px; font-weight: bold; text-align: center;
-      text-decoration: none; cursor: pointer;
-    }
-    button:disabled { opacity: .55; cursor: wait; }
-    .google { background: white; color: #24364b; border: 1px solid #cbd5e1; }
-    .secondary { margin-top: 10px; background: #e8eef5; color: #173a5e; }
-    .link { margin-top: 10px; }
-    .preview-wrap {
-      margin-top: 16px; border: 1px solid #cbd5e1; border-radius: 10px;
-      overflow: hidden; background: #e2e8f0;
-    }
-    .preview-head {
-      padding: 10px 12px; background: #f1f5f9; color: #334155;
-      font-size: 13px; font-weight: bold; text-align: left;
-    }
-    #pdfPreview {
-      display: block; width: 100%; height: 70vh; min-height: 420px;
-      border: 0; background: white;
-    }
-    .message {
-      margin-top: 15px; padding: 12px; border-radius: 8px;
-      background: #f1f5f9; color: #475569; font-size: 13px;
-      line-height: 1.5; overflow-wrap: anywhere; text-align: left;
-    }
-    .success { background: #ecfdf5; color: #166534; }
-    .error { background: #fef2f2; color: #991b1b; }
-    .hidden { display: none !important; }
-    .userline { margin: 0 0 14px; font-size: 13px; color: #475569; line-height: 1.5; }
-    .footer { margin-top: 20px; text-align: center; color: #94a3b8; font-size: 11px; }
-    .section-title { margin: 22px 0 4px; color: #003b70; font-size: 16px; text-align: left; }
-    @media (max-width: 420px) {
-      body { padding: 12px; }
-      .wrap { margin: 8px auto; }
-      .card { padding: 20px 17px; }
-    }
+    body { margin:0; min-height:100vh; padding:18px; background:#eef3f8; font-family:Arial,sans-serif; color:#172b43; }
+    .wrap { width:100%; max-width:560px; margin:24px auto; }
+    .card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,.08); }
+    .brand { text-align:center; margin-bottom:22px; }
+    .logo { width:54px; height:54px; margin:0 auto 12px; display:grid; place-items:center; border-radius:14px; background:#003b70; color:white; font-size:22px; font-weight:bold; }
+    h1 { margin:0; color:#003b70; font-size:25px; }
+    .subtitle { margin:8px 0 0; color:#64748b; font-size:13px; }
+    .field { margin:16px 0; text-align:left; }
+    label { display:block; margin-bottom:7px; font-size:13px; font-weight:bold; }
+    input,select { width:100%; min-height:46px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:#172b43; font-size:15px; }
+    button,.link { display:block; width:100%; min-height:46px; padding:13px; border:0; border-radius:8px; background:#003b70; color:white; font-size:15px; font-weight:bold; text-align:center; text-decoration:none; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .google { background:white; color:#24364b; border:1px solid #cbd5e1; }
+    .secondary { margin-top:10px; background:#e8eef5; color:#173a5e; }
+    .link { margin-top:10px; }
+    .preview-wrap { margin-top:16px; border:1px solid #cbd5e1; border-radius:10px; overflow:hidden; background:#e2e8f0; }
+    .preview-head { padding:10px 12px; background:#f1f5f9; color:#334155; font-size:13px; font-weight:bold; text-align:left; }
+    #pdfPreview { display:block; width:100%; height:70vh; min-height:420px; border:0; background:white; }
+    .message { margin-top:15px; padding:12px; border-radius:8px; background:#f1f5f9; color:#475569; font-size:13px; line-height:1.5; overflow-wrap:anywhere; text-align:left; }
+    .success { background:#ecfdf5; color:#166534; }
+    .error { background:#fef2f2; color:#991b1b; }
+    .hidden { display:none !important; }
+    .userline { margin:0 0 14px; font-size:13px; color:#475569; line-height:1.5; }
+    .footer { margin-top:20px; text-align:center; color:#94a3b8; font-size:11px; }
+    .section-title { margin:22px 0 4px; color:#003b70; font-size:16px; text-align:left; }
+    @media(max-width:420px) { body{padding:12px;} .wrap{margin:8px auto;} .card{padding:20px 17px;} }
   </style>
 </head>
 <body>
@@ -82,34 +46,24 @@
 
       <section id="loginSection">
         <button id="loginBtn" class="google" type="button">Sign in with Google</button>
-        <div id="loginMessage" class="message">
-          Sign in using your authorized TEAM RER Gmail account.
-        </div>
+        <div id="loginMessage" class="message">Sign in using your authorized TEAM RER Gmail account.</div>
       </section>
 
       <section id="appSection" class="hidden">
         <p class="userline" id="userDetails"></p>
-
         <h2 class="section-title">Generate PDF</h2>
 
         <div class="field">
           <label for="worksheet">Select worksheet</label>
-          <select id="worksheet">
-            <option value="">Loading worksheets...</option>
-          </select>
+          <select id="worksheet"><option value="">Loading worksheets...</option></select>
         </div>
-
         <div class="field">
           <label for="downpayment">Downpayment (optional)</label>
-          <input id="downpayment" type="number" min="0" step="0.01"
-            inputmode="decimal" placeholder="Enter downpayment amount">
+          <input id="downpayment" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Enter downpayment amount">
         </div>
-
         <div class="field hidden" id="consultantField">
           <label for="consultant">Sales consultant</label>
-          <select id="consultant">
-            <option value="">Select consultant</option>
-          </select>
+          <select id="consultant"><option value="">Select consultant</option></select>
         </div>
 
         <div class="message" id="roleNote"></div>
@@ -123,68 +77,75 @@
           <iframe id="pdfPreview" title="Generated PDF preview"></iframe>
         </div>
 
-        <a id="downloadLink" class="link hidden" target="_blank" rel="noopener">
-          Download PDF
-        </a>
-
+        <a id="downloadLink" class="link hidden" rel="noopener">Download PDF</a>
         <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
       </section>
     </div>
     <div class="footer">TEAM RER • Hyundai Cainta</div>
   </main>
 
-  <iframe id="bridgeFrame" name="bridgeFrame" class="hidden"
-    title="TEAM RER secure request"></iframe>
-
+  <iframe id="bridgeFrame" name="bridgeFrame" class="hidden" title="TEAM RER secure request"></iframe>
   <form id="bridgeForm" method="POST" target="bridgeFrame"
     action="https://script.google.com/macros/s/AKfycbyoEk3ZaWlq0veoamAAns3pKuyXoQ39IfeY9BY-8SWNeAHn382-ZwwsAuKiEzIQph8/exec">
-
     <input type="hidden" name="action" id="actionField">
     <input type="hidden" name="idToken" id="tokenField">
     <input type="hidden" name="nonce" id="nonceField">
     <input type="hidden" name="worksheet" id="worksheetField">
     <input type="hidden" name="downpayment" id="downpaymentField">
     <input type="hidden" name="consultant" id="consultantRequestField">
-    const $ = id => document.getElementById(id);
+  </form>
 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyACEuFMX0ly0p4RpkqJCIhL6TTfIrsrEiA",
+      authDomain: "team-rer-hyundai.firebaseapp.com",
+      projectId: "team-rer-hyundai",
+      storageBucket: "team-rer-hyundai.firebasestorage.app",
+      messagingSenderId: "419126543512",
+      appId: "1:419126543512:web:3b5e11657efa4cc7417ced",
+      measurementId: "G-EB98RG1VYH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    const $ = id => document.getElementById(id);
     let pendingNonce = null;
     let currentUser = null;
     let authorizedUser = null;
     let pendingAction = null;
+    let previewLoadPending = false;
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
       element.classList.remove("hidden", "success", "error");
-
-      if (type) {
-        element.classList.add(type);
-      }
+      if (type) element.classList.add(type);
     }
 
     function makeNonce() {
-      return Array.from(
-        crypto.getRandomValues(new Uint8Array(24))
-      ).map(value => value.toString(16).padStart(2, "0")).join("");
+      return Array.from(crypto.getRandomValues(new Uint8Array(24)))
+        .map(value => value.toString(16).padStart(2, "0")).join("");
     }
 
     async function submitRequest(action, extra = {}) {
-      if (!currentUser) {
-        throw new Error("Please sign in again.");
-      }
-
+      if (!currentUser) throw new Error("Please sign in again.");
       const token = await currentUser.getIdToken(true);
       const nonce = makeNonce();
-
       pendingNonce = nonce;
       pendingAction = action;
-
       $("actionField").value = action;
       $("tokenField").value = token;
       $("nonceField").value = nonce;
       $("worksheetField").value = extra.worksheet || "";
       $("downpaymentField").value = extra.downpayment || "";
       $("consultantRequestField").value = extra.consultant || "";
-
       $("bridgeForm").submit();
     }
 
@@ -197,12 +158,10 @@
 
     function fillSelect(select, items, placeholder) {
       select.replaceChildren();
-
       const first = document.createElement("option");
       first.value = "";
       first.textContent = placeholder;
       select.appendChild(first);
-
       items.forEach(item => {
         const option = document.createElement("option");
         option.value = item;
@@ -212,123 +171,77 @@
     }
 
     async function loadAppData() {
-      setMessage($("loginMessage"), "Loading your TEAM RER workspace...");
       await submitRequest("appData");
     }
 
     window.addEventListener("message", event => {
-      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) {
-        return;
-      }
-
-      if (!event.data || event.data.nonce !== pendingNonce) {
-        return;
-      }
+      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
+      if (!event.data || event.data.nonce !== pendingNonce) return;
 
       const action = pendingAction;
-
       pendingNonce = null;
       pendingAction = null;
-
       $("tokenField").value = "";
       $("nonceField").value = "";
 
       if (!event.data.success) {
         const error = event.data.error || "Request failed.";
-
-        if (action === "authorize") {
-          showLoginError(error);
-        } else {
+        if (action === "authorize") showLoginError(error);
+        else {
           setMessage($("resultMessage"), error, "error");
           $("generateBtn").disabled = false;
         }
-
         return;
       }
 
       if (action === "authorize") {
         authorizedUser = event.data.user;
-
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
-
         $("userDetails").textContent =
           `${authorizedUser.name} • ${authorizedUser.role} • ${authorizedUser.email}`;
-
-        loadAppData().catch(error => {
-          setMessage($("resultMessage"), error.message, "error");
-        });
-
+        loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
         return;
       }
 
       if (action === "appData") {
         const data = event.data.appData;
-
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
-
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
-
-          fillSelect(
-            $("consultant"),
-            data.consultants || [],
-            "Select consultant"
-          );
-
-          $("roleNote").textContent =
-            "Admin access: select the sales consultant for this PDF.";
+          fillSelect($("consultant"), data.consultants || [], "Select consultant");
+          $("roleNote").textContent = "Admin access: select the sales consultant for this PDF.";
         } else {
           $("consultantField").classList.add("hidden");
-
-          $("roleNote").textContent =
-            "Your registered TEAM RER name will be used as the sales consultant.";
+          $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
         }
-
-        setMessage(
-          $("resultMessage"),
-          "Workspace ready. Select a worksheet to continue.",
-          "success"
-        );
-
+        setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         return;
       }
 
       if (action === "generate") {
         const result = event.data;
-
-        setMessage(
-          $("resultMessage"),
-          result.message || "PDF generated successfully.",
-          "success"
-        );
-
+        setMessage($("resultMessage"), result.message || "PDF generated successfully.", "success");
         $("downloadLink").href = result.downloadUrl;
         $("downloadLink").classList.add("hidden");
-
         $("viewBtn").dataset.viewUrl = result.viewUrl;
         $("viewBtn").classList.remove("hidden");
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
-
         $("previewWrap").classList.add("hidden");
         $("pdfPreview").src = "about:blank";
-
+        previewLoadPending = false;
         $("generateBtn").disabled = false;
       }
     });
 
     $("loginBtn").addEventListener("click", async () => {
       $("loginBtn").disabled = true;
-
       setMessage($("loginMessage"), "Connecting to Google...");
-
       try {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
-
         await submitRequest("authorize");
-
       } catch (error) {
         console.error(error);
         showLoginError("Sign-in failed: " + error.message);
@@ -337,124 +250,84 @@
 
     $("viewBtn").addEventListener("click", () => {
       const viewUrl = $("viewBtn").dataset.viewUrl || "";
-
-      if (!viewUrl) {
-        return;
-      }
+      if (!viewUrl) return;
 
       const fileIdMatch = viewUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-
       const previewUrl = fileIdMatch
         ? `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`
         : viewUrl;
 
       $("downloadLink").classList.add("hidden");
       $("previewWrap").classList.remove("hidden");
-
-      $("pdfPreview").src = previewUrl;
-
       $("viewBtn").disabled = true;
       $("viewBtn").textContent = "Loading preview...";
+      previewLoadPending = true;
+      $("pdfPreview").src = previewUrl;
     });
 
     $("pdfPreview").addEventListener("load", () => {
-      if (!$("previewWrap").classList.contains("hidden")) {
-        $("viewBtn").disabled = false;
-        $("viewBtn").textContent = "Refresh PDF Preview";
-
-        $("downloadLink").classList.remove("hidden");
-      }
+      if (!previewLoadPending || $("previewWrap").classList.contains("hidden")) return;
+      previewLoadPending = false;
+      $("viewBtn").disabled = false;
+      $("viewBtn").textContent = "Refresh PDF Preview";
+      $("downloadLink").classList.remove("hidden");
     });
 
     $("generateBtn").addEventListener("click", async () => {
       const worksheet = $("worksheet").value;
-
       if (!worksheet) {
-        setMessage(
-          $("resultMessage"),
-          "Please select a worksheet.",
-          "error"
-        );
+        setMessage($("resultMessage"), "Please select a worksheet.", "error");
         return;
       }
 
       const downpayment = $("downpayment").value.trim();
-
-      if (downpayment && Number(downpayment) < 0) {
-        setMessage(
-          $("resultMessage"),
-          "Downpayment cannot be negative.",
-          "error"
-        );
+      if (downpayment && (!/^\d+(\.\d{1,2})?$/.test(downpayment) || Number(downpayment) < 0)) {
+        setMessage($("resultMessage"), "Please enter a valid downpayment amount.", "error");
         return;
       }
 
-      const consultant =
-        authorizedUser && authorizedUser.role.toLowerCase() === "admin"
-          ? $("consultant").value
-          : "";
+      const isAdmin = authorizedUser && authorizedUser.role.toLowerCase() === "admin";
+      const consultant = isAdmin ? $("consultant").value : "";
 
-      if (
-        authorizedUser &&
-        authorizedUser.role.toLowerCase() === "admin" &&
-        !consultant
-      ) {
-        setMessage(
-          $("resultMessage"),
-          "Please select a sales consultant.",
-          "error"
-        );
+      if (isAdmin && !consultant) {
+        setMessage($("resultMessage"), "Please select a sales consultant.", "error");
         return;
       }
 
       $("generateBtn").disabled = true;
-
       $("downloadLink").classList.add("hidden");
       $("viewBtn").classList.add("hidden");
       $("previewWrap").classList.add("hidden");
       $("pdfPreview").src = "about:blank";
-
-      setMessage(
-        $("resultMessage"),
-        "Generating PDF. Please wait..."
-      );
+      previewLoadPending = false;
+      setMessage($("resultMessage"), "Generating PDF. Please wait...");
 
       try {
-        await submitRequest("generate", {
-          worksheet,
-          downpayment,
-          consultant
-        });
-
+        await submitRequest("generate", { worksheet, downpayment, consultant });
       } catch (error) {
         $("generateBtn").disabled = false;
-
-        setMessage(
-          $("resultMessage"),
-          error.message,
-          "error"
-        );
+        setMessage($("resultMessage"), error.message, "error");
       }
     });
 
     $("logoutBtn").addEventListener("click", async () => {
       authorizedUser = null;
       currentUser = null;
-
       await signOut(auth);
     });
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
-
       if (!user) {
         authorizedUser = null;
         pendingNonce = null;
         pendingAction = null;
-
         $("appSection").classList.add("hidden");
         $("loginSection").classList.remove("hidden");
         $("loginBtn").disabled = false;
+        $("downloadLink").classList.add("hidden");
+        $("viewBtn").classList.add("hidden");
+        $("previewWrap").classList.add("hidden");
       }
     });
   </script>
