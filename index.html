@@ -33,8 +33,8 @@
     .userline { margin:0 0 14px; font-size:13px; color:#475569; line-height:1.5; }
     .footer { margin-top:20px; text-align:center; color:#94a3b8; font-size:11px; }
     .section-title { margin:22px 0 4px; color:#003b70; font-size:16px; text-align:left; }
-    .app-nav { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 18px; }
-    .app-nav button { min-height:42px; padding:10px; font-size:13px; }
+    .app-nav { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 18px; }
+    .app-nav button { min-height:58px; padding:14px 10px; font-size:15px; }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
     .quote-panel { border:1px solid #d8e1eb; border-radius:12px; padding:15px; margin-top:14px; }
     .quote-preview { margin-top:16px; border:1px solid #cbd5e1; border-radius:10px; padding:20px; background:#fff; text-align:left; }
@@ -156,11 +156,12 @@
       <section id="appSection" class="hidden">
         <p class="userline" id="userDetails"></p>
         <nav class="app-nav" id="appNav">
-          <button id="pdfTabBtn" class="active" type="button">PDF Generator</button>
+          <button id="pdfTabBtn" type="button">Price List</button>
           <button id="quoteTabBtn" type="button">Vehicle Quotation</button>
         </nav>
 
-        <section id="pdfPage">
+        <section id="pdfPage" class="hidden">
+          <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
         <h2 class="section-title">Generate PDF</h2>
 
         <div class="field">
@@ -200,6 +201,7 @@
         </section>
 
         <section id="quotePage" class="hidden">
+          <button id="backToMenuFromQuote" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Vehicle Quotation</h2>
           <div id="quoteControls" class="quote-panel">
             <div class="field">
@@ -364,8 +366,13 @@
         authorizedUser = event.data.user;
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
-        $("userDetails").textContent =
-          `${authorizedUser.name} • ${authorizedUser.role} • ${authorizedUser.email}`;
+        const firstName = String(authorizedUser.name || "").trim().split(/\\s+/)[0] || "there";
+        const localHour = new Date().getHours();
+        const greeting = localHour < 12 ? "Good morning" : localHour < 18 ? "Good afternoon" : "Good evening";
+        $("userDetails").textContent = `${greeting}, ${firstName}!`;
+        $("appNav").classList.remove("hidden");
+        $("pdfPage").classList.add("hidden");
+        $("quotePage").classList.add("hidden");
         loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
         return;
       }
@@ -478,13 +485,25 @@
     }
 
     $("pdfTabBtn").addEventListener("click", () => {
-      $("pdfPage").classList.remove("hidden"); $("quotePage").classList.add("hidden");
-      $("pdfTabBtn").classList.add("active"); $("quoteTabBtn").classList.remove("active");
+      $("appNav").classList.add("hidden");
+      $("pdfPage").classList.remove("hidden");
+      $("quotePage").classList.add("hidden");
     });
     $("quoteTabBtn").addEventListener("click", () => {
-      $("pdfPage").classList.add("hidden"); $("quotePage").classList.remove("hidden");
-      $("quoteTabBtn").classList.add("active"); $("pdfTabBtn").classList.remove("active");
+      $("appNav").classList.add("hidden");
+      $("pdfPage").classList.add("hidden");
+      $("quotePage").classList.remove("hidden");
       updateQuotePreview();
+    });
+    $("backToMenuFromPdf").addEventListener("click", () => {
+      $("pdfPage").classList.add("hidden");
+      $("quotePage").classList.add("hidden");
+      $("appNav").classList.remove("hidden");
+    });
+    $("backToMenuFromQuote").addEventListener("click", () => {
+      $("pdfPage").classList.add("hidden");
+      $("quotePage").classList.add("hidden");
+      $("appNav").classList.remove("hidden");
     });
     ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
