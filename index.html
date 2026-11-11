@@ -457,8 +457,11 @@
         rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
       } else {
-        const dpDisplay = usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true ? "ZERO" : money2(dpAmount);
-        const dpClass = usePriceListDownpayment ? "" : "quote-dp-adjusted";
+        const isZeroDpPromo = usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
+        const standardDpAmount = srp * dpRate;
+        const isSpecialDownpayment = isZeroDpPromo || dpAmount < standardDpAmount - 0.01;
+        const dpDisplay = isZeroDpPromo ? "ZERO" : money2(dpAmount);
+        const dpClass = isSpecialDownpayment ? "quote-dp-adjusted" : "";
         rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong class="${dpClass}">${dpDisplay}</strong></div>`);
         rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money2(balance)}</strong></div>`);
         const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
