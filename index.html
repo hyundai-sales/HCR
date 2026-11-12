@@ -538,7 +538,7 @@
 <body>
   <div class="seasonal-decor" aria-hidden="true"></div>
 
-  <div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="false">
     <div class="loading-content">
       <div class="loading-logo-wrap">
         <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai">
@@ -778,6 +778,15 @@
       if (!overlay) return;
       overlay.classList.add("hidden");
       overlay.setAttribute("aria-hidden", "true");
+    }
+
+    // Short branded transition used for page navigation and authentication changes.
+    function runPageTransition(message, callback, duration = 420) {
+      showLoading(message);
+      window.setTimeout(() => {
+        try { callback(); }
+        finally { hideLoading(); }
+      }, duration);
     }
 
     let pendingNonce = null;
@@ -1276,10 +1285,10 @@ if (termsField) {
       return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa};
     }
 
-    $("creditTabBtn").addEventListener("click",()=>{
+    $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
       $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); buildCreditForm();
-    });
-    $("backToMenuFromCredit").addEventListener("click",()=>{ $("creditPage").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("appNav").classList.remove("hidden"); });
+    }));
+    $("backToMenuFromCredit").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{ $("creditPage").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("appNav").classList.remove("hidden"); }));
     $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
@@ -1292,32 +1301,32 @@ if (termsField) {
       catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
     });
 
-    $("pdfTabBtn").addEventListener("click", () => {
+    $("pdfTabBtn").addEventListener("click", () => runPageTransition("Opening Price List...",() => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.remove("hidden");
       $("pdfFormFields").classList.remove("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
-    });
-    $("quoteTabBtn").addEventListener("click", () => {
+    }));
+    $("quoteTabBtn").addEventListener("click", () => runPageTransition("Opening Vehicle Quotation...",() => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.remove("hidden");
       $("creditPage").classList.add("hidden");
       updateQuotePreview();
-    });
-    $("backToMenuFromPdf").addEventListener("click", () => {
+    }));
+    $("backToMenuFromPdf").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
-    });
-    $("backToMenuFromQuote").addEventListener("click", () => {
+    }));
+    $("backToMenuFromQuote").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
-    });
+    }));
     ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
@@ -1439,16 +1448,27 @@ if (termsField) {
       }
     });
 
+    let signingOut = false;
     $("logoutBtn").addEventListener("click", async () => {
+      signingOut = true;
+      showLoading("Signing out securely...");
       authorizedUser = null;
       currentUser = null;
-      await signOut(auth);
+      try { await signOut(auth); }
+      catch (error) {
+        signingOut = false;
+        hideLoading();
+        setMessage($("loginMessage"), "Sign-out failed: " + error.message, "error");
+      }
     });
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if (!user) {
-        hideLoading();
+        showLoading(signingOut ? "Signed out. Returning to sign in..." : "Loading TEAM RER...");
+        const transitionDelay = signingOut ? 650 : 750;
+        signingOut = false;
+        window.setTimeout(hideLoading, transitionDelay);
         authorizedUser = null;
         pendingNonce = null;
         pendingAction = null;
@@ -1461,6 +1481,9 @@ if (termsField) {
         $("creditPage").classList.add("hidden");
         $("creditFormFields").replaceChildren();
         $("creditFormFields").dataset.built = "";
+      } else {
+        // A returning Firebase session still starts at the sign-in screen until access is rechecked.
+        window.setTimeout(hideLoading, 700);
       }
     });
   </script>
