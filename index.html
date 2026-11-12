@@ -452,9 +452,120 @@
       .loading-orbit, .loading-track::after { animation-duration: 3s; }
     }
 
+    /* =========================================================
+       SEASONAL THEME SYSTEM
+       Change SEASONAL_THEME in the main script:
+       CHRISTMAS | NEW_YEAR | VALENTINES | SUMMER | NORMAL
+       Seasonal decorations are visual-only and do not touch app logic.
+       ========================================================= */
+    body[data-season="CHRISTMAS"] {
+      background:
+        radial-gradient(ellipse at 8% 8%, rgba(190,35,54,.075), transparent 28%),
+        radial-gradient(ellipse at 92% 88%, rgba(22,112,72,.075), transparent 30%),
+        #eef3f8;
+    }
+    body[data-season="CHRISTMAS"] .card {
+      border-color:#dce8e2;
+      box-shadow:0 12px 34px rgba(13,48,79,.09), 0 0 0 3px rgba(22,112,72,.035);
+    }
+    body[data-season="CHRISTMAS"] .cover-container {
+      border:1px solid rgba(22,112,72,.22);
+      box-shadow:0 3px 12px rgba(22,112,72,.08);
+    }
+    body[data-season="CHRISTMAS"] .dashboard-welcome {
+      background:linear-gradient(120deg,#f2f8f4 0%,#fff7f2 100%);
+      border-color:#e7d9d7;
+      box-shadow:inset 4px 0 0 #b9273d;
+    }
+    body[data-season="CHRISTMAS"] .credit-section,
+    body[data-season="CHRISTMAS"] .quote-panel {
+      border-color:#d9e6dc;
+      background-image:linear-gradient(135deg,rgba(22,112,72,.025),transparent 42%);
+    }
+    body[data-season="CHRISTMAS"] .section-title,
+    body[data-season="CHRISTMAS"] .credit-section h3 {
+      text-decoration:underline;
+      text-decoration-color:rgba(185,39,61,.28);
+      text-decoration-thickness:2px;
+      text-underline-offset:5px;
+    }
+    .seasonal-decor {
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:0;
+      overflow:hidden;
+      pointer-events:none;
+      contain:paint;
+    }
+    body[data-season="CHRISTMAS"] .seasonal-decor { display:block; }
+    .seasonal-garland {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:34px;
+      opacity:.9;
+      background:
+        radial-gradient(ellipse at 8% 0%, transparent 0 28px, #176b45 29px 31px, transparent 32px),
+        radial-gradient(ellipse at 28% 0%, transparent 0 28px, #176b45 29px 31px, transparent 32px),
+        radial-gradient(ellipse at 48% 0%, transparent 0 28px, #176b45 29px 31px, transparent 32px),
+        radial-gradient(ellipse at 68% 0%, transparent 0 28px, #176b45 29px 31px, transparent 32px),
+        radial-gradient(ellipse at 88% 0%, transparent 0 28px, #176b45 29px 31px, transparent 32px);
+      background-size:20% 34px;
+      background-repeat:repeat-x;
+    }
+    .seasonal-garland::after {
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:13px;
+      height:8px;
+      background:
+        radial-gradient(circle,#d7ad43 0 3px,transparent 4px) 3% 0/9% 8px,
+        radial-gradient(circle,#b9273d 0 3px,transparent 4px) 7% 0/13% 8px,
+        radial-gradient(circle,#f4e4b2 0 2px,transparent 3px) 0 0/7% 8px;
+    }
+    .seasonal-corner {
+      position:absolute;
+      width:76px;
+      height:112px;
+      opacity:.75;
+      background:
+        radial-gradient(circle at 22px 45px,#b9273d 0 8px, #f7d8d8 9px 10px, transparent 11px),
+        radial-gradient(circle at 51px 76px,#d7ad43 0 7px, #f8e8b9 8px 9px, transparent 10px),
+        radial-gradient(circle at 18px 100px,#176b45 0 6px, #d6e9dc 7px 8px, transparent 9px);
+    }
+    .seasonal-corner.left { top:42px; left:0; }
+    .seasonal-corner.right { top:42px; right:0; transform:scaleX(-1); }
+    .seasonal-bottom {
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      height:13px;
+      opacity:.65;
+      background:radial-gradient(ellipse at center, #176b45 0 4px, transparent 5px) 0 0/34px 13px repeat-x;
+    }
+    @media(max-width:600px) {
+      .seasonal-corner { opacity:.42; transform:scale(.78); transform-origin:top left; }
+      .seasonal-corner.right { transform:scaleX(-1) scale(.78); transform-origin:top right; }
+      .seasonal-garland { height:25px; }
+    }
+    @media print {
+      .seasonal-decor { display:none !important; }
+    }
+
   </style>
 </head>
 <body>
+  <div class="seasonal-decor" aria-hidden="true">
+    <div class="seasonal-garland"></div>
+    <div class="seasonal-corner left"></div>
+    <div class="seasonal-corner right"></div>
+    <div class="seasonal-bottom"></div>
+  </div>
 
   <div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite" aria-hidden="true">
     <div class="loading-content">
@@ -668,6 +779,13 @@
     provider.setCustomParameters({ prompt: "select_account" });
 
     const $ = id => document.getElementById(id);
+
+    // Change this ONE setting when the season changes.
+    // Available values: "CHRISTMAS", "NEW_YEAR", "VALENTINES", "SUMMER", "NORMAL".
+    // Each theme is visual-only; it does not alter forms, mappings, calculations, or requests.
+    const SEASONAL_THEME = "CHRISTMAS";
+    document.body.dataset.season = SEASONAL_THEME;
+
 
     const loadingMessages = {
       authorize: "Checking your access...",
