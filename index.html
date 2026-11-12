@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#003b70">
   <title>TEAM RER | Hyundai Sales Tools</title>
-
-  <style>
-    .cover-container {
+.cover-container {
   width: 100%;
   margin: 0 auto 12px;
   overflow: hidden;
@@ -20,6 +18,7 @@
   object-fit: cover;
   object-position: center;
 }
+  <style>
     @font-face {
       font-family: "Hyundai Sans Head KR";
       src: url("./HyundaiSansHeadKRMedium.ttf") format("truetype");
@@ -183,9 +182,131 @@
       }
     }
     @media(max-width:420px) { body{padding:12px;} .wrap{margin:8px auto;} .card{padding:20px 17px;} }
+  
+    /* Hyundai-style full-screen loading overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(31,112,177,.18), transparent 38%),
+        linear-gradient(145deg, #f7fbff 0%, #eaf2f9 52%, #dce9f4 100%);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+    .loading-overlay.hidden {
+      display: flex !important;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loading-content {
+      width: min(100%, 340px);
+      text-align: center;
+      padding: 34px 24px 30px;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 22px;
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 20px 60px rgba(0,39,75,.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .loading-logo-wrap {
+      width: 104px;
+      height: 74px;
+      margin: 0 auto 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 9px rgba(0,59,112,.12));
+    }
+    .loading-orbit {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 17px;
+      border: 3px solid rgba(0,59,112,.13);
+      border-top-color: #003b70;
+      border-right-color: #2b83bd;
+      border-radius: 50%;
+      animation: hyundaiSpin .9s linear infinite;
+      position: relative;
+    }
+    .loading-orbit::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      top: -4px;
+      left: 7px;
+      border-radius: 50%;
+      background: #78b9e3;
+      box-shadow: 0 0 12px rgba(43,131,189,.75);
+    }
+    .loading-title {
+      margin: 0;
+      color: #003b70;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .loading-message {
+      min-height: 20px;
+      margin: 8px 0 0;
+      color: #587087;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .loading-track {
+      height: 4px;
+      margin: 23px 4px 0;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #dce7f0;
+    }
+    .loading-track::after {
+      content: "";
+      display: block;
+      width: 38%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #003b70, #3c9bd2, #003b70);
+      animation: hyundaiProgress 1.5s ease-in-out infinite;
+    }
+    @keyframes hyundaiSpin { to { transform: rotate(360deg); } }
+    @keyframes hyundaiProgress {
+      0% { transform: translateX(-110%); }
+      100% { transform: translateX(290%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loading-orbit, .loading-track::after { animation-duration: 3s; }
+    }
+
   </style>
 </head>
 <body>
+
+  <div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite" aria-hidden="true">
+    <div class="loading-content">
+      <div class="loading-logo-wrap">
+        <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai">
+      </div>
+      <div class="loading-orbit" aria-hidden="true"></div>
+      <h2 class="loading-title">Please wait</h2>
+      <p id="loadingMessage" class="loading-message">Preparing your document...</p>
+      <div class="loading-track" aria-hidden="true"></div>
+    </div>
+  </div>
+
   <main class="wrap">
     <div class="card">
       <div class="cover-container">
@@ -349,6 +470,29 @@
     provider.setCustomParameters({ prompt: "select_account" });
 
     const $ = id => document.getElementById(id);
+
+    const loadingMessages = {
+      authorize: "Checking your access...",
+      appData: "Loading vehicle information...",
+      generate: "Generating your PDF...",
+      creditApplication: "Preparing your application PDF..."
+    };
+
+    function showLoading(message) {
+      const overlay = $("loadingOverlay");
+      if (!overlay) return;
+      $("loadingMessage").textContent = message || "Preparing your document...";
+      overlay.classList.remove("hidden");
+      overlay.setAttribute("aria-hidden", "false");
+    }
+
+    function hideLoading() {
+      const overlay = $("loadingOverlay");
+      if (!overlay) return;
+      overlay.classList.add("hidden");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
     let pendingNonce = null;
     let currentUser = null;
     let authorizedUser = null;
@@ -369,6 +513,7 @@
 
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
+      showLoading(loadingMessages[action] || "Preparing your document...");
       const token = await currentUser.getIdToken(true);
       const nonce = makeNonce();
       pendingNonce = nonce;
@@ -414,6 +559,7 @@
       if (!event.data || event.data.nonce !== pendingNonce) return;
 
       const action = pendingAction;
+      hideLoading();
       pendingNonce = null;
       pendingAction = null;
       $("tokenField").value = "";
@@ -889,12 +1035,14 @@
 
     $("loginBtn").addEventListener("click", async () => {
       $("loginBtn").disabled = true;
+      showLoading("Connecting securely to Google...");
       setMessage($("loginMessage"), "Connecting to Google...");
       try {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         await submitRequest("authorize");
       } catch (error) {
+        hideLoading();
         console.error(error);
         showLoginError("Sign-in failed: " + error.message);
       }
@@ -913,6 +1061,7 @@
       $("previewWrap").classList.remove("hidden");
       $("viewBtn").disabled = true;
       $("viewBtn").textContent = "Loading preview...";
+      showLoading("Loading your PDF preview...");
       previewLoadPending = true;
       $("pdfPreview").src = previewUrl;
     });
@@ -920,6 +1069,7 @@
     $("pdfPreview").addEventListener("load", () => {
       if (!previewLoadPending || $("previewWrap").classList.contains("hidden")) return;
       previewLoadPending = false;
+      hideLoading();
       $("viewBtn").disabled = false;
       $("viewBtn").textContent = "Refresh PDF Preview";
       $("downloadLink").classList.remove("hidden");
@@ -972,6 +1122,7 @@
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if (!user) {
+        hideLoading();
         authorizedUser = null;
         pendingNonce = null;
         pendingAction = null;
