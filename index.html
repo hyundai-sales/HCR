@@ -409,6 +409,7 @@
 
         <section id="pdfPage" class="hidden">
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
+        <div id="pdfFormFields">
         <h2 class="section-title">Generate PDF</h2>
 
         <div class="field">
@@ -435,6 +436,7 @@
 
         <div class="message" id="roleNote"></div>
         <button id="generateBtn" type="button">Generate PDF</button>
+        </div>
         <div id="resultMessage" class="message hidden" aria-live="polite"></div>
 
         <button id="viewBtn" class="secondary hidden" type="button">View PDF</button>
@@ -653,6 +655,7 @@
             if (action === "creditApplication") $("generateCreditBtn").disabled = false;
           } else {
             setMessage($("resultMessage"), error, "error");
+            $("pdfFormFields").classList.remove("hidden");
             $("generateBtn").disabled = false;
           }
         }
@@ -1078,6 +1081,7 @@
     $("pdfTabBtn").addEventListener("click", () => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.remove("hidden");
+      $("pdfFormFields").classList.remove("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
     });
@@ -1191,6 +1195,7 @@
       }
 
       $("generateBtn").disabled = true;
+      $("pdfFormFields").classList.add("hidden");
       $("downloadLink").classList.add("hidden");
       $("viewBtn").classList.add("hidden");
       $("previewWrap").classList.add("hidden");
