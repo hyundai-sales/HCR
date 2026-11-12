@@ -1001,7 +1001,8 @@
           const variantLabel = document.createElement("label"); variantLabel.textContent = "Vehicle Variant"; variantLabel.htmlFor = "credit_vehicle_variant";
           const variantSelect = document.createElement("select"); variantSelect.id = "credit_vehicle_variant"; variantSelect.dataset.vehicleVariant = "true";
           const blankVariant = document.createElement("option"); blankVariant.value = ""; blankVariant.textContent = "Choose variant"; variantSelect.appendChild(blankVariant);
-          const termsField = grid.querySelector('[data-cell="V18:W18"]')
+          variantWrap.append(variantLabel, variantSelect);const termsField = grid.querySelector('[data-cell="V18:W18"]')
+            
   ?.closest(".credit-field");
 
 if (termsField) {
