@@ -33,13 +33,13 @@
       font-family: "Hyundai Sans Head KR", Arial, sans-serif;
     }
     body { margin:0; min-height:100vh; padding:18px; background:#eef3f8; font-family:Arial,sans-serif; color:#172b43; }
-    .wrap { width:100%; max-width:560px; margin:24px auto; }
-    .card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,.08); }
-    .brand { text-align:center; margin-bottom:22px; }
-    .logo { width:76px; height:58px; margin:0 auto 12px; display:block; object-fit:contain; }
-    h1 { margin:0; color:#003b70; font-size:25px; }
+    .wrap { width:100%; max-width:760px; margin:24px auto; }
+    .card { background:#fff; border-radius:18px; padding:22px; box-shadow:0 12px 34px rgba(13,48,79,.09); border:1px solid #e4ebf2; }
+    .brand { text-align:center; margin:0 0 18px; }
+    .logo { width:66px; height:46px; margin:0 auto 7px; display:block; object-fit:contain; }
+    h1 { margin:0; color:#003b70; font-size:25px; letter-spacing:.2px; }
     .subtitle { margin:6px 0 0; color:#003b70; font-size:15px; font-weight:700; letter-spacing:1.2px; }
-    .app-caption { margin:6px 0 0; color:#64748b; font-size:12px; }
+    .app-caption { margin:5px 0 0; color:#64748b; font-size:12px; }
     .field { margin:16px 0; text-align:left; }
     label { display:block; margin-bottom:7px; font-size:13px; font-weight:bold; }
     input,select { width:100%; min-height:46px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:#172b43; font-size:15px; }
@@ -145,6 +145,47 @@
     .credit-choice input { width:auto; min-height:0; }
     @media(max-width:420px){ .credit-grid{grid-template-columns:1fr;} .credit-field.full{grid-column:auto;} }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
+    /* TEAM RER dashboard home */
+    .cover-container { border-radius:13px; margin-bottom:15px; background:#e8f0f7; }
+    .cover-photo { height:116px; }
+    .dashboard-welcome {
+      margin:4px 0 17px; padding:17px 18px; border-radius:13px;
+      background:linear-gradient(120deg,#f3f8fc 0%,#e7f0f8 100%);
+      border:1px solid #dce8f2; text-align:left;
+    }
+    .welcome-eyebrow { margin:0 0 5px; color:#64809a; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+    .dashboard-welcome .userline { margin:0; color:#123d63; font-size:18px; font-weight:700; line-height:1.35; }
+    .welcome-note { margin:5px 0 0; color:#60758a; font-size:12px; }
+    .dashboard-label { margin:0 0 10px; color:#244866; font-size:13px; font-weight:700; text-align:left; }
+    .app-nav { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0 0 15px; }
+    .app-nav button {
+      display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;
+      gap:11px; min-height:138px; padding:16px 14px; border:1px solid #dce6ef;
+      border-radius:13px; background:#fff; color:#123d63; text-align:left;
+      box-shadow:0 3px 12px rgba(18,61,99,.045); transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .app-nav button:hover { transform:translateY(-2px); border-color:#9ebbd3; box-shadow:0 8px 18px rgba(18,61,99,.09); }
+    .nav-icon {
+      display:flex; align-items:center; justify-content:center; width:42px; height:42px;
+      border-radius:11px; background:#eaf2f9; color:#003b70; font-size:21px;
+    }
+    .nav-copy { display:block; }
+    .nav-title { display:block; color:#123d63; font-size:13px; font-weight:700; line-height:1.3; }
+    .nav-description { display:block; margin-top:5px; color:#718397; font-size:10px; font-weight:400; line-height:1.4; }
+    .app-nav button.active { background:#f2f7fb; color:#003b70; border:1px solid #9db8d1; }
+    #logoutBtn { width:auto; min-height:36px; margin:10px 0 0 auto; padding:8px 15px; font-size:12px; }
+    @media(max-width:560px) {
+      .wrap { margin:10px auto; }
+      .card { padding:15px; border-radius:15px; }
+      .cover-photo { height:92px; }
+      .app-nav { grid-template-columns:1fr; gap:9px; }
+      .app-nav button { flex-direction:row; align-items:center; min-height:76px; padding:12px; gap:12px; }
+      .nav-icon { flex:0 0 42px; }
+      .nav-description { font-size:11px; }
+      .dashboard-welcome { padding:14px; }
+      .dashboard-welcome .userline { font-size:16px; }
+    }
+
     .quote-panel { border:1px solid #d8e1eb; border-radius:12px; padding:15px; margin-top:14px; }
     .quote-preview { margin-top:16px; border:1px solid #cbd5e1; border-radius:10px; padding:20px; background:#fff; text-align:left; }
     .quote-preview h2 { color:#003b70; text-align:center; margin:5px 0 2px; font-size:20px; }
@@ -447,12 +488,28 @@
       </section>
 
       <section id="appSection" class="hidden">
-        <p class="userline" id="userDetails"></p>
-        <nav class="app-nav" id="appNav">
-          <button id="pdfTabBtn" type="button">Price List</button>
-          <button id="quoteTabBtn" type="button">Vehicle Quotation</button>
-          <button id="creditTabBtn" type="button">Credit Application</button>
-        </nav>
+        <div id="appNav">
+          <div class="dashboard-welcome">
+            <p class="welcome-eyebrow">TEAM RER • SALES WORKSPACE</p>
+            <p class="userline" id="userDetails"></p>
+            <p class="welcome-note">Your Hyundai Cainta workspace is ready.</p>
+          </div>
+          <p class="dashboard-label">Choose a module to get started</p>
+          <nav class="app-nav" aria-label="Sales tools">
+            <button id="pdfTabBtn" type="button">
+              <span class="nav-icon" aria-hidden="true">▤</span>
+              <span class="nav-copy"><span class="nav-title">Price List</span><span class="nav-description">Vehicle pricing and downpayment sheets</span></span>
+            </button>
+            <button id="quoteTabBtn" type="button">
+              <span class="nav-icon" aria-hidden="true">▧</span>
+              <span class="nav-copy"><span class="nav-title">Vehicle Quotation</span><span class="nav-description">Prepare customer quotations</span></span>
+            </button>
+            <button id="creditTabBtn" type="button">
+              <span class="nav-icon" aria-hidden="true">▣</span>
+              <span class="nav-copy"><span class="nav-title">Credit Application</span><span class="nav-description">Complete financing applications</span></span>
+            </button>
+          </nav>
+        </div>
 
         <section id="pdfPage" class="hidden">
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
