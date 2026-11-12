@@ -155,6 +155,18 @@
     .quote-total { margin-top:10px; padding:12px; background:#eef4fa; border-radius:8px; color:#003b70; font-size:17px; font-weight:bold; display:flex; justify-content:space-between; gap:10px; }
     .quote-contact { margin-top:20px; padding-top:12px; border-top:2px solid #003b70; font-size:12px; line-height:1.6; }
     .quote-terms { margin-top:15px; color:#475569; font-size:11px; line-height:1.5; }
+    /* Floating quotation preview */
+    .quote-preview-dialog { width:min(100%, 850px); height:min(94vh, 1050px); }
+    .quote-preview-scroll { flex:1 1 auto; min-height:0; overflow:auto; padding:14px; background:#e9eef4; }
+    .quote-preview-scroll .quote-preview { max-width:760px; margin:0 auto; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+    .quote-preview-actions { flex:0 0 auto; padding:12px 16px; background:#fff; border-top:1px solid #dbe4ee; }
+    .quote-preview-actions button { margin:0; }
+    @media(max-width:600px) {
+      .quote-preview-dialog { width:100%; height:100%; border:0; border-radius:0; }
+      .quote-preview-scroll { padding:8px; }
+      .quote-preview-scroll .quote-preview { padding:14px; }
+      .quote-preview-actions { padding:10px 12px; }
+    }
     @page {
       size: A4 portrait;
       margin: 12mm;
@@ -192,9 +204,42 @@
       }
       body.printing-quote #appSection,
       body.printing-quote #quotePage,
-      body.printing-quote #quotePreview {
+      body.printing-quote #quotePreview,
+      body.printing-quote #quotePreviewWrap,
+      body.printing-quote .quote-preview-scroll {
         display:block !important;
         visibility:visible !important;
+      }
+      body.printing-quote #quotePreviewWrap {
+        position:static !important;
+        inset:auto !important;
+        z-index:auto !important;
+        width:100% !important;
+        height:auto !important;
+        padding:0 !important;
+        margin:0 !important;
+        overflow:visible !important;
+        background:#fff !important;
+        backdrop-filter:none !important;
+      }
+      body.printing-quote #quotePreviewWrap .quote-preview-dialog {
+        display:block !important;
+        width:100% !important;
+        height:auto !important;
+        max-width:none !important;
+        overflow:visible !important;
+        border:0 !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+      }
+      body.printing-quote .quote-preview-head,
+      body.printing-quote .quote-preview-actions {
+        display:none !important;
+      }
+      body.printing-quote .quote-preview-scroll {
+        padding:0 !important;
+        overflow:visible !important;
+        background:#fff !important;
       }
       body.printing-quote #quotePage {
         margin:0 !important;
@@ -495,10 +540,23 @@
               <select id="quoteLto"><option value="Included">Included</option><option value="Not included">Not included</option></select>
             </div>
           </div>
-          <div id="quotePreview" class="quote-preview" aria-live="polite">
-            <p>Select a vehicle to preview the quotation.</p>
+          <button id="openQuotePreviewBtn" type="button" style="margin-top:14px">Preview Quotation</button>
+          <div id="quotePreviewWrap" class="preview-wrap hidden" role="dialog" aria-modal="true" aria-label="Vehicle Quotation Preview">
+            <div class="preview-dialog quote-preview-dialog">
+              <div class="preview-head quote-preview-head">
+                <span>Vehicle Quotation Preview</span>
+                <button id="closeQuotePreviewBtn" class="preview-close" type="button" aria-label="Close quotation preview">Close ✕</button>
+              </div>
+              <div class="quote-preview-scroll">
+                <div id="quotePreview" class="quote-preview" aria-live="polite">
+                  <p>Select a vehicle to preview the quotation.</p>
+                </div>
+              </div>
+              <div class="quote-preview-actions">
+                <button id="printQuoteBtn" type="button">Print / Save as PDF</button>
+              </div>
+            </div>
           </div>
-          <button id="printQuoteBtn" type="button" style="margin-top:14px">Print / Save as PDF</button>
         </section>
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
@@ -1107,6 +1165,20 @@
     ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
+    function closeQuotePreview() {
+      $("quotePreviewWrap").classList.add("hidden");
+    }
+    $("openQuotePreviewBtn").addEventListener("click", () => {
+      if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
+        alert("Please select a vehicle model and variant first."); return;
+      }
+      updateQuotePreview();
+      $("quotePreviewWrap").classList.remove("hidden");
+    });
+    $("closeQuotePreviewBtn").addEventListener("click", closeQuotePreview);
+    $("quotePreviewWrap").addEventListener("click", event => {
+      if (event.target === $("quotePreviewWrap")) closeQuotePreview();
+    });
     $("printQuoteBtn").addEventListener("click", () => {
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
         alert("Please select a vehicle model and variant first."); return;
