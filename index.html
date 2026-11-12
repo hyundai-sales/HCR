@@ -5,21 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#003b70">
   <title>TEAM RER | Hyundai Sales Tools</title>
-
   <style>
     .cover-container {
-  width: 100%;
-  margin: 0 auto 12px;
-  overflow: hidden;
-}
-
-.cover-photo {
-  display: block;
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  object-position: center;
-}
+      width: 100%;
+      margin: 0 auto 12px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    .cover-photo {
+      display: block;
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      object-position: center;
+    }
+    @media (max-width: 600px) {
+      .cover-photo { height: 120px; }
+    }
     @font-face {
       font-family: "Hyundai Sans Head KR";
       src: url("./HyundaiSansHeadKRMedium.ttf") format("truetype");
