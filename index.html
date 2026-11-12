@@ -5,23 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#003b70">
   <title>TEAM RER | Hyundai Sales Tools</title>
+.cover-container {
+  width: 100%;
+  margin: 0 auto 12px;
+  overflow: hidden;
+}
+
+.cover-photo {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  object-position: center;
+}
   <style>
-    .cover-container {
-      width: 100%;
-      margin: 0 auto 12px;
-      overflow: hidden;
-      border-radius: 10px;
-    }
-    .cover-photo {
-      display: block;
-      width: 100%;
-      height: 130px;
-      object-fit: cover;
-      object-position: center;
-    }
-    @media (max-width: 600px) {
-      .cover-photo { height: 120px; }
-    }
     @font-face {
       font-family: "Hyundai Sans Head KR";
       src: url("./HyundaiSansHeadKRMedium.ttf") format("truetype");
@@ -113,7 +110,11 @@
       }
       body.printing-quote .brand, body.printing-quote #loginSection, body.printing-quote #userDetails,
       body.printing-quote #appNav, body.printing-quote #pdfPage, body.printing-quote #quoteControls,
-      body.printing-quote .footer, body.printing-quote #logoutBtn, body.printing-quote #printQuoteBtn {
+      body.printing-quote .footer,
+      body.printing-quote #logoutBtn,
+      body.printing-quote #printQuoteBtn,
+      body.printing-quote .cover-container,
+      body.printing-quote #backToMenuFromQuote {
         display:none !important;
       }
       body.printing-quote #appSection,
@@ -146,6 +147,12 @@
       body.printing-quote #quotePreview .quote-sub {
         margin:0 0 5mm !important;
         font-size:9pt !important;
+      }
+      body.printing-quote #quotePreview .quote-date {
+        margin:0 0 4mm !important;
+        font-size:8.5pt !important;
+        color:#444 !important;
+        text-align:right !important;
       }
       body.printing-quote #quotePreview .quote-line {
         padding:2.3mm 0 !important;
@@ -552,6 +559,9 @@
       const balance = Math.round(srp * (1 - dpRate) * 100) / 100;
       const freebies = $("quoteFreebies").value.trim();
       const validity = Math.max(1, Math.min(90, Number($("quoteValidity").value) || 7));
+      const generatedDate = new Date().toLocaleDateString("en-PH", {
+        year: "numeric", month: "long", day: "numeric"
+      });
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
@@ -576,7 +586,7 @@
       rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
       if (freebies) rows.push(`<div class="quote-line"><span>Freebies / Inclusions</span><strong>${escapeHtml(freebies)}</strong></div>`);
-      preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : "CASH TRANSACTION"}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
+      preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : "CASH TRANSACTION"}</p><p class="quote-date"><strong>Date Generated:</strong> ${generatedDate}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
     }
 
 
