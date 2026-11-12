@@ -1001,7 +1001,14 @@
           const variantLabel = document.createElement("label"); variantLabel.textContent = "Vehicle Variant"; variantLabel.htmlFor = "credit_vehicle_variant";
           const variantSelect = document.createElement("select"); variantSelect.id = "credit_vehicle_variant"; variantSelect.dataset.vehicleVariant = "true";
           const blankVariant = document.createElement("option"); blankVariant.value = ""; blankVariant.textContent = "Choose variant"; variantSelect.appendChild(blankVariant);
-          variantWrap.append(variantLabel, variantSelect); grid.appendChild(variantWrap);
+          const termsField = grid.querySelector('[data-cell="V18:W18"]')
+  ?.closest(".credit-field");
+
+if (termsField) {
+  grid.insertBefore(variantWrap, termsField);
+} else {
+  grid.appendChild(variantWrap);
+}
         }
         section.appendChild(grid);
         if (group.section === "Spouse / Co-maker Details") {
