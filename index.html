@@ -991,7 +991,33 @@
       .loading-content { width:min(100%,330px); }
     }
 
-  </style>
+  
+    .credit-download-pdf-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: auto;
+      min-width: 190px;
+      margin-top: 14px;
+      padding: 13px 22px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0878d1, #004a91);
+      color: #fff;
+      font-weight: 750;
+      box-shadow: 0 8px 22px rgba(0,74,145,.22), inset 0 1px 0 rgba(255,255,255,.25);
+      cursor: pointer;
+    }
+    .credit-download-pdf-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #168ce8, #075ca9);
+      transform: translateY(-1px);
+    }
+    .credit-download-pdf-btn:disabled {
+      opacity: .75;
+      cursor: default;
+    }
+</style>
 </head>
 <body>
   <div class="seasonal-decor" aria-hidden="true"></div>
@@ -1253,6 +1279,7 @@
     let pendingAction = null;
     let previewLoadPending = false;
     let quotationVehicles = [];
+    let pendingCreditPdfUrl = null;
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
@@ -1372,29 +1399,41 @@
 
       if (action === "creditApplication") {
         const result = event.data;
-        const bytes = Uint8Array.from(atob(result.pdfBase64 || ""), c => c.charCodeAt(0));
-        const blob = new Blob([bytes], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = result.fileName || "Hyundai-Credit-Application.pdf";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-        clearCreditForm();
-        setMessage($("creditMessage"), "Application PDF generated. Temporary customer details have been cleared from the form.", "success");
-        if (result.driveUrl) {
-          const driveLink = document.createElement("a");
-          driveLink.href = result.driveUrl;
-          driveLink.target = "_blank";
-          driveLink.rel = "noopener";
-          driveLink.textContent = "Open saved PDF in Google Drive";
-          driveLink.style.display = "inline-block";
-          driveLink.style.marginTop = "8px";
-          $("creditMessage").appendChild(document.createElement("br"));
-          $("creditMessage").appendChild(driveLink);
+        if (!result.pdfBase64) {
+          throw new Error("The PDF was generated, but the download data was not received. Please try again.");
         }
+
+        if (pendingCreditPdfUrl) URL.revokeObjectURL(pendingCreditPdfUrl);
+        const bytes = Uint8Array.from(atob(result.pdfBase64), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        pendingCreditPdfUrl = URL.createObjectURL(blob);
+
+        clearCreditForm();
+        setMessage($("creditMessage"), "Application PDF generated successfully. Your form has been cleared. Tap below to download your PDF.", "success");
+
+        const downloadButton = document.createElement("button");
+        downloadButton.type = "button";
+        downloadButton.className = "credit-download-pdf-btn";
+        downloadButton.textContent = "⬇ Download PDF";
+        downloadButton.addEventListener("click", () => {
+          if (!pendingCreditPdfUrl) return;
+          const downloadLink = document.createElement("a");
+          downloadLink.href = pendingCreditPdfUrl;
+          downloadLink.download = result.fileName || "Hyundai-Credit-Application.pdf";
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          downloadLink.remove();
+          downloadButton.textContent = "PDF Downloaded";
+          downloadButton.disabled = true;
+          setTimeout(() => {
+            if (pendingCreditPdfUrl) {
+              URL.revokeObjectURL(pendingCreditPdfUrl);
+              pendingCreditPdfUrl = null;
+            }
+          }, 30000);
+        });
+        $("creditMessage").appendChild(document.createElement("br"));
+        $("creditMessage").appendChild(downloadButton);
         $("generateCreditBtn").disabled = false;
         return;
       }
