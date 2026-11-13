@@ -891,6 +891,106 @@
       }
     }
 
+  
+    /* TEAM RER — iPhone-inspired Liquid Glass navigation and translucent transitions */
+    #backToMenuFromPdf,
+    #backToMenuFromQuote,
+    #backToMenuFromCredit {
+      display:inline-flex !important;
+      align-items:center;
+      justify-content:flex-start;
+      gap:9px;
+      width:auto !important;
+      min-height:42px;
+      margin:2px 0 16px !important;
+      padding:8px 17px 8px 12px !important;
+      border:1px solid rgba(255,255,255,.82) !important;
+      border-radius:999px !important;
+      color:#12466f !important;
+      background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(225,239,250,.48)) !important;
+      box-shadow:0 5px 18px rgba(25,75,115,.10), inset 0 1px 0 rgba(255,255,255,.95) !important;
+      backdrop-filter:blur(18px) saturate(155%);
+      -webkit-backdrop-filter:blur(18px) saturate(155%);
+      font-size:13px !important;
+      font-weight:650 !important;
+      letter-spacing:.05px;
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    #backToMenuFromPdf::before,
+    #backToMenuFromQuote::before,
+    #backToMenuFromCredit::before {
+      content:"‹";
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:23px;
+      height:23px;
+      border-radius:50%;
+      color:#17669b;
+      background:rgba(255,255,255,.72);
+      box-shadow:inset 0 1px 2px rgba(255,255,255,.95),0 1px 4px rgba(25,75,115,.08);
+      font-family:Arial,sans-serif;
+      font-size:27px;
+      font-weight:400;
+      line-height:18px;
+      padding-bottom:3px;
+    }
+    #backToMenuFromPdf:hover,
+    #backToMenuFromQuote:hover,
+    #backToMenuFromCredit:hover {
+      transform:translateY(-1px);
+      box-shadow:0 8px 22px rgba(25,75,115,.14), inset 0 1px 0 rgba(255,255,255,.98) !important;
+    }
+    #backToMenuFromPdf:active,
+    #backToMenuFromQuote:active,
+    #backToMenuFromCredit:active {
+      transform:scale(.98);
+    }
+
+    /* Let the actual app remain softly visible through the loading screen. */
+    .loading-overlay {
+      background:rgba(225,239,251,.30) !important;
+      backdrop-filter:blur(20px) saturate(150%) !important;
+      -webkit-backdrop-filter:blur(20px) saturate(150%) !important;
+    }
+    .loading-content {
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.78) !important;
+      background:linear-gradient(145deg,rgba(255,255,255,.70),rgba(239,247,253,.46)) !important;
+      box-shadow:0 22px 70px rgba(0,43,82,.16),inset 0 1px 0 rgba(255,255,255,.95) !important;
+      backdrop-filter:blur(26px) saturate(165%) !important;
+      -webkit-backdrop-filter:blur(26px) saturate(165%) !important;
+    }
+    .loading-content::before {
+      content:"";
+      position:absolute;
+      inset:0 0 auto;
+      height:48%;
+      pointer-events:none;
+      background:linear-gradient(180deg,rgba(255,255,255,.34),transparent);
+    }
+    .loading-content > * { position:relative; z-index:1; }
+
+    /* Keyboard-driven credit form navigation */
+    #creditFormFields input:focus,
+    #creditFormFields select:focus,
+    #creditFormFields textarea:focus {
+      outline:0;
+      border-color:rgba(32,125,184,.72);
+      box-shadow:0 0 0 3px rgba(53,145,202,.14);
+    }
+    @media(max-width:560px) {
+      #backToMenuFromPdf,
+      #backToMenuFromQuote,
+      #backToMenuFromCredit {
+        min-height:40px;
+        margin-bottom:13px !important;
+      }
+      .loading-overlay { padding:18px !important; }
+      .loading-content { width:min(100%,330px); }
+    }
+
   </style>
 </head>
 <body>
@@ -1503,6 +1603,59 @@ if (termsField) {
         refreshCreditVehicleDropdowns();
       }
       buildRepeatableCreditFields();
+      installCreditEnterNavigation_(root);
+    }
+
+    // Press Enter to move to the next visible, enabled credit-application field.
+    // Textareas keep normal Enter for new lines; Ctrl/Command+Enter advances.
+    function installCreditEnterNavigation_(root) {
+      if (root.dataset.enterNavigationInstalled === "yes") return;
+
+      const advanceFrom = current => {
+        const candidates = [...root.querySelectorAll("input:not([type='hidden']), select, textarea")]
+          .filter(el => !el.disabled && !el.closest("[hidden]") && el.getClientRects().length)
+          .filter((el, index, all) => {
+            if (el.type !== "radio") return true;
+            return all.findIndex(item => item.type === "radio" && item.name === el.name) === index;
+          });
+
+        const currentIndex = candidates.findIndex(el =>
+          current.type === "radio"
+            ? el.type === "radio" && el.name === current.name
+            : el === current
+        );
+        if (currentIndex < 0) return;
+
+        const next = candidates[currentIndex + 1];
+        if (next) {
+          next.focus();
+        } else {
+          $("generateCreditBtn").focus();
+        }
+      };
+
+      root.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+        const current = event.target;
+        if (!(current instanceof HTMLElement) ||
+            !current.matches("input:not([type='hidden']), textarea") ||
+            current.tagName === "TEXTAREA" && !(event.ctrlKey || event.metaKey)) return;
+
+        event.preventDefault();
+        if (current.type === "radio" && !current.checked) {
+          current.checked = true;
+          current.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        advanceFrom(current);
+      });
+
+      // A select needs its native Enter behavior first so the chosen option is committed.
+      root.addEventListener("keyup", event => {
+        if (event.key !== "Enter" || !(event.target instanceof HTMLSelectElement)) return;
+        advanceFrom(event.target);
+      });
+
+      root.dataset.enterNavigationInstalled = "yes";
     }
 
     function buildRepeatableCreditFields() {
