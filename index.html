@@ -1392,7 +1392,10 @@
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
-        if ($("creditFormFields").dataset.built === "yes") refreshCreditVehicleDropdowns();
+        if ($("creditFormFields").dataset.built === "yes") {
+          refreshCreditVehicleDropdowns();
+          updateCreditColorDropdown();
+        }
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         return;
       }
@@ -1534,7 +1537,7 @@
     const creditInputFields = [
       { section:"Application Details", fields:[
         ["U7:W7","Source","select",["FB BOOSTING","AutoDeals PH"]], ["U9:W9","TIN","text"],
-        ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Vehicle Color","text"],
+        ["E14:I14","Vehicle Model","select",[...new Set(quotationVehicles.map(v => v.model))].sort()], ["K14","Vehicle Color","select",[]],
         ["E16","Vehicle Type","text"], ["N16","Downpayment (%)","select",["20","25","30","35","40","45","50","55","60"]],
         ["V18:W18","Terms","select",["1 YR","2 YRS","3 YRS","4 YRS","5 YRS"]]
       ]},
@@ -1635,11 +1638,21 @@ if (termsField) {
       const vehicleSelect = root.querySelector('[data-cell="E14:I14"]');
       const variantSelect = root.querySelector('[data-vehicle-variant="true"]');
       if (vehicleSelect && variantSelect) {
-        vehicleSelect.addEventListener("change", () => { refreshCreditVehicleDropdowns(); updateCreditPriceFields(); });
-        variantSelect.addEventListener("change", updateCreditPriceFields);
+        vehicleSelect.addEventListener("change", () => {
+          // A newly selected model must require a fresh variant selection.
+          variantSelect.value = "";
+          refreshCreditVehicleDropdowns();
+          updateCreditPriceFields();
+          updateCreditColorDropdown();
+        });
+        variantSelect.addEventListener("change", () => {
+          updateCreditPriceFields();
+          updateCreditColorDropdown();
+        });
         const dpSelect = root.querySelector('[data-cell="N16"]');
         if (dpSelect) dpSelect.addEventListener("change", updateCreditPriceFields);
         refreshCreditVehicleDropdowns();
+        updateCreditColorDropdown();
       }
       buildRepeatableCreditFields();
       installCreditEnterNavigation_(root);
@@ -1784,6 +1797,22 @@ if (termsField) {
       if (variants.includes(currentVariant)) variantSelect.value = currentVariant;
     }
 
+    function updateCreditColorDropdown() {
+      const root = $("creditFormFields");
+      const modelSelect = root.querySelector('[data-cell="E14:I14"]');
+      const variantSelect = root.querySelector('[data-vehicle-variant="true"]');
+      const colorSelect = root.querySelector('[data-cell="K14"]');
+      if (!modelSelect || !variantSelect || !colorSelect) return;
+
+      const match = quotationVehicles.find(vehicle =>
+        vehicle.model === modelSelect.value && vehicle.variant === variantSelect.value
+      );
+      const colors = match && Array.isArray(match.colors) ? match.colors : [];
+      const selectedColor = colorSelect.value;
+      fillSelect(colorSelect, colors, colors.length ? "Choose color" : "Select a variant first");
+      if (colors.includes(selectedColor)) colorSelect.value = selectedColor;
+    }
+
     function updateCreditPriceFields() {
       // The live Google Sheet template already contains formulas in P14, P16 and P18.
       // The backend temporarily supplies verified SRP/DP/balance values before PDF export.
@@ -1804,6 +1833,7 @@ if (termsField) {
       $("creditFormFields").querySelectorAll("[data-cell]").forEach(el => { el.value = ""; el.disabled = false; });
       $("creditFormFields").querySelectorAll("input[type=radio],input[type=checkbox]").forEach(el => { el.checked = false; el.disabled = false; });
       const variant = $("credit_vehicle_variant"); if (variant) variant.value = "";
+      updateCreditColorDropdown();
     }
 
     function prefillCreditFromQuote() {
@@ -1814,7 +1844,7 @@ if (termsField) {
       const variantEl=document.querySelector('[data-vehicle-variant="true"]');
       const dpEl=document.querySelector('[data-cell="N16"]');
       if(modelEl) { modelEl.value = model; modelEl.dispatchEvent(new Event("change")); }
-      if(variantEl) variantEl.value = variant;
+      if(variantEl) { variantEl.value = variant; variantEl.dispatchEvent(new Event("change")); }
       if(dpEl) { dpEl.value=dp; dpEl.dispatchEvent(new Event("change")); }
       updateCreditPriceFields();
       setMessage($("creditMessage"), model && variant ? "Vehicle model, variant, and downpayment copied. SRP and amount financed will be filled in the PDF." : "Select a vehicle model and variant in Vehicle Quotation first.", model && variant ? "success" : "error");
