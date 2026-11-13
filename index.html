@@ -533,7 +533,365 @@
     @media print {
       .seasonal-decor { display:none !important; }
     }
-</style>
+
+    /* =========================================================
+       TEAM RER — LIQUID GLASS VISUAL REFRESH
+       Visual-only overrides. Existing HTML, JavaScript, forms,
+       calculations, Firebase flow and Apps Script bridge remain.
+       ========================================================= */
+    @media screen {
+      :root {
+        --rer-blue: #003b70;
+        --rer-blue-2: #1769a6;
+        --rer-ink: #18334d;
+        --rer-muted: #647b90;
+        --rer-glass: rgba(255,255,255,.66);
+        --rer-glass-strong: rgba(255,255,255,.82);
+        --rer-edge: rgba(255,255,255,.82);
+        --rer-shadow: 0 22px 65px rgba(16,53,86,.13);
+      }
+
+      html {
+        min-height: 100%;
+        background: #eaf2f9;
+      }
+
+      body {
+        color: var(--rer-ink);
+        background:
+          radial-gradient(ellipse at 8% 8%, rgba(104,177,225,.24), transparent 34%),
+          radial-gradient(ellipse at 92% 18%, rgba(190,218,241,.58), transparent 31%),
+          radial-gradient(ellipse at 78% 94%, rgba(125,169,207,.20), transparent 34%),
+          linear-gradient(145deg,#edf5fb 0%,#e5eef7 48%,#f5f8fc 100%);
+        background-attachment: fixed;
+      }
+
+      .wrap {
+        max-width: 820px;
+        margin: 26px auto;
+      }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(17px,3vw,28px);
+        border: 1px solid var(--rer-edge);
+        border-radius: 28px;
+        background: linear-gradient(145deg,rgba(255,255,255,.82),rgba(255,255,255,.57));
+        box-shadow: var(--rer-shadow), inset 0 1px 0 rgba(255,255,255,.9);
+        -webkit-backdrop-filter: blur(28px) saturate(145%);
+        backdrop-filter: blur(28px) saturate(145%);
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 1px;
+        background: linear-gradient(90deg,transparent,rgba(255,255,255,.98),transparent);
+        pointer-events: none;
+      }
+
+      .cover-container {
+        border: 1px solid rgba(255,255,255,.78);
+        border-radius: 19px;
+        box-shadow: 0 9px 25px rgba(18,61,99,.10);
+      }
+
+      .cover-photo {
+        border-radius: inherit;
+      }
+
+      .brand {
+        padding: 5px 0 4px;
+      }
+
+      h1 {
+        letter-spacing: -.45px;
+        text-shadow: 0 1px 0 rgba(255,255,255,.7);
+      }
+
+      .subtitle {
+        letter-spacing: 1.55px;
+      }
+
+      .dashboard-welcome {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.9);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 100% 0%,rgba(255,255,255,.9),transparent 42%),
+          linear-gradient(125deg,rgba(236,246,255,.84),rgba(255,255,255,.62));
+        box-shadow: 0 9px 26px rgba(20,67,108,.07), inset 0 1px 0 #fff;
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+      }
+
+      .dashboard-welcome::after {
+        content: "";
+        position: absolute;
+        width: 130px;
+        height: 130px;
+        right: -58px;
+        bottom: -82px;
+        border: 1px solid rgba(45,119,174,.12);
+        border-radius: 50%;
+        box-shadow: 0 0 0 14px rgba(45,119,174,.035),0 0 0 29px rgba(45,119,174,.025);
+        pointer-events: none;
+      }
+
+      .app-nav {
+        gap: 13px;
+      }
+
+      .app-nav button {
+        position: relative;
+        overflow: hidden;
+        min-height: 145px;
+        border: 1px solid rgba(255,255,255,.94);
+        border-radius: 19px;
+        background: linear-gradient(145deg,rgba(255,255,255,.88),rgba(245,250,255,.61));
+        color: var(--rer-ink);
+        box-shadow: 0 8px 24px rgba(19,62,99,.075), inset 0 1px 0 rgba(255,255,255,.95);
+        -webkit-backdrop-filter: blur(18px) saturate(135%);
+        backdrop-filter: blur(18px) saturate(135%);
+        transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+      }
+
+      .app-nav button::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg,rgba(255,255,255,.34),transparent 42%);
+        pointer-events: none;
+      }
+
+      .app-nav button:hover {
+        transform: translateY(-3px);
+        border-color: rgba(83,151,202,.55);
+        background: linear-gradient(145deg,rgba(255,255,255,.96),rgba(232,244,253,.82));
+        box-shadow: 0 15px 32px rgba(19,62,99,.12), inset 0 1px 0 #fff;
+      }
+
+      .app-nav button.active {
+        border-color: rgba(39,113,170,.55);
+        background: linear-gradient(145deg,rgba(225,241,253,.96),rgba(255,255,255,.78));
+        box-shadow: 0 8px 24px rgba(0,75,130,.10), inset 0 0 0 1px rgba(255,255,255,.8);
+      }
+
+      .nav-icon {
+        border: 1px solid rgba(255,255,255,.9);
+        border-radius: 14px;
+        background: linear-gradient(145deg,#f7fbff,#dcecf8);
+        box-shadow: 0 4px 12px rgba(0,59,112,.08), inset 0 1px 0 #fff;
+      }
+
+      .section-title {
+        margin-top: 25px;
+        padding-bottom: 9px;
+        border-bottom: 1px solid rgba(93,133,166,.18);
+        color: var(--rer-blue);
+        letter-spacing: -.2px;
+      }
+
+      .field,
+      .credit-field {
+        min-width: 0;
+      }
+
+      label {
+        color: #294760;
+      }
+
+      input, select, textarea {
+        border: 1px solid rgba(132,158,181,.38);
+        border-radius: 13px;
+        background: rgba(255,255,255,.76);
+        color: var(--rer-ink);
+        box-shadow: inset 0 1px 2px rgba(26,62,91,.035), 0 2px 7px rgba(23,62,96,.025);
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      }
+
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: rgba(35,119,181,.78);
+        background: rgba(255,255,255,.96);
+        box-shadow: 0 0 0 4px rgba(42,132,194,.13), 0 5px 15px rgba(24,83,130,.06);
+      }
+
+      button, .link {
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: 13px;
+        background: linear-gradient(135deg,#07518b,#003b70 68%,#06345d);
+        box-shadow: 0 7px 17px rgba(0,59,112,.17), inset 0 1px 0 rgba(255,255,255,.20);
+        transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+      }
+
+      button:hover:not(:disabled), .link:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(0,59,112,.21), inset 0 1px 0 rgba(255,255,255,.25);
+      }
+
+      button:active:not(:disabled), .link:active {
+        transform: translateY(0) scale(.99);
+      }
+
+      button:focus-visible, .link:focus-visible {
+        outline: 3px solid rgba(52,143,205,.38);
+        outline-offset: 3px;
+      }
+
+      .google {
+        border: 1px solid rgba(132,158,181,.42);
+        background: rgba(255,255,255,.78);
+        color: #243b52;
+        box-shadow: 0 5px 16px rgba(22,57,88,.07), inset 0 1px 0 #fff;
+      }
+
+      .secondary {
+        border: 1px solid rgba(116,157,190,.24);
+        background: linear-gradient(135deg,rgba(231,242,251,.96),rgba(211,229,243,.82));
+        color: #17466d;
+        box-shadow: 0 5px 14px rgba(24,76,117,.07), inset 0 1px 0 rgba(255,255,255,.9);
+      }
+
+      .app-nav button.active:hover,
+      .secondary:hover:not(:disabled) {
+        background: linear-gradient(135deg,#e8f4fc,#d5e9f7);
+      }
+
+      .message {
+        border: 1px solid rgba(151,174,194,.20);
+        border-radius: 13px;
+        background: rgba(242,247,251,.74);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
+
+      .success {
+        border-color: rgba(22,163,74,.16);
+        background: rgba(236,253,245,.82);
+      }
+
+      .error {
+        border-color: rgba(220,38,38,.15);
+        background: rgba(254,242,242,.84);
+      }
+
+      .credit-section,
+      .quote-panel {
+        border: 1px solid rgba(255,255,255,.92);
+        border-radius: 18px;
+        background: linear-gradient(145deg,rgba(255,255,255,.72),rgba(246,250,253,.54));
+        box-shadow: 0 8px 23px rgba(24,65,101,.055), inset 0 1px 0 rgba(255,255,255,.9);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+      }
+
+      .credit-section h3 {
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(93,133,166,.16);
+      }
+
+      .quote-preview {
+        border-color: rgba(255,255,255,.95);
+        border-radius: 16px;
+        box-shadow: 0 10px 28px rgba(18,55,88,.09);
+      }
+
+      .quote-total {
+        border: 1px solid rgba(255,255,255,.7);
+        background: linear-gradient(120deg,#e9f3fb,#dcebf7);
+      }
+
+      .footer {
+        color: #8196a9;
+        letter-spacing: .3px;
+      }
+
+      .preview-wrap {
+        background: rgba(8,25,43,.52);
+        -webkit-backdrop-filter: blur(16px) saturate(125%);
+        backdrop-filter: blur(16px) saturate(125%);
+      }
+
+      .preview-dialog {
+        border: 1px solid rgba(255,255,255,.78);
+        border-radius: 21px;
+        box-shadow: 0 30px 90px rgba(0,20,40,.36);
+      }
+
+      .preview-head,
+      .quote-preview-actions {
+        background: linear-gradient(120deg,#f8fbfe,#eaf2f8);
+      }
+
+      .preview-close {
+        border: 1px solid rgba(118,145,169,.18);
+        background: #e8eef4;
+        box-shadow: none;
+      }
+
+      .loading-content {
+        border: 1px solid rgba(255,255,255,.92);
+        background: rgba(255,255,255,.70);
+        box-shadow: 0 25px 75px rgba(0,39,75,.16), inset 0 1px 0 #fff;
+        -webkit-backdrop-filter: blur(24px) saturate(145%);
+        backdrop-filter: blur(24px) saturate(145%);
+      }
+
+      #logoutBtn {
+        border-radius: 11px;
+      }
+
+      body[data-season="CHRISTMAS"] .card {
+        background: linear-gradient(145deg,rgba(255,255,255,.84),rgba(255,252,246,.65));
+        border-color: rgba(221,211,190,.72);
+      }
+
+      body[data-season="CHRISTMAS"] .dashboard-welcome {
+        background: linear-gradient(125deg,rgba(247,250,248,.88),rgba(255,249,237,.72));
+      }
+
+      @media (max-width: 560px) {
+        body {
+          padding: 12px;
+          background-attachment: scroll;
+        }
+        .wrap {
+          margin: 8px auto;
+        }
+        .card {
+          border-radius: 22px;
+          padding: 15px;
+        }
+        .app-nav button {
+          min-height: 78px;
+          border-radius: 16px;
+        }
+        .dashboard-welcome {
+          border-radius: 17px;
+        }
+        .credit-section,
+        .quote-panel {
+          border-radius: 15px;
+          padding: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          transition-duration: .01ms !important;
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    }
+
+  </style>
 </head>
 <body>
   <div class="seasonal-decor" aria-hidden="true"></div>
