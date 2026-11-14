@@ -1438,9 +1438,11 @@
     .promo-tabs{display:flex;gap:8px;padding:5px;border:1px solid rgba(160,187,209,.42);border-radius:15px;background:rgba(231,241,249,.72);margin:14px 0}
     .promo-tabs button{flex:1;min-height:40px;margin:0;padding:9px;border-radius:11px;background:transparent;color:#315674;font-size:13px}
     .promo-tabs button.active{background:rgba(255,255,255,.94);color:#003b70;box-shadow:0 3px 10px rgba(23,61,91,.10)}
-    .promo-tools{display:flex;gap:8px;align-items:center;margin:12px 0}
+    .promo-tools{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
     .promo-tools input{flex:1;min-width:0}
     .promo-add{width:auto;min-height:42px;padding:10px 14px;white-space:nowrap}
+    #manageStockOptionsBtn{white-space:nowrap;min-height:42px}
+    @media(max-width:700px){#promoStockPanel .promo-tools #stockSearch{flex:1 1 100%;width:100%}#promoStockPanel .promo-tools button{flex:1 1 auto}}
     .promo-card{margin:11px 0;padding:15px;border:1px solid rgba(185,205,221,.68);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(240,247,252,.84));box-shadow:0 7px 20px rgba(21,58,87,.055);text-align:left}
     .promo-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
     .promo-card h3{margin:0;color:#123d63;font-size:15px}
@@ -1454,6 +1456,7 @@
     .promo-detail small{display:block;color:#71869a;font-size:10px}
     .promo-detail strong{display:block;margin-top:3px;color:#244866;font-size:12px;overflow-wrap:anywhere}
     .promo-description{margin:11px 0 0;color:#526c82;font-size:12px;line-height:1.5;white-space:pre-wrap}
+    .bank-card-title{display:flex;align-items:center;gap:10px;min-width:0}.bank-drag-handle{width:34px;min-width:34px;height:38px;min-height:38px;padding:0;border:1px solid rgba(120,151,176,.28);border-radius:10px;background:rgba(225,237,247,.8);color:#416783;font-size:24px;line-height:1;cursor:grab;touch-action:none;user-select:none}.bank-drag-handle:active{cursor:grabbing}.partner-bank-card{transition:transform .14s ease,box-shadow .14s ease}.partner-bank-card.bank-dragging{opacity:.72;transform:scale(.985);box-shadow:0 12px 28px rgba(13,48,79,.18);border-color:#4c91c3}.bank-sort-hint{margin:8px 0 12px}.partner-bank-card .promo-card-head{align-items:center} 
     .promo-card-actions{display:flex;gap:8px;margin-top:12px}
     .promo-card-actions button{min-height:36px;padding:8px 12px;font-size:12px}
     .promo-card-actions .secondary{margin:0}
@@ -1578,9 +1581,11 @@
           <div id="promoStockPanel" class="hidden">
             <div class="promo-tools">
               <input id="stockSearch" type="search" placeholder="Search model, variant or color..." aria-label="Search vehicle availability">
+              <button id="manageStockOptionsBtn" class="secondary hidden" type="button">Manage Dropdowns</button>
               <button id="addStockBtn" class="promo-add hidden" type="button">＋ Add Stock</button>
             </div>
             <div id="promoStockList"></div>
+            <div id="stockOptionsHost"></div>
             <div id="stockFormHost"></div>
           </div>
           <div id="promoBanksPanel" class="hidden">
@@ -2091,9 +2096,11 @@
       }
 
       if (action === "promoInventorySave") {
-        setMessage($("promoModuleMessage"), "Your update has been saved.", "success");
+        const savedType = event.data.promoInventory && event.data.promoInventory.type;
+        setMessage($("promoModuleMessage"), savedType === "bankOrder" ? "Partner bank order saved and applied throughout TEAM RER." : "Your update has been saved.", "success");
         $("promoFormHost").replaceChildren();
         $("stockFormHost").replaceChildren();
+        $("stockOptionsHost").replaceChildren();
         $("bankFormHost").replaceChildren();
         submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         return;
@@ -2148,6 +2155,7 @@
       const model = $("quoteModel").value;
       const variants = quotationVehicles.filter(v => v.model === model).map(v => v.variant);
       fillSelect($("quoteVariant"), variants, "Choose variant");
+      refreshQuotePartnerBanks();
       updateQuotePreview();
     }
 
@@ -2155,11 +2163,30 @@
       const select = $("quotePartnerBank");
       if (!select) return;
       const previous = select.value;
-      const banks = (promoInventoryData.partnerBanks || [])
+      const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const specificBankNames = new Set();
+      if(vehicle) {
+        (promoInventoryData.promotions || []).forEach(promo => {
+          if(String(promo.status || "Active").toLowerCase() !== "active") return;
+          if(String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return;
+          if(String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return;
+          if(String(promo.applicableDownpayment || "") === "CASH") return;
+          if(promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return;
+          if(promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return;
+          (Array.isArray(promo.applicableBanks) ? promo.applicableBanks : []).forEach(name => {
+            if(name && name !== "ALL_BANKS") specificBankNames.add(String(name));
+          });
+        });
+      }
+      const banks = getOrderedPartnerBanks()
         .filter(bank => String(bank.status || "Active").toLowerCase() === "active")
-        .map(bank => String(bank.bankName || "").trim()).filter(Boolean);
-      fillSelect(select, [...new Set(banks)].sort(), "Select partner bank");
-      if (banks.includes(previous)) select.value = previous;
+        .map(bank => String(bank.bankName || "").trim())
+        .filter(name => name && specificBankNames.has(name));
+      const choices = [...new Set([...banks, "OTHER BANKS"])];
+      fillSelect(select, choices, "Select partner bank");
+      if (choices.includes(previous)) select.value = previous;
     }
 
     function getMatchingQuotePromotion(vehicle, dpPercent, bankName) {
@@ -2898,7 +2925,7 @@
 
 
     // PROMOS & VEHICLE AVAILABILITY
-    let promoInventoryData = { promotions: [], inventory: [], partnerBanks: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"], downpaymentOptions: ["20","25","30","35","40","45","50"] };
+    let promoInventoryData = { promotions: [], inventory: [], partnerBanks: [], inventoryOptions: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"], downpaymentOptions: ["20","25","30","35","40","45","50"] };
     let promoActiveView = "promos";
     const isTeamRerAdmin = () => String(authorizedUser?.role || "").trim().toLowerCase() === "admin";
     const promoText = value => String(value ?? "").trim();
@@ -2923,18 +2950,30 @@
       const v = String(status || "").toLowerCase().replace(/\s+/g,"-");
       return ["inactive","incoming","reserved","sold-out"].includes(v) ? v : "";
     }
+    function getOrderedPartnerBanks() {
+      return (promoInventoryData.partnerBanks || []).map((bank, index) => ({...bank, __fallbackOrder:index+1}))
+        .sort((a,b) => {
+          const ao = Number(a.displayOrder), bo = Number(b.displayOrder);
+          const av = Number.isFinite(ao) && ao > 0 ? ao : a.__fallbackOrder;
+          const bv = Number.isFinite(bo) && bo > 0 ? bo : b.__fallbackOrder;
+          return av - bv || a.__fallbackOrder - b.__fallbackOrder;
+        }).map(({__fallbackOrder,...bank}) => bank);
+    }
+
     function renderPromoInventory(data) {
       promoInventoryLoaded = true;
       promoInventoryData = {
         promotions: Array.isArray(data.promotions) ? data.promotions : [],
         inventory: Array.isArray(data.inventory) ? data.inventory : [],
         partnerBanks: Array.isArray(data.partnerBanks) ? data.partnerBanks : [],
+        inventoryOptions: Array.isArray(data.inventoryOptions) ? data.inventoryOptions : [],
         stockStatuses: Array.isArray(data.stockStatuses) ? data.stockStatuses : ["Available","Incoming","Reserved","Sold Out"],
         downpaymentOptions: Array.isArray(data.downpaymentOptions) ? data.downpaymentOptions : ["20","25","30","35","40","45","50"]
       };
       const admin = isTeamRerAdmin();
       $("addPromoBtn").classList.add("hidden");
       $("addStockBtn").classList.toggle("hidden",!admin);
+      $("manageStockOptionsBtn").classList.toggle("hidden",!admin);
       $("addBankBtn").classList.toggle("hidden",!admin);
       renderPromoCards();
       renderStockCards();
@@ -2975,16 +3014,19 @@
           const active=records.filter(p=>String(p.status||"Active").toLowerCase()==="active").length;
           const row=document.createElement("div"); row.className="promo-variant-row";
           row.innerHTML=`<div class="promo-variant-info"><strong>${promoEsc(variant)}</strong><small>${active?`${active} active offer${active===1?"":"s"}`:"No active offers"}</small></div>`;
-          if(isTeamRerAdmin()) { const edit=document.createElement("button"); edit.type="button"; edit.className="secondary"; edit.textContent="Edit"; edit.addEventListener("click",()=>openVariantPromoEditor(group.model,variant)); row.appendChild(edit); }
+          const actions=document.createElement("div"); actions.className="promo-card-actions"; actions.style.marginTop="0";
+          const view=document.createElement("button"); view.type="button"; view.className="secondary"; view.textContent="View"; view.addEventListener("click",()=>openVariantPromoEditor(group.model,variant,true)); actions.appendChild(view);
+          if(isTeamRerAdmin()) { const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit"; edit.addEventListener("click",()=>openVariantPromoEditor(group.model,variant,false)); actions.appendChild(edit); }
+          row.appendChild(actions);
           list.appendChild(row);
         });
         details.appendChild(list); section.appendChild(details); host.appendChild(section);
       });
     }
-    function openVariantPromoEditor(model, variant) {
-      if(!isTeamRerAdmin()) return;
+    function openVariantPromoEditor(model, variant, readOnly=false) {
+      if(!readOnly && !isTeamRerAdmin()) return;
       const records=(promoInventoryData.promotions||[]).filter(p=>p.model===model&&p.variant===variant);
-      const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>String(b.bankName||"").trim()).filter(Boolean).sort();
+      const activeBanks=getOrderedPartnerBanks().filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>String(b.bankName||"").trim()).filter(Boolean);
       const dps=(promoInventoryData.downpaymentOptions||["20","25","30","35","40","45","50"]).map(String);
       const existing=(dp,bank)=>records.find(p=>String(p.applicableDownpayment||"")===String(dp)&&(Array.isArray(p.applicableBanks)&&p.applicableBanks.includes(bank)));
       const meta=records.find(p=>String(p.status||"Active").toLowerCase()==="active")||records[0]||{};
@@ -3000,8 +3042,8 @@
       matrix+=`</tbody></table></div>`;
       const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
       form.innerHTML=`<div class="promo-hcr-top"><span>HCR MONTHLY PROMOTIONS</span><small>HYUNDAI CAINTA</small></div>
-        <h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
-        <div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>
+        <h3>${readOnly?"View Variant Promotions":"Edit Variant Promotions"}</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
+        ${readOnly?"":`<div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>`}
         <h4>Financing Downpayment Offers</h4>${matrix}
         <p class="promo-note">Bank-specific financing and Bank PO offers take priority over ALL BANKS. CASH is a separate global transaction discount. Copying a bank copies its financing DP and Bank PO offers only.</p>
         <div class="promo-form-grid">
@@ -3011,9 +3053,12 @@
         ${promoTextArea("Description","description",meta.description||"")}
         ${promoTextArea("Freebies / Inclusions","freebies",meta.freebiesInclusions||meta.freebies||"")}
         <div class="field"><label for="variantPromo_status">Status</label><select id="variantPromo_status" name="status"><option ${(!meta.status||meta.status==="Active")?"selected":""}>Active</option><option ${meta.status==="Inactive"?"selected":""}>Inactive</option></select></div>
-        </div><div class="promo-form-actions"><button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button></div>
+        </div><div class="promo-form-actions">${readOnly?'<button type="button" class="secondary" id="cancelVariantPromo">Close</button>':'<button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button>'}</div>
         <div class="promo-hcr-bottom"><img src="https://cdn.simpleicons.org/hyundai/79513b" alt="Hyundai" class="promo-hyundai-logo"><strong>HYUNDAI</strong><small>TEAM RER • HYUNDAI CAINTA</small></div>`;
-      form.querySelector("#copyBankPromoBtn").addEventListener("click",()=>{
+      if(readOnly) {
+        form.querySelectorAll("input,select,textarea").forEach(control=>{ control.disabled=true; control.setAttribute("aria-readonly","true"); });
+      } else {
+        form.querySelector("#copyBankPromoBtn").addEventListener("click",()=>{
         const from=form.querySelector("#promoCopySource").value,to=form.querySelector("#promoCopyTarget").value;
         if(!from||!to||from===to){setMessage($("promoModuleMessage"),"Choose two different banks to copy offers.","error");return;}
         form.querySelectorAll(".promo-matrix-input:not(.promo-cash-input)").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
@@ -3035,6 +3080,8 @@
           host.replaceChildren(); await submitRequest("promoInventoryGet");setMessage($("promoModuleMessage"),"Variant promotions saved successfully.","success");
         } catch(error){submit.disabled=false;submit.textContent="Save Variant Promotions";setMessage($("promoModuleMessage"),error.message,"error");}
       });
+
+      }
       host.appendChild(form); $("cancelVariantPromo").addEventListener("click",()=>host.replaceChildren());form.scrollIntoView({behavior:"smooth",block:"start"});
     }
     function renderStockCards() {
@@ -3060,13 +3107,20 @@
     }
     function renderPartnerBankCards() {
       const query=$("bankSearch").value.trim().toLowerCase();
-      const items=promoInventoryData.partnerBanks.filter(b=>[b.bankName,b.status].join(" ").toLowerCase().includes(query));
+      const allItems=getOrderedPartnerBanks();
+      const items=allItems.filter(b=>[b.bankName,b.status].join(" ").toLowerCase().includes(query));
       const host=$("promoBanksList"); host.replaceChildren();
       if(!items.length){host.innerHTML=`<div class="promo-empty">${promoInventoryData.partnerBanks.length?"No partner banks match your search.":"No partner banks added yet. Add the partner banks your team works with."}</div>`;return;}
+      if(isTeamRerAdmin()) {
+        const hint=document.createElement("p"); hint.className="promo-note bank-sort-hint";
+        hint.textContent=query?"Clear the search to rearrange banks. Drag using the six-dot handle; the order is shared across TEAM RER.":"Drag banks using the six-dot handle to arrange their order. Changes are saved for everyone.";
+        host.appendChild(hint);
+      }
       items.forEach(bank=>{
-        const card=document.createElement("article");card.className="promo-card";
+        const card=document.createElement("article");card.className="promo-card partner-bank-card";card.dataset.bankId=String(bank.id||"");
         const status=bank.status||"Active";
-        card.innerHTML=`<div class="promo-card-head"><div><h3>${promoEsc(bank.bankName)}</h3><p class="promo-sub">Partner bank</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>`;
+        const handle=isTeamRerAdmin()&&!query?'<button type="button" class="bank-drag-handle" aria-label="Drag to reorder bank" title="Drag to reorder">⠿</button>':'';
+        card.innerHTML=`<div class="promo-card-head"><div class="bank-card-title">${handle}<div><h3>${promoEsc(bank.bankName)}</h3><p class="promo-sub">Partner bank</p></div></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>`;
         if(isTeamRerAdmin()){
           const actions=document.createElement("div");actions.className="promo-card-actions";
           const edit=document.createElement("button");edit.type="button";edit.className="secondary";edit.textContent="Edit";edit.addEventListener("click",()=>openBankForm(bank));
@@ -3076,6 +3130,42 @@
         }
         host.appendChild(card);
       });
+      if(isTeamRerAdmin()&&!query) enablePartnerBankReordering(host);
+    }
+    let bankReorderPointer = null;
+    function enablePartnerBankReordering(host) {
+      host.querySelectorAll(".bank-drag-handle").forEach(handle=>{
+        handle.addEventListener("pointerdown",event=>{
+          if(event.button!==0 && event.pointerType==="mouse") return;
+          const card=handle.closest(".partner-bank-card"); if(!card) return;
+          bankReorderPointer={pointerId:event.pointerId,card,host,moved:false};
+          handle.setPointerCapture?.(event.pointerId);
+          card.classList.add("bank-dragging");
+          event.preventDefault();
+        });
+        handle.addEventListener("pointermove",event=>{
+          const drag=bankReorderPointer; if(!drag||drag.pointerId!==event.pointerId) return;
+          const target=document.elementFromPoint(event.clientX,event.clientY)?.closest(".partner-bank-card");
+          if(!target||target===drag.card||target.parentElement!==drag.host) return;
+          const rect=target.getBoundingClientRect();
+          if(event.clientY<rect.top+rect.height/2) drag.host.insertBefore(drag.card,target);
+          else drag.host.insertBefore(drag.card,target.nextSibling);
+          drag.moved=true;
+        });
+        const finish=async event=>{
+          const drag=bankReorderPointer; if(!drag||drag.pointerId!==event.pointerId) return;
+          bankReorderPointer=null; drag.card.classList.remove("bank-dragging");
+          if(drag.moved) await savePartnerBankOrder([...drag.host.querySelectorAll(".partner-bank-card")].map(card=>card.dataset.bankId).filter(Boolean));
+        };
+        handle.addEventListener("pointerup",finish);
+        handle.addEventListener("pointercancel",finish);
+      });
+    }
+    function savePartnerBankOrder(orderedIds) {
+      if(!isTeamRerAdmin()||!orderedIds.length) return;
+      setMessage($("promoModuleMessage"),"Saving partner bank order...","info");
+      submitRequest("promoInventorySave",{payload:JSON.stringify({type:"bankOrder",record:{orderedIds}})})
+        .catch(error=>setMessage($("promoModuleMessage"),"Could not save bank order: "+error.message,"error"));
     }
     function promoField(label,name,value="",type="text",full=false,placeholder="") {
       return `<div class="field ${full?"full":""}"><label for="promoEdit_${name}">${label}</label><input id="promoEdit_${name}" name="${name}" type="${type}" value="${promoEsc(value)}" placeholder="${promoEsc(placeholder)}"></div>`;
@@ -3093,7 +3183,7 @@
       const modelOptions=models.map(item=>`<option value="${promoEsc(item)}" ${item===selectedModel?"selected":""}>${promoEsc(item)}</option>`).join("");
       const variantOptions=variants.map(item=>`<option value="${promoEsc(item)}" ${item===(record.variant||"")?"selected":""}>${promoEsc(item)}</option>`).join("");
       const dpOptions=promoInventoryData.downpaymentOptions.map(item=>`<option value="${promoEsc(item)}" ${String(item)===String(record.applicableDownpayment||"")?"selected":""}>${promoEsc(item)}%</option>`).join("");
-      const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active");
+      const activeBanks=getOrderedPartnerBanks().filter(b=>String(b.status||"Active").toLowerCase()==="active");
       const savedBanks=Array.isArray(record.applicableBanks)?record.applicableBanks:[];
       const bankScope=savedBanks.includes("ALL_BANKS")?"ALL_BANKS":"SELECTED_BANK";
       const selectedBank=savedBanks.find(name=>name!=="ALL_BANKS")||"";
@@ -3150,26 +3240,49 @@
         ${promoField("Partner Bank Name","bankName",record.bankName||"", "text", true, "Enter bank name")}
         <div class="field"><label for="bankEdit_status">Status</label><select id="bankEdit_status" name="status"><option ${(!record.status||record.status==="Active")?"selected":""}>Active</option><option ${record.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         </div><p class="promo-note">Inactive banks remain in the list for record history but cannot be selected for new promotions.</p><div class="promo-form-actions"><button type="submit">Save Partner Bank</button><button type="button" class="secondary" id="cancelBankForm">Cancel</button></div>`;
-      form.addEventListener("submit",e=>{e.preventDefault();const payload=Object.fromEntries(new FormData(form).entries());payload.id=record.id||record.recordId||"";saveBankRecord(payload);});
+      form.addEventListener("submit",e=>{e.preventDefault();const payload=Object.fromEntries(new FormData(form).entries());payload.id=record.id||record.recordId||"";payload.displayOrder=record.displayOrder||"";saveBankRecord(payload);});
       host.appendChild(form);
       $("cancelBankForm").addEventListener("click",()=>host.replaceChildren());
       form.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    function stockOptionValues(type) {
+      return (promoInventoryData.inventoryOptions||[])
+        .filter(x=>String(x.optionType||"").toLowerCase()===type && String(x.status||"Active").toLowerCase()==="active")
+        .map(x=>String(x.optionValue||"").trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b));
+    }
+    function stockSelectOptions(values, selected, placeholder) {
+      const list=[...new Set([...(values||[]),...(selected?[selected]:[])])];
+      return `<option value="">${promoEsc(placeholder)}</option>`+list.map(v=>`<option value="${promoEsc(v)}" ${v===selected?"selected":""}>${promoEsc(v)}</option>`).join("");
     }
     function openStockForm(record={}) {
       if(!isTeamRerAdmin()) return;
       const host=$("stockFormHost"); host.replaceChildren();
       const statuses=promoInventoryData.stockStatuses;
+      const models=[...new Set(quotationVehicles.map(v=>v.model).filter(Boolean))].sort();
+      if(record.model&&!models.includes(record.model)) models.unshift(record.model);
+      const variants=[...new Set(quotationVehicles.filter(v=>v.model===(record.model||"")).map(v=>v.variant).filter(Boolean))].sort();
+      if(record.variant&&!variants.includes(record.variant)) variants.unshift(record.variant);
+      const modelOptions=stockSelectOptions(models,record.model||"","Choose vehicle model");
+      const variantOptions=stockSelectOptions(variants,record.variant||"","Choose variant");
+      const years=stockOptionValues("modelyear");
+      const colors=stockOptionValues("color");
       const form=document.createElement("form"); form.className="promo-form"; form.id="stockEditForm";
       form.innerHTML=`<h3>${record.id||record.recordId?"Edit Vehicle Stock":"Add Vehicle Stock"}</h3><div class="promo-form-grid">
-        ${promoField("Vehicle Model","model",record.model||"")}
-        ${promoField("Variant","variant",record.variant||"")}
-        ${promoField("Model Year","modelYear",record.modelYear||"")}
-        ${promoField("Color","color",record.color||"")}
+        <div class="field"><label for="stockEdit_model">Vehicle Model</label><select id="stockEdit_model" name="model" required>${modelOptions}</select></div>
+        <div class="field"><label for="stockEdit_variant">Variant</label><select id="stockEdit_variant" name="variant" required>${variantOptions}</select></div>
+        <div class="field"><label for="stockEdit_modelYear">Model Year</label><select id="stockEdit_modelYear" name="modelYear">${stockSelectOptions(years,record.modelYear||"","Select model year")}</select></div>
+        <div class="field"><label for="stockEdit_color">Color</label><select id="stockEdit_color" name="color" required>${stockSelectOptions(colors,record.color||"","Select color")}</select></div>
         <div class="field"><label for="stockEdit_stockStatus">Stock Status</label><select id="stockEdit_stockStatus" name="stockStatus">${statuses.map(x=>`<option ${x===(record.stockStatus||"Available")?"selected":""}>${promoEsc(x)}</option>`).join("")}</select></div>
-        ${promoField("Quantity","quantity",record.quantity??"","number")}
-        ${promoField("Expected Arrival","expectedArrival",record.expectedArrival||"","date")}
+        ${promoField("Quantity","quantity",record.quantity??"1","number")}
+        ${promoField("Expected Arrival (Optional)","expectedArrival",record.expectedArrival||"","date")}
         ${promoTextArea("Remarks","remarks",record.remarks||"")}
-        </div><p class="promo-note">Only admins can add or update vehicle stock information.</p><div class="promo-form-actions"><button type="submit">Save Stock Record</button><button type="button" class="secondary" id="cancelStockForm">Cancel</button></div>`;
+        </div><p class="promo-note">Model and variant choices come from the Price List. Model years and colors are managed by admins using Manage Dropdowns. Expected Arrival is optional.</p><div class="promo-form-actions"><button type="submit">Save Stock Record</button><button type="button" class="secondary" id="cancelStockForm">Cancel</button></div>`;
+      const modelSelect=form.elements.model, variantSelect=form.elements.variant;
+      modelSelect.addEventListener("change",()=>{
+        const selected=modelSelect.value;
+        const choices=[...new Set(quotationVehicles.filter(v=>v.model===selected).map(v=>v.variant).filter(Boolean))].sort();
+        variantSelect.innerHTML=stockSelectOptions(choices,"","Choose variant");
+      });
       form.addEventListener("submit",e=>{
         e.preventDefault(); const payload=Object.fromEntries(new FormData(form).entries());
         payload.id=record.id||record.recordId||"";
@@ -3178,6 +3291,38 @@
       host.appendChild(form);
       $("cancelStockForm").addEventListener("click",()=>host.replaceChildren());
       form.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    function openStockOptionsManager() {
+      if(!isTeamRerAdmin()) return;
+      const host=$("stockOptionsHost"); host.replaceChildren();
+      const panel=document.createElement("section"); panel.className="promo-form";
+      const options=promoInventoryData.inventoryOptions||[];
+      const renderRows=()=>{
+        const rows=(promoInventoryData.inventoryOptions||[]).map(item=>`<div class="promo-variant-row"><div class="promo-variant-info"><strong>${promoEsc(item.optionValue)}</strong><small>${String(item.optionType).toLowerCase()==="modelyear"?"Model Year":"Color"} · ${promoEsc(item.status||"Active")}</small></div><button type="button" class="secondary" data-option-id="${promoEsc(item.id||"")}" data-option-status="${promoEsc(item.status||"Active")}">${String(item.status||"Active").toLowerCase()==="active"?"Deactivate":"Activate"}</button></div>`).join("");
+        panel.querySelector("#stockOptionRows").innerHTML=rows||'<div class="promo-empty">No dropdown choices added yet.</div>';
+        panel.querySelectorAll("[data-option-id]").forEach(btn=>btn.addEventListener("click",()=>{
+          const item=(promoInventoryData.inventoryOptions||[]).find(x=>String(x.id)===btn.dataset.optionId);
+          if(item) saveStockOption({...item,status:String(item.status).toLowerCase()==="active"?"Inactive":"Active"});
+        }));
+      };
+      panel.innerHTML=`<h3>Manage Vehicle Availability Dropdowns</h3><div class="promo-form-grid">
+        <div class="field"><label for="stockOptionType">Dropdown</label><select id="stockOptionType"><option value="modelYear">Model Year</option><option value="color">Color</option></select></div>
+        <div class="field"><label for="stockOptionValue">New choice</label><input id="stockOptionValue" type="text" maxlength="80" placeholder="Enter a year or color"></div>
+        </div><div class="promo-form-actions"><button type="button" id="addStockOptionBtn">Add Choice</button><button type="button" class="secondary" id="closeStockOptionsBtn">Close</button></div><h4>Existing Choices</h4><div id="stockOptionRows"></div><p class="promo-note">Deactivating a choice hides it from new stock entries but keeps existing inventory records unchanged.</p>`;
+      host.appendChild(panel); renderRows();
+      panel.querySelector("#addStockOptionBtn").addEventListener("click",()=>{
+        const optionType=panel.querySelector("#stockOptionType").value;
+        const optionValue=panel.querySelector("#stockOptionValue").value.trim();
+        if(!optionValue){setMessage($("promoModuleMessage"),"Enter a model year or color first.","error");return;}
+        saveStockOption({optionType,optionValue,status:"Active"});
+      });
+      panel.querySelector("#closeStockOptionsBtn").addEventListener("click",()=>host.replaceChildren());
+      panel.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    async function saveStockOption(record) {
+      if(!isTeamRerAdmin()) return;
+      try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"inventoryOption",record})}); }
+      catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
     }
     async function savePromoRecord(record) {
       if(!isTeamRerAdmin()) return;
@@ -3208,6 +3353,7 @@
     $("bankSearch").addEventListener("input",renderPartnerBankCards);
     $("addPromoBtn").addEventListener("click",()=>{});
     $("addStockBtn").addEventListener("click",()=>openStockForm());
+    $("manageStockOptionsBtn").addEventListener("click",openStockOptionsManager);
     $("addBankBtn").addEventListener("click",()=>openBankForm());
     $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos & Availability...",()=>{
       $("appNav").classList.add("hidden");
@@ -3260,6 +3406,7 @@
     }));
     ["quoteVariant","quoteType","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
+    $("quoteVariant").addEventListener("change", refreshQuotePartnerBanks);
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
     function closeQuotePreview() {
       $("quotePreviewWrap").classList.add("hidden");
