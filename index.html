@@ -2174,53 +2174,75 @@
       if (choices.includes(previous)) select.value = previous;
     }
 
+    function quotePromoDateKey(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+      const parsed = new Date(raw);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,"0")}-${String(parsed.getDate()).padStart(2,"0")}`;
+    }
+
+    function quotePromoIsCurrent(promo, todayKey) {
+      if (String(promo.status || "Active").trim().toLowerCase() !== "active") return false;
+      const from = quotePromoDateKey(promo.validFrom);
+      const until = quotePromoDateKey(promo.validUntil);
+      if (from && from > todayKey) return false;
+      if (until && until < todayKey) return false;
+      return true;
+    }
+
+    function quotePromoBankMatches(promo, bankName) {
+      const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks.map(bank => String(bank).trim().toUpperCase()) : [];
+      return banks.includes("ALL_BANKS") || banks.includes(String(bankName || "").trim().toUpperCase());
+    }
+
     function getMatchingQuotePromotion(vehicle, dpPercent, bankName) {
       if (!vehicle || !bankName) return null;
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const modelKey = String(vehicle.model || "").trim().toLowerCase();
+      const variantKey = String(vehicle.variant || "").trim().toLowerCase();
+      const dpKey = String(dpPercent || "").replace(/%/g, "").trim();
       const matches = (promoInventoryData.promotions || []).filter(promo => {
-        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
-        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
-        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
-        if (String(promo.applicableDownpayment || "") !== String(dpPercent)) return false;
-        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
-        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
-        const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks : [];
-        return banks.includes("ALL_BANKS") || banks.includes(bankName);
+        if (!quotePromoIsCurrent(promo, todayKey)) return false;
+        if (String(promo.model || "").trim().toLowerCase() !== modelKey) return false;
+        if (String(promo.variant || "").trim().toLowerCase() !== variantKey) return false;
+        if (String(promo.applicableDownpayment || "").replace(/%/g, "").trim() !== dpKey) return false;
+        return quotePromoBankMatches(promo, bankName);
       });
       // A bank-specific offer takes precedence over the ALL BANKS fallback.
-      return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
+      return matches.find(promo => !(promo.applicableBanks || []).some(bank => String(bank).trim().toUpperCase() === "ALL_BANKS")) || matches[0] || null;
     }
 
     function getMatchingBankPoPromotion(vehicle, bankName) {
       if (!vehicle || !bankName) return null;
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const modelKey = String(vehicle.model || "").trim().toLowerCase();
+      const variantKey = String(vehicle.variant || "").trim().toLowerCase();
       const matches = (promoInventoryData.promotions || []).filter(promo => {
-        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
-        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
-        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
-        if (String(promo.applicableDownpayment || "") !== "BANK_PO") return false;
-        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
-        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
-        const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks : [];
-        return banks.includes("ALL_BANKS") || banks.includes(bankName);
+        if (!quotePromoIsCurrent(promo, todayKey)) return false;
+        if (String(promo.model || "").trim().toLowerCase() !== modelKey) return false;
+        if (String(promo.variant || "").trim().toLowerCase() !== variantKey) return false;
+        if (String(promo.applicableDownpayment || "").trim().toUpperCase() !== "BANK_PO") return false;
+        return quotePromoBankMatches(promo, bankName);
       });
-      return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
+      return matches.find(promo => !(promo.applicableBanks || []).some(bank => String(bank).trim().toUpperCase() === "ALL_BANKS")) || matches[0] || null;
     }
 
     function getMatchingCashPromotion(vehicle) {
       if (!vehicle) return null;
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const modelKey = String(vehicle.model || "").trim().toLowerCase();
+      const variantKey = String(vehicle.variant || "").trim().toLowerCase();
       return (promoInventoryData.promotions || []).find(promo => {
-        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
-        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
-        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
-        if (String(promo.applicableDownpayment || "") !== "CASH") return false;
-        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
-        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
-        return Array.isArray(promo.applicableBanks) && promo.applicableBanks.includes("ALL_BANKS");
+        if (!quotePromoIsCurrent(promo, todayKey)) return false;
+        if (String(promo.model || "").trim().toLowerCase() !== modelKey) return false;
+        if (String(promo.variant || "").trim().toLowerCase() !== variantKey) return false;
+        if (String(promo.applicableDownpayment || "").trim().toUpperCase() !== "CASH") return false;
+        return Array.isArray(promo.applicableBanks) && promo.applicableBanks.some(bank => String(bank).trim().toUpperCase() === "ALL_BANKS");
       }) || null;
     }
 
