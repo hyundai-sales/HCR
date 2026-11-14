@@ -1477,6 +1477,23 @@
     @media(max-width:520px){.promo-bank-options{grid-template-columns:1fr}.promo-tabs button{font-size:11px;padding:8px 5px}}
     @media(max-width:520px){.promo-form-grid{grid-template-columns:1fr}.promo-form .field.full{grid-column:auto}.promo-tools{align-items:stretch}.promo-add{width:auto}.promo-details{gap:6px}.promo-card{padding:12px}}
 
+
+    .promo-matrix-wrap{max-height:62vh;overflow:auto;overscroll-behavior:contain;position:relative}
+    .promo-matrix thead th{position:sticky;top:0;z-index:5;background:#eaf2f8;box-shadow:0 1px 0 #d9e4ed}
+    .promo-matrix th:first-child{position:sticky;left:0;z-index:4;background:#f5f8fb;min-width:116px}
+    .promo-matrix thead th:first-child{z-index:7;background:#eaf2f8}
+    .promo-matrix .promo-cashpo-row th,.promo-matrix .promo-cashpo-row td{background:#fff8ed}
+    .promo-hcr-frame{border-top:8px solid #79513b!important;border-bottom:8px solid #79513b!important;box-shadow:0 10px 30px rgba(92,58,37,.12),0 2px 12px rgba(15,55,85,.06)!important;position:relative}
+    .promo-hcr-top{margin:-5px -5px 16px;padding:12px 14px;text-align:center;border-radius:10px;background:linear-gradient(135deg,rgba(121,81,59,.13),rgba(224,196,169,.2));border-bottom:2px solid #9a7054;color:#805438;font-weight:800;letter-spacing:.08em;font-size:13px}
+    .promo-hcr-top small{display:block;margin-top:3px;font-size:9px;letter-spacing:.16em;color:#7c8b99}
+    .promo-copy-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;border:1px solid rgba(164,190,211,.6);border-radius:12px;background:rgba(255,255,255,.7);font-size:11px}
+    .promo-copy-tools select{width:auto;min-width:120px;flex:1;min-height:36px;font-size:11px}
+    .promo-copy-tools button{width:auto;min-height:36px;margin:0;padding:7px 10px;font-size:11px}
+    .promo-hcr-bottom{display:flex;align-items:center;gap:8px;margin:18px -5px -5px;padding:12px 14px;border-radius:8px;background:linear-gradient(90deg,rgba(121,81,59,.15),rgba(224,196,169,.08));border-top:2px solid #9a7054;color:#79513b}
+    .promo-hcr-bottom .promo-hyundai-logo{width:38px;height:24px;object-fit:contain}
+    .promo-hcr-bottom strong{font-size:11px;letter-spacing:.12em}.promo-hcr-bottom small{margin-left:auto;font-size:9px;color:#71869a}
+    @media(max-width:600px){.promo-matrix-wrap{max-height:55vh}.promo-copy-tools{align-items:stretch}.promo-copy-tools label{align-self:center}.promo-hcr-bottom small{font-size:8px}}
+
   </style>
 </head>
 <body>
@@ -1640,7 +1657,7 @@
             </div>
             <div class="field">
               <label for="quoteType">Quotation type</label>
-              <select id="quoteType"><option value="cash">CASH</option><option value="financing">BANK FINANCING</option></select>
+              <select id="quoteType"><option value="cash">CASH</option><option value="bankpo">BANK PO</option><option value="financing">BANK FINANCING</option></select>
             </div>
             <div class="field" id="quoteDpField">
               <label for="quoteDownpayment">Downpayment</label>
@@ -2159,23 +2176,45 @@
       return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
     }
 
+    function getMatchingBankPoPromotion(vehicle, bankName) {
+      if (!vehicle || !bankName) return null;
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const matches = (promoInventoryData.promotions || []).filter(promo => {
+        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
+        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
+        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
+        if (String(promo.applicableDownpayment || "") !== "BANK_PO") return false;
+        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
+        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
+        const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks : [];
+        return banks.includes("ALL_BANKS") || banks.includes(bankName);
+      });
+      return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
+    }
+
     function updateQuotePreview() {
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       const preview = $("quotePreview");
-      const financing = $("quoteType").value === "financing";
+      const quoteType = $("quoteType").value;
+      const financing = quoteType === "financing";
+      const bankPo = quoteType === "bankpo";
       $("quoteDpField").classList.toggle("hidden", !financing);
-      $("quoteBankField").classList.toggle("hidden", !financing);
+      $("quoteBankField").classList.toggle("hidden", !financing && !bankPo);
       if (!vehicle) {
         preview.innerHTML = "<p>Select a vehicle and variant to preview the quotation.</p>";
         return;
       }
 
       const srp = Number(vehicle.srp) || 0;
-      const discount = financing ? 0 : (Number(vehicle.discount) || 0);
+      const selectedBank = (financing || bankPo) ? $("quotePartnerBank").value : "";
+      const discountPromo = bankPo ? getMatchingBankPoPromotion(vehicle, selectedBank) : (quoteType === "cash" ? getMatchingBankPoPromotion(vehicle, "ALL_BANKS") : null);
+      const promoDiscountValue = discountPromo ? Number(String(discountPromo.cashDiscount || "").replace(/[^0-9.]/g,"")) : NaN;
+      const hasPromoDiscount = !!discountPromo && Number.isFinite(promoDiscountValue) && promoDiscountValue >= 0;
+      const discount = (bankPo || quoteType === "cash") ? (hasPromoDiscount ? promoDiscountValue : (Number(vehicle.discount) || 0)) : 0;
       const netPrice = srp - discount;
       const dpPercent = Number($("quoteDownpayment").value);
       const dpRate = dpPercent / 100;
-      const selectedBank = financing ? $("quotePartnerBank").value : "";
       const matchingPromotion = financing ? getMatchingQuotePromotion(vehicle, String(dpPercent), selectedBank) : null;
       const promoOfferValue = matchingPromotion ? Number(String(matchingPromotion.downpaymentOffer || "").replace(/[^0-9.]/g,"")) : NaN;
       const hasPromoDownpayment = !!matchingPromotion && Number.isFinite(promoOfferValue) && promoOfferValue >= 0;
@@ -2194,8 +2233,9 @@
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
       if (!financing) {
-        rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
-        rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
+        rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
+        if (hasPromoDiscount) rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO" : "Cash"} Promotion</span><strong>Applied</strong></div>`);
+        rows.push(`<div class="quote-total"><span>${bankPo ? "NET BANK PO PRICE" : "NET CASH PRICE"}</span><span>${money(netPrice)}</span></div>`);
       } else {
         const isZeroDpPromo = !hasPromoDownpayment && usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
         const standardDpAmount = srp * dpRate;
@@ -2209,10 +2249,14 @@
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
         terms.forEach(t => { const monthly = Math.ceil((balance * t.factor) / t.months); rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`); });
       }
+      const appliedPromoForExtras = financing ? matchingPromotion : (hasPromoDiscount ? discountPromo : null);
+      if (appliedPromoForExtras && (String(appliedPromoForExtras.tplIncluded||"").toLowerCase()==="true" || String(appliedPromoForExtras.tplIncluded||"")==="1")) {
+        rows.push(`<div class="quote-line"><span>TPL</span><strong>Included • ₱1,700</strong></div>`);
+      }
       rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
       if (freebies) rows.push(`<div class="quote-line"><span>Freebies / Inclusions</span><strong>${escapeHtml(freebies)}</strong></div>`);
-      preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : "CASH TRANSACTION"}</p><p class="quote-date"><strong>Date Generated:</strong> ${generatedDate}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
+      preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : (bankPo ? "BANK PO TRANSACTION" : "CASH TRANSACTION")}</p><p class="quote-date"><strong>Date Generated:</strong> ${generatedDate}</p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div><div class="quote-contact"><strong>${escapeHtml(authorizedUser?.name || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta<br>${escapeHtml(authorizedUser?.email || "")}</div>`;
     }
 
 
@@ -2915,56 +2959,59 @@
     }
     function openVariantPromoEditor(model, variant) {
       if(!isTeamRerAdmin()) return;
-      const records=promoInventoryData.promotions.filter(p=>p.model===model&&p.variant===variant);
-      const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>b.bankName).filter(Boolean);
-      const dps=promoInventoryData.downpaymentOptions;
-      const existing=(dp,bank)=>records.find(p=>String(p.applicableDownpayment)===String(dp)&&(Array.isArray(p.applicableBanks)&&p.applicableBanks.includes(bank)));
+      const records=(promoInventoryData.promotions||[]).filter(p=>p.model===model&&p.variant===variant);
+      const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>String(b.bankName||"").trim()).filter(Boolean).sort();
+      const dps=(promoInventoryData.downpaymentOptions||["20","25","30","35","40","45","50"]).map(String);
+      const existing=(dp,bank)=>records.find(p=>String(p.applicableDownpayment||"")===String(dp)&&(Array.isArray(p.applicableBanks)&&p.applicableBanks.includes(bank)));
       const meta=records.find(p=>String(p.status||"Active").toLowerCase()==="active")||records[0]||{};
       const host=$("promoFormHost"); host.replaceChildren();
-      const form=document.createElement("form"); form.className="promo-form"; form.id="variantPromoEditor";
+      const form=document.createElement("form"); form.className="promo-form promo-hcr-frame"; form.id="variantPromoEditor";
       const bankHeaders=["ALL BANKS",...activeBanks];
       let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b)}</th>`).join("")}</tr></thead><tbody>`;
       dps.forEach(dp=>{matrix+=`<tr><th>${promoEsc(dp)}%</th>${bankHeaders.map(bank=>{const rec=existing(dp,bank==="ALL BANKS"?"ALL_BANKS":bank);const value=rec?.downpaymentOffer||"";return `<td><input class="promo-matrix-input" type="text" inputmode="decimal" data-dp="${promoEsc(dp)}" data-bank="${promoEsc(bank)}" value="${promoEsc(value)}" placeholder="—" aria-label="${promoEsc(dp)} percent ${promoEsc(bank)} offer"></td>`;}).join("")}</tr>`;});
+      // Bank PO is a separate transaction and is stored as its own special offer record.
+      matrix+=`<tr class="promo-cashpo-row"><th>CASH / BANK PO DISC.</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-cashpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Cash and Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`</tbody></table></div>`;
-      form.innerHTML=`<h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
+      const tplChecked=records.some(r=>String(r.tplIncluded||"").toLowerCase()==="true"||String(r.tplIncluded||"")==="1");
+      const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
+      form.innerHTML=`<div class="promo-hcr-top"><span>HCR MONTHLY PROMOTIONS</span><small>HYUNDAI CAINTA</small></div>
+        <h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
+        <div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>
         <h4>Financing Downpayment Offers</h4>${matrix}
-        <p class="promo-note">Enter an offer in the relevant DP and bank cell. Each bank has its own offer. Use ALL BANKS only when the same offer genuinely applies to every partner bank. Leave a cell blank when there is no offer for that combination.</p>
-        <h4>Other Variant Promotions</h4><div class="promo-form-grid">
-        ${promoField("Cash Discount","cashDiscount",meta.cashDiscount||"")}
+        <p class="promo-note">Bank-specific offers take priority over ALL BANKS. The CASH / BANK PO discount row is separate from financing downpayment offers. Copying a bank copies its DP and Bank PO offers into another bank's column.</p>
+        <div class="promo-form-grid">
         ${promoField("Fuel Voucher","fuelVoucher",meta.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",meta.validFrom||"","date")}
         ${promoField("Valid Until","validUntil",meta.validUntil||"","date")}
         ${promoTextArea("Description","description",meta.description||"")}
         ${promoTextArea("Freebies / Inclusions","freebies",meta.freebiesInclusions||meta.freebies||"")}
+        <div class="field"><label><input type="checkbox" id="variantPromo_tpl" name="tplIncluded" value="true" ${tplChecked?"checked":""} style="width:auto;min-height:0;margin-right:8px">Includes TPL (₱1,700)</label></div>
         <div class="field"><label for="variantPromo_status">Status</label><select id="variantPromo_status" name="status"><option ${(!meta.status||meta.status==="Active")?"selected":""}>Active</option><option ${meta.status==="Inactive"?"selected":""}>Inactive</option></select></div>
-        </div><div class="promo-form-actions"><button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button></div>`;
+        </div><div class="promo-form-actions"><button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button></div>
+        <div class="promo-hcr-bottom"><img src="https://cdn.simpleicons.org/hyundai/79513b" alt="Hyundai" class="promo-hyundai-logo"><strong>HYUNDAI</strong><small>TEAM RER • HYUNDAI CAINTA</small></div>`;
+      form.querySelector("#copyBankPromoBtn").addEventListener("click",()=>{
+        const from=form.querySelector("#promoCopySource").value,to=form.querySelector("#promoCopyTarget").value;
+        if(!from||!to||from===to){setMessage($("promoModuleMessage"),"Choose two different banks to copy offers.","error");return;}
+        form.querySelectorAll(".promo-matrix-input").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
+        const srcPo=form.querySelector(`.promo-cashpo-input[data-bank="${CSS.escape(from)}"]`),dstPo=form.querySelector(`.promo-cashpo-input[data-bank="${CSS.escape(to)}"]`);if(srcPo&&dstPo)dstPo.value=srcPo.value;
+        setMessage($("promoModuleMessage"),`Copied ${from} offers into ${to}. Save to apply the changes.`,"success");
+      });
       form.addEventListener("submit",async e=>{
         e.preventDefault(); const submit=form.querySelector('button[type="submit"]'); submit.disabled=true; submit.textContent="Saving offers…";
         const shared=Object.fromEntries(new FormData(form).entries());
         const desired=[];
-        form.querySelectorAll(".promo-matrix-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
-        const status=shared.status||"Active";
+        form.querySelectorAll(".promo-matrix-input:not(.promo-cashpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
+        form.querySelectorAll(".promo-cashpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
+        const status=shared.status||"Active", tplIncluded=form.querySelector("#variantPromo_tpl").checked;
+        if(tplIncluded && !desired.length) desired.push({dp:"BANK_PO",bank:"ALL BANKS",offer:""});
+        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const record={id:old?.id||"",model,variant,downpaymentOffer:item.dp==="BANK_PO"?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:item.dp==="BANK_PO"?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",tplIncluded,status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
         try {
-          for(const item of desired){
-            const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;
-            const old=existing(item.dp,bankKey);
-            const record={id:old?.id||"",model,variant,downpaymentOffer:item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:shared.cashDiscount||"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",status};
-            await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});
-          }
-          // Deactivate prior offers whose cells were cleared, rather than deleting history.
-          for(const old of records){
-            const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];
-            const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);
-            if(!stillPresent && String(old.status||"Active").toLowerCase()==="active"){
-              await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});
-            }
-          }
-          host.replaceChildren(); await submitRequest("promoInventoryGet");
-          setMessage($("promoModuleMessage"),"Variant promotions saved successfully.","success");
+          for(const item of desired) await saveRecord(item);
+          for(const old of records){const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);if(!stillPresent&&String(old.status||"Active").toLowerCase()==="active")await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});}
+          host.replaceChildren(); await submitRequest("promoInventoryGet");setMessage($("promoModuleMessage"),"Variant promotions saved successfully.","success");
         } catch(error){submit.disabled=false;submit.textContent="Save Variant Promotions";setMessage($("promoModuleMessage"),error.message,"error");}
       });
-      host.appendChild(form); $("cancelVariantPromo").addEventListener("click",()=>host.replaceChildren());
-      form.scrollIntoView({behavior:"smooth",block:"start"});
+      host.appendChild(form); $("cancelVariantPromo").addEventListener("click",()=>host.replaceChildren());form.scrollIntoView({behavior:"smooth",block:"start"});
     }
     function renderStockCards() {
       const query = $("stockSearch").value.trim().toLowerCase();
@@ -3197,8 +3244,8 @@
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
         alert("Please select a vehicle model and variant first."); return;
       }
-      if ($("quoteType").value === "financing" && !$("quotePartnerBank").value) {
-        alert("Please select a partner bank for this bank financing quotation."); $("quotePartnerBank").focus(); return;
+      if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
+        alert("Please select a partner bank for this transaction."); $("quotePartnerBank").focus(); return;
       }
       updateQuotePreview();
       $("quotePreviewWrap").classList.remove("hidden");
@@ -3211,8 +3258,8 @@
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
         alert("Please select a vehicle model and variant first."); return;
       }
-      if ($("quoteType").value === "financing" && !$("quotePartnerBank").value) {
-        alert("Please select a partner bank for this bank financing quotation."); $("quotePartnerBank").focus(); return;
+      if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
+        alert("Please select a partner bank for this transaction."); $("quotePartnerBank").focus(); return;
       }
       updateQuotePreview();
       document.body.classList.add("printing-quote");
