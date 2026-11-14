@@ -1625,8 +1625,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
-      initializeAuth, browserLocalPersistence, GoogleAuthProvider,
-      signInWithPopup, onAuthStateChanged, signOut
+      initializeAuth, browserLocalPersistence, browserPopupRedirectResolver,
+      GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1642,7 +1642,8 @@
     const app = initializeApp(firebaseConfig);
     // Keep Google authentication across page refreshes and browser restarts.
     const auth = initializeAuth(app, {
-      persistence: browserLocalPersistence
+      persistence: browserLocalPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver
     });
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
