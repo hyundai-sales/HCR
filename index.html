@@ -1599,15 +1599,14 @@
           const variantLabel = document.createElement("label"); variantLabel.textContent = "Vehicle Variant"; variantLabel.htmlFor = "credit_vehicle_variant";
           const variantSelect = document.createElement("select"); variantSelect.id = "credit_vehicle_variant"; variantSelect.dataset.vehicleVariant = "true";
           const blankVariant = document.createElement("option"); blankVariant.value = ""; blankVariant.textContent = "Choose variant"; variantSelect.appendChild(blankVariant);
-          variantWrap.append(variantLabel, variantSelect);const termsField = grid.querySelector('[data-cell="V18:W18"]')
-            
-  ?.closest(".credit-field");
-
-if (termsField) {
-  grid.insertBefore(variantWrap, termsField);
-} else {
-  grid.appendChild(variantWrap);
-}
+          variantWrap.append(variantLabel, variantSelect);
+          // Keep Vehicle Model, Vehicle Variant, and Vehicle Color together.
+          const modelField = grid.querySelector('[data-cell="E14:I14"]')?.closest(".credit-field");
+          if (modelField && modelField.nextSibling) {
+            grid.insertBefore(variantWrap, modelField.nextSibling);
+          } else {
+            grid.appendChild(variantWrap);
+          }
         }
         section.appendChild(grid);
         if (group.section === "Spouse / Co-maker Details") {
