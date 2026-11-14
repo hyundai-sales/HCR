@@ -2193,6 +2193,21 @@
       return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
     }
 
+    function getMatchingCashPromotion(vehicle) {
+      if (!vehicle) return null;
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      return (promoInventoryData.promotions || []).find(promo => {
+        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
+        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
+        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
+        if (String(promo.applicableDownpayment || "") !== "CASH") return false;
+        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
+        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
+        return Array.isArray(promo.applicableBanks) && promo.applicableBanks.includes("ALL_BANKS");
+      }) || null;
+    }
+
     function updateQuotePreview() {
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       const preview = $("quotePreview");
@@ -2208,7 +2223,7 @@
 
       const srp = Number(vehicle.srp) || 0;
       const selectedBank = (financing || bankPo) ? $("quotePartnerBank").value : "";
-      const discountPromo = bankPo ? getMatchingBankPoPromotion(vehicle, selectedBank) : (quoteType === "cash" ? getMatchingBankPoPromotion(vehicle, "ALL_BANKS") : null);
+      const discountPromo = bankPo ? getMatchingBankPoPromotion(vehicle, selectedBank) : (quoteType === "cash" ? getMatchingCashPromotion(vehicle) : null);
       const promoDiscountValue = discountPromo ? Number(String(discountPromo.cashDiscount || "").replace(/[^0-9.]/g,"")) : NaN;
       const hasPromoDiscount = !!discountPromo && Number.isFinite(promoDiscountValue) && promoDiscountValue >= 0;
       const discount = (bankPo || quoteType === "cash") ? (hasPromoDiscount ? promoDiscountValue : (Number(vehicle.discount) || 0)) : 0;
@@ -2218,6 +2233,8 @@
       const matchingPromotion = financing ? getMatchingQuotePromotion(vehicle, String(dpPercent), selectedBank) : null;
       const promoOfferValue = matchingPromotion ? Number(String(matchingPromotion.downpaymentOffer || "").replace(/[^0-9.]/g,"")) : NaN;
       const hasPromoDownpayment = !!matchingPromotion && Number.isFinite(promoOfferValue) && promoOfferValue >= 0;
+      const appliedPromoForExtras = financing ? matchingPromotion : (hasPromoDiscount ? discountPromo : null);
+      const tplIncluded = !!appliedPromoForExtras && (String(appliedPromoForExtras.tplIncluded||"").toLowerCase()==="true" || String(appliedPromoForExtras.tplIncluded||"")==="1");
       // Price List Downpayment entries are applicable only to the 20% DP quotation.
       const usePriceListDownpayment = Math.abs(dpRate - 0.20) < 0.000001;
       const hasDpOverride = usePriceListDownpayment && vehicle.hasDownpaymentOverride === true &&
@@ -2249,9 +2266,12 @@
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
         terms.forEach(t => { const monthly = Math.ceil((balance * t.factor) / t.months); rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`); });
       }
-      const appliedPromoForExtras = financing ? matchingPromotion : (hasPromoDiscount ? discountPromo : null);
-      if (appliedPromoForExtras && (String(appliedPromoForExtras.tplIncluded||"").toLowerCase()==="true" || String(appliedPromoForExtras.tplIncluded||"")==="1")) {
-        rows.push(`<div class="quote-line"><span>TPL</span><strong>Included • ₱1,700</strong></div>`);
+      if (tplIncluded) {
+        rows.push(`<div class="quote-line"><span>TPL</span><strong>${money(1700)}</strong></div>`);
+      }
+      if (financing) {
+        const totalCashout = dpAmount + (tplIncluded ? 1700 : 0);
+        rows.push(`<div class="quote-total"><span>TOTAL CASHOUT</span><span>${money2(totalCashout)}</span></div>`);
       }
       rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
@@ -2969,8 +2989,10 @@
       const bankHeaders=["ALL BANKS",...activeBanks];
       let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b)}</th>`).join("")}</tr></thead><tbody>`;
       dps.forEach(dp=>{matrix+=`<tr><th>${promoEsc(dp)}%</th>${bankHeaders.map(bank=>{const rec=existing(dp,bank==="ALL BANKS"?"ALL_BANKS":bank);const value=rec?.downpaymentOffer||"";return `<td><input class="promo-matrix-input" type="text" inputmode="decimal" data-dp="${promoEsc(dp)}" data-bank="${promoEsc(bank)}" value="${promoEsc(value)}" placeholder="—" aria-label="${promoEsc(dp)} percent ${promoEsc(bank)} offer"></td>`;}).join("")}</tr>`;});
-      // Bank PO is a separate transaction and is stored as its own special offer record.
-      matrix+=`<tr class="promo-cashpo-row"><th>CASH / BANK PO DISC.</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-cashpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Cash and Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
+      // CASH is one global transaction offer; BANK PO remains independently configurable by bank.
+      const cashRecord=existing("CASH","ALL_BANKS");
+      matrix+=`<tr class="promo-cashpo-row"><th>CASH DISCOUNT</th><td colspan="${bankHeaders.length}"><input class="promo-matrix-input promo-cash-input" type="text" inputmode="decimal" data-bank="ALL BANKS" value="${promoEsc(cashRecord?.cashDiscount||"")}" placeholder="Enter cash discount" aria-label="Cash transaction discount"></td></tr>`;
+      matrix+=`<tr class="promo-cashpo-row"><th>BANK PO DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-bankpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`</tbody></table></div>`;
       const tplChecked=records.some(r=>String(r.tplIncluded||"").toLowerCase()==="true"||String(r.tplIncluded||"")==="1");
       const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
@@ -2978,7 +3000,7 @@
         <h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
         <div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>
         <h4>Financing Downpayment Offers</h4>${matrix}
-        <p class="promo-note">Bank-specific offers take priority over ALL BANKS. The CASH / BANK PO discount row is separate from financing downpayment offers. Copying a bank copies its DP and Bank PO offers into another bank's column.</p>
+        <p class="promo-note">Bank-specific financing and Bank PO offers take priority over ALL BANKS. CASH is a separate global transaction discount. Copying a bank copies its financing DP and Bank PO offers only.</p>
         <div class="promo-form-grid">
         ${promoField("Fuel Voucher","fuelVoucher",meta.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",meta.validFrom||"","date")}
@@ -2992,8 +3014,8 @@
       form.querySelector("#copyBankPromoBtn").addEventListener("click",()=>{
         const from=form.querySelector("#promoCopySource").value,to=form.querySelector("#promoCopyTarget").value;
         if(!from||!to||from===to){setMessage($("promoModuleMessage"),"Choose two different banks to copy offers.","error");return;}
-        form.querySelectorAll(".promo-matrix-input").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
-        const srcPo=form.querySelector(`.promo-cashpo-input[data-bank="${CSS.escape(from)}"]`),dstPo=form.querySelector(`.promo-cashpo-input[data-bank="${CSS.escape(to)}"]`);if(srcPo&&dstPo)dstPo.value=srcPo.value;
+        form.querySelectorAll(".promo-matrix-input:not(.promo-cash-input)").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
+        const srcPo=form.querySelector(`.promo-bankpo-input[data-bank="${CSS.escape(from)}"]`),dstPo=form.querySelector(`.promo-bankpo-input[data-bank="${CSS.escape(to)}"]`);if(srcPo&&dstPo)dstPo.value=srcPo.value;
         setMessage($("promoModuleMessage"),`Copied ${from} offers into ${to}. Save to apply the changes.`,"success");
       });
       form.addEventListener("submit",async e=>{
@@ -3001,10 +3023,11 @@
         const shared=Object.fromEntries(new FormData(form).entries());
         const desired=[];
         form.querySelectorAll(".promo-matrix-input:not(.promo-cashpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
-        form.querySelectorAll(".promo-cashpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
+        form.querySelectorAll(".promo-cash-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"CASH",bank:"ALL BANKS",offer});});
+        form.querySelectorAll(".promo-bankpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
         const status=shared.status||"Active", tplIncluded=form.querySelector("#variantPromo_tpl").checked;
-        if(tplIncluded && !desired.length) desired.push({dp:"BANK_PO",bank:"ALL BANKS",offer:""});
-        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const record={id:old?.id||"",model,variant,downpaymentOffer:item.dp==="BANK_PO"?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:item.dp==="BANK_PO"?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",tplIncluded,status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
+        if(tplIncluded && !desired.length) desired.push({dp:"CASH",bank:"ALL BANKS",offer:""});
+        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";const record={id:old?.id||"",model,variant,downpaymentOffer:isDiscount?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:isDiscount?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",tplIncluded,status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
         try {
           for(const item of desired) await saveRecord(item);
           for(const old of records){const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);if(!stillPresent&&String(old.status||"Active").toLowerCase()==="active")await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});}
