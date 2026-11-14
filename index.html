@@ -1617,7 +1617,6 @@
           <label for="worksheet">Select worksheet</label>
           <select id="worksheet"><option value="">Loading worksheets...</option></select>
         </div>
-        <p class="app-caption">Price List PDFs use the fixed 20% downpayment and BDO promotional basis.</p>
         <div class="field hidden" id="consultantField">
           <label for="consultant">Sales consultant</label>
           <select id="consultant"><option value="">Select consultant</option></select>
@@ -2064,10 +2063,10 @@
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
-          $("roleNote").textContent = "Admin access: select the sales consultant. Price List uses 20% DP and BDO promotions.";
+          $("roleNote").textContent = "Admin access: select the sales consultant.";
         } else {
           $("consultantField").classList.add("hidden");
-          $("roleNote").textContent = "Your registered TEAM RER name will be used. Price List uses 20% DP and BDO promotions.";
+          $("roleNote").textContent = "Your registered TEAM RER name will be used.";
         }
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
