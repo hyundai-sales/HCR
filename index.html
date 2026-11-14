@@ -1458,6 +1458,8 @@
     .promo-card-actions button{min-height:36px;padding:8px 12px;font-size:12px}
     .promo-card-actions .secondary{margin:0}
     .promo-empty{padding:28px 16px;text-align:center;border:1px dashed #c5d5e2;border-radius:16px;color:#71869a;font-size:13px;background:rgba(246,250,253,.7)}
+    .promo-model-group{margin:10px 0}.promo-model-accordion{border:1px solid rgba(164,190,211,.7);border-radius:15px;background:rgba(255,255,255,.78);overflow:hidden}.promo-model-accordion>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;font-weight:700;color:#123d63;cursor:pointer}.promo-model-accordion>summary::-webkit-details-marker{display:none}.promo-model-accordion>summary:after{content:"＋";color:#52718c}.promo-model-accordion[open]>summary:after{content:"−"}.promo-model-accordion>summary small{margin-left:auto;color:#71869a;font-size:11px;font-weight:500}.promo-variant-list{padding:0 12px 10px}.promo-variant-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 4px;border-top:1px solid #e3edf4}.promo-variant-info{display:flex;flex-direction:column;gap:4px;min-width:0}.promo-variant-info strong{font-size:13px;color:#234865}.promo-variant-info small{font-size:10px;color:#71869a}.promo-variant-row button{width:auto;min-width:72px;min-height:34px;margin:0;padding:7px 12px;font-size:11px}.promo-editor-vehicle{padding:10px 12px;border-radius:10px;background:#eaf2f8;color:#234865;font-size:12px}.promo-form h4{margin:16px 0 8px;color:#234865;font-size:13px}.promo-matrix-wrap{width:100%;overflow-x:auto;border:1px solid #d6e3ed;border-radius:11px;background:white}.promo-matrix{border-collapse:collapse;min-width:100%;font-size:11px}.promo-matrix th,.promo-matrix td{padding:7px;border-bottom:1px solid #e7eef4;border-right:1px solid #e7eef4;text-align:center;white-space:nowrap}.promo-matrix thead th{background:#eaf2f8;color:#234865;position:sticky;top:0}.promo-matrix tbody th{background:#f5f8fb;color:#234865}.promo-matrix-input{width:100px;min-height:36px;padding:7px;font-size:12px;text-align:right}
+
     .promo-form{margin:14px 0;padding:16px;border:1px solid rgba(164,190,211,.65);border-radius:17px;background:rgba(244,249,253,.92);text-align:left}
     .promo-form h3{margin:0 0 12px;color:#123d63;font-size:15px}
     .promo-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -2143,7 +2145,7 @@
       if (!vehicle || !bankName) return null;
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      return (promoInventoryData.promotions || []).find(promo => {
+      const matches = (promoInventoryData.promotions || []).filter(promo => {
         if (String(promo.status || "Active").toLowerCase() !== "active") return false;
         if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
         if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
@@ -2152,7 +2154,9 @@
         if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
         const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks : [];
         return banks.includes("ALL_BANKS") || banks.includes(bankName);
-      }) || null;
+      });
+      // A bank-specific offer takes precedence over the ALL BANKS fallback.
+      return matches.find(promo => !(promo.applicableBanks || []).includes("ALL_BANKS")) || matches[0] || null;
     }
 
     function updateQuotePreview() {
@@ -2861,7 +2865,7 @@
         downpaymentOptions: Array.isArray(data.downpaymentOptions) ? data.downpaymentOptions : ["20","25","30","35","40","45","50"]
       };
       const admin = isTeamRerAdmin();
-      $("addPromoBtn").classList.toggle("hidden",!admin);
+      $("addPromoBtn").classList.add("hidden");
       $("addStockBtn").classList.toggle("hidden",!admin);
       $("addBankBtn").classList.toggle("hidden",!admin);
       renderPromoCards();
@@ -2873,40 +2877,94 @@
     }
     function renderPromoCards() {
       const query = $("promoSearch").value.trim().toLowerCase();
-      const items = promoInventoryData.promotions.filter(p => [p.model,p.variant,p.description,p.status,p.applicableDownpayment,(p.applicableBanks||[]).join(" ")].join(" ").toLowerCase().includes(query));
-      const host = $("promoOffersList");
-      host.replaceChildren();
-      if (!items.length) {
-        host.innerHTML = `<div class="promo-empty">${promoInventoryData.promotions.length ? "No promotions match your search." : "No promotions added yet."}</div>`;
-        return;
-      }
-      items.forEach(p => {
-        const card = document.createElement("article");
-        card.className = "promo-card";
-        const status = p.status || "Active";
-        const promoFreebies = p.freebiesInclusions || p.freebies;
-        const bankNames = Array.isArray(p.applicableBanks) ? p.applicableBanks : [];
-        const bankScopeLabel = bankNames.includes("ALL_BANKS") ? "ALL BANKS" : bankNames.filter(x=>x!=="ALL_BANKS").join(", ");
-        const details = [
-          ["Downpayment Offer",p.downpaymentOffer],
-          ["Applicable Downpayment",p.applicableDownpayment ? p.applicableDownpayment+"%" : ""],
-          ["Partner Banks",bankScopeLabel],
-          ["Cash Discount",p.cashDiscount], ["Fuel Voucher",p.fuelVoucher],
-          ["Freebies / Inclusions",promoFreebies], ["Validity",`${promoDate(p.validFrom)} – ${promoDate(p.validUntil)}`]
-        ].filter(x => promoText(x[1]));
-        card.innerHTML = `<div class="promo-card-head"><div><h3>${promoEsc(p.model)}${p.variant ? " • "+promoEsc(p.variant) : ""}</h3><p class="promo-sub">Promotion</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>
-          ${p.description ? `<p class="promo-description">${promoEsc(p.description)}</p>` : ""}
-          <div class="promo-details">${details.map(d=>`<div class="promo-detail"><small>${promoEsc(d[0])}</small><strong>${promoEsc(d[1])}</strong></div>`).join("")}</div>`;
-        if (isTeamRerAdmin()) {
-          const actions=document.createElement("div"); actions.className="promo-card-actions";
-          const edit=document.createElement("button"); edit.type="button"; edit.className="secondary"; edit.textContent="Edit";
-          edit.addEventListener("click",()=>openPromoForm(p));
-          const toggle=document.createElement("button"); toggle.type="button"; toggle.textContent=String(status).toLowerCase()==="active"?"Deactivate":"Activate";
-          toggle.addEventListener("click",()=>savePromoRecord({...p,status:String(status).toLowerCase()==="active"?"Inactive":"Active"}));
-          actions.append(edit,toggle); card.appendChild(actions);
-        }
-        host.appendChild(card);
+      const allVariants = new Map();
+      quotationVehicles.forEach(v => {
+        if (!v.model || !v.variant) return;
+        if (!allVariants.has(v.model)) allVariants.set(v.model, new Set());
+        allVariants.get(v.model).add(v.variant);
       });
+      promoInventoryData.promotions.forEach(p => {
+        if (p.model && p.variant) {
+          if (!allVariants.has(p.model)) allVariants.set(p.model, new Set());
+          allVariants.get(p.model).add(p.variant);
+        }
+      });
+      const host = $("promoOffersList"); host.replaceChildren();
+      const models = [...allVariants.keys()].sort((a,b)=>a.localeCompare(b));
+      const filtered = models.map(model => ({model, variants:[...allVariants.get(model)].filter(variant => {
+        const records=promoInventoryData.promotions.filter(p=>p.model===model&&p.variant===variant);
+        return !query || `${model} ${variant} ${records.map(p=>[p.description,p.status,p.applicableDownpayment,(p.applicableBanks||[]).join(" ")].join(" ")).join(" ")}`.toLowerCase().includes(query);
+      })})).filter(x=>x.variants.length);
+      if (!filtered.length) { host.innerHTML='<div class="promo-empty">No vehicle variants match your search.</div>'; return; }
+      filtered.forEach(group => {
+        const section=document.createElement("section"); section.className="promo-model-group";
+        const details=document.createElement("details"); details.className="promo-model-accordion";
+        const summary=document.createElement("summary"); summary.innerHTML=`<span>${promoEsc(group.model)}</span><small>${group.variants.length} variant${group.variants.length===1?"":"s"}</small>`;
+        details.appendChild(summary);
+        const list=document.createElement("div"); list.className="promo-variant-list";
+        group.variants.sort((a,b)=>a.localeCompare(b)).forEach(variant=>{
+          const records=promoInventoryData.promotions.filter(p=>p.model===group.model&&p.variant===variant);
+          const active=records.filter(p=>String(p.status||"Active").toLowerCase()==="active").length;
+          const row=document.createElement("div"); row.className="promo-variant-row";
+          row.innerHTML=`<div class="promo-variant-info"><strong>${promoEsc(variant)}</strong><small>${active?`${active} active offer${active===1?"":"s"}`:"No active offers"}</small></div>`;
+          if(isTeamRerAdmin()) { const edit=document.createElement("button"); edit.type="button"; edit.className="secondary"; edit.textContent="Edit"; edit.addEventListener("click",()=>openVariantPromoEditor(group.model,variant)); row.appendChild(edit); }
+          list.appendChild(row);
+        });
+        details.appendChild(list); section.appendChild(details); host.appendChild(section);
+      });
+    }
+    function openVariantPromoEditor(model, variant) {
+      if(!isTeamRerAdmin()) return;
+      const records=promoInventoryData.promotions.filter(p=>p.model===model&&p.variant===variant);
+      const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>b.bankName).filter(Boolean);
+      const dps=promoInventoryData.downpaymentOptions;
+      const existing=(dp,bank)=>records.find(p=>String(p.applicableDownpayment)===String(dp)&&(Array.isArray(p.applicableBanks)&&p.applicableBanks.includes(bank)));
+      const meta=records.find(p=>String(p.status||"Active").toLowerCase()==="active")||records[0]||{};
+      const host=$("promoFormHost"); host.replaceChildren();
+      const form=document.createElement("form"); form.className="promo-form"; form.id="variantPromoEditor";
+      const bankHeaders=["ALL BANKS",...activeBanks];
+      let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b)}</th>`).join("")}</tr></thead><tbody>`;
+      dps.forEach(dp=>{matrix+=`<tr><th>${promoEsc(dp)}%</th>${bankHeaders.map(bank=>{const rec=existing(dp,bank==="ALL BANKS"?"ALL_BANKS":bank);const value=rec?.downpaymentOffer||"";return `<td><input class="promo-matrix-input" type="text" inputmode="decimal" data-dp="${promoEsc(dp)}" data-bank="${promoEsc(bank)}" value="${promoEsc(value)}" placeholder="—" aria-label="${promoEsc(dp)} percent ${promoEsc(bank)} offer"></td>`;}).join("")}</tr>`;});
+      matrix+=`</tbody></table></div>`;
+      form.innerHTML=`<h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
+        <h4>Financing Downpayment Offers</h4>${matrix}
+        <p class="promo-note">Enter an offer in the relevant DP and bank cell. Each bank has its own offer. Use ALL BANKS only when the same offer genuinely applies to every partner bank. Leave a cell blank when there is no offer for that combination.</p>
+        <h4>Other Variant Promotions</h4><div class="promo-form-grid">
+        ${promoField("Cash Discount","cashDiscount",meta.cashDiscount||"")}
+        ${promoField("Fuel Voucher","fuelVoucher",meta.fuelVoucher||"")}
+        ${promoField("Valid From","validFrom",meta.validFrom||"","date")}
+        ${promoField("Valid Until","validUntil",meta.validUntil||"","date")}
+        ${promoTextArea("Description","description",meta.description||"")}
+        ${promoTextArea("Freebies / Inclusions","freebies",meta.freebiesInclusions||meta.freebies||"")}
+        <div class="field"><label for="variantPromo_status">Status</label><select id="variantPromo_status" name="status"><option ${(!meta.status||meta.status==="Active")?"selected":""}>Active</option><option ${meta.status==="Inactive"?"selected":""}>Inactive</option></select></div>
+        </div><div class="promo-form-actions"><button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button></div>`;
+      form.addEventListener("submit",async e=>{
+        e.preventDefault(); const submit=form.querySelector('button[type="submit"]'); submit.disabled=true; submit.textContent="Saving offers…";
+        const shared=Object.fromEntries(new FormData(form).entries());
+        const desired=[];
+        form.querySelectorAll(".promo-matrix-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
+        const status=shared.status||"Active";
+        try {
+          for(const item of desired){
+            const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;
+            const old=existing(item.dp,bankKey);
+            const record={id:old?.id||"",model,variant,downpaymentOffer:item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:shared.cashDiscount||"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",status};
+            await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});
+          }
+          // Deactivate prior offers whose cells were cleared, rather than deleting history.
+          for(const old of records){
+            const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];
+            const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);
+            if(!stillPresent && String(old.status||"Active").toLowerCase()==="active"){
+              await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});
+            }
+          }
+          host.replaceChildren(); await submitRequest("promoInventoryGet");
+          setMessage($("promoModuleMessage"),"Variant promotions saved successfully.","success");
+        } catch(error){submit.disabled=false;submit.textContent="Save Variant Promotions";setMessage($("promoModuleMessage"),error.message,"error");}
+      });
+      host.appendChild(form); $("cancelVariantPromo").addEventListener("click",()=>host.replaceChildren());
+      form.scrollIntoView({behavior:"smooth",block:"start"});
     }
     function renderStockCards() {
       const query = $("stockSearch").value.trim().toLowerCase();
@@ -3077,7 +3135,7 @@
     $("promoSearch").addEventListener("input",renderPromoCards);
     $("stockSearch").addEventListener("input",renderStockCards);
     $("bankSearch").addEventListener("input",renderPartnerBankCards);
-    $("addPromoBtn").addEventListener("click",()=>openPromoForm());
+    $("addPromoBtn").addEventListener("click",()=>{});
     $("addStockBtn").addEventListener("click",()=>openStockForm());
     $("addBankBtn").addEventListener("click",()=>openBankForm());
     $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos & Availability...",()=>{
