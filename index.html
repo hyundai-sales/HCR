@@ -1617,27 +1617,7 @@
           <label for="worksheet">Select worksheet</label>
           <select id="worksheet"><option value="">Loading worksheets...</option></select>
         </div>
-        <div class="pdf-select-row">
-          <div class="field">
-            <label for="downpayment">Downpayment (%)</label>
-            <select id="downpayment" required>
-              <option value="">Select downpayment</option>
-              <option value="20">20%</option>
-              <option value="25">25%</option>
-              <option value="30">30%</option>
-              <option value="35">35%</option>
-              <option value="40">40%</option>
-              <option value="45">45%</option>
-              <option value="50">50%</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="priceListBank">Partner Bank</label>
-            <select id="priceListBank" required>
-              <option value="OTHER BANKS">OTHER BANKS</option>
-            </select>
-          </div>
-        </div>
+        <p class="app-caption">Price List PDFs use the fixed 20% downpayment and BDO promotional basis.</p>
         <div class="field hidden" id="consultantField">
           <label for="consultant">Sales consultant</label>
           <select id="consultant"><option value="">Select consultant</option></select>
@@ -2084,10 +2064,10 @@
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
-          $("roleNote").textContent = "Admin access: select the sales consultant for this PDF.";
+          $("roleNote").textContent = "Admin access: select the sales consultant. Price List uses 20% DP and BDO promotions.";
         } else {
           $("consultantField").classList.add("hidden");
-          $("roleNote").textContent = "Your registered TEAM RER name will be used as the sales consultant.";
+          $("roleNote").textContent = "Your registered TEAM RER name will be used. Price List uses 20% DP and BDO promotions.";
         }
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
@@ -3090,9 +3070,8 @@
       const bankHeaders=["ALL BANKS",...activeBanks];
       let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b)}</th>`).join("")}</tr></thead><tbody>`;
       dps.forEach(dp=>{matrix+=`<tr><th>${promoEsc(dp)}%</th>${bankHeaders.map(bank=>{const rec=existing(dp,bank==="ALL BANKS"?"ALL_BANKS":bank);const value=rec?.downpaymentOffer||"";return `<td><input class="promo-matrix-input" type="text" inputmode="decimal" data-dp="${promoEsc(dp)}" data-bank="${promoEsc(bank)}" value="${promoEsc(value)}" placeholder="—" aria-label="${promoEsc(dp)} percent ${promoEsc(bank)} offer"></td>`;}).join("")}</tr>`;});
-      // CASH is one global transaction offer; BANK PO remains independently configurable by bank.
-      const cashRecord=existing("CASH","ALL_BANKS");
-      matrix+=`<tr class="promo-cashpo-row"><th>CASH DISCOUNT</th><td class="promo-cash-discount-cell" colspan="${bankHeaders.length}"><input class="promo-matrix-input promo-cash-input" type="text" inputmode="decimal" data-bank="ALL BANKS" value="${promoEsc(cashRecord?.cashDiscount||"")}" placeholder="Enter global cash discount" aria-label="Global cash transaction discount"></td></tr>`;
+      // CASH and BANK PO are separate transaction discounts, each configurable by bank.
+      matrix+=`<tr class="promo-cashpo-row"><th>CASH DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("CASH",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-cash-input" type="text" inputmode="decimal" data-dp="CASH" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Cash transaction discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`<tr class="promo-cashpo-row"><th>BANK PO DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-bankpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`</tbody></table></div>`;
       const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
@@ -3100,7 +3079,7 @@
         <h3>${readOnly?"View Variant Promotions":"Edit Variant Promotions"}</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
         ${readOnly?"":`<div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>`}
         <h4>Financing Downpayment Offers</h4>${matrix}
-        <p class="promo-note">Bank-specific financing and Bank PO offers take priority over ALL BANKS. CASH is a separate global transaction discount. Copying a bank copies its financing DP and Bank PO offers only.</p>
+        <p class="promo-note">Bank-specific financing, CASH and Bank PO offers take priority over ALL BANKS. CASH and BANK PO are separate transaction discounts. Copying a bank copies its financing DP, CASH and Bank PO offers.</p>
         <div class="promo-form-grid">
         ${promoField("Fuel Voucher","fuelVoucher",meta.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",meta.validFrom||"","date")}
@@ -3116,7 +3095,7 @@
         form.querySelector("#copyBankPromoBtn").addEventListener("click",()=>{
         const from=form.querySelector("#promoCopySource").value,to=form.querySelector("#promoCopyTarget").value;
         if(!from||!to||from===to){setMessage($("promoModuleMessage"),"Choose two different banks to copy offers.","error");return;}
-        form.querySelectorAll(".promo-matrix-input:not(.promo-cash-input)").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
+        form.querySelectorAll(".promo-matrix-input:not(.promo-bankpo-input)").forEach(input=>{if(input.dataset.bank===to){const source=form.querySelector(`.promo-matrix-input:not(.promo-bankpo-input)[data-bank="${CSS.escape(from)}"][data-dp="${CSS.escape(input.dataset.dp||"")}"]`);if(source)input.value=source.value;}});
         const srcPo=form.querySelector(`.promo-bankpo-input[data-bank="${CSS.escape(from)}"]`),dstPo=form.querySelector(`.promo-bankpo-input[data-bank="${CSS.escape(to)}"]`);if(srcPo&&dstPo)dstPo.value=srcPo.value;
         setMessage($("promoModuleMessage"),`Copied ${from} offers into ${to}. Save to apply the changes.`,"success");
       });
@@ -3124,8 +3103,7 @@
         e.preventDefault(); const submit=form.querySelector('button[type="submit"]'); submit.disabled=true; submit.textContent="Saving offers…";
         const shared=Object.fromEntries(new FormData(form).entries());
         const desired=[];
-        form.querySelectorAll(".promo-matrix-input:not(.promo-cash-input):not(.promo-bankpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
-        form.querySelectorAll(".promo-cash-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"CASH",bank:"ALL BANKS",offer});});
+        form.querySelectorAll(".promo-matrix-input:not(.promo-bankpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
         form.querySelectorAll(".promo-bankpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
         const status=shared.status||"Active";
         const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";const record={id:old?.id||"",model,variant,downpaymentOffer:isDiscount?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:isDiscount?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
@@ -3564,14 +3542,8 @@
         return;
       }
 
-      const downpayment = $("downpayment").value;
-      if (!["20", "25", "30", "35", "40", "45", "50"].includes(downpayment)) {
-        setMessage($("resultMessage"), "Please select a downpayment percentage.", "error");
-        $("downpayment").focus();
-        return;
-      }
-
-      const bank = $("priceListBank").value || "OTHER BANKS";
+      const downpayment = "20";
+      const bank = "BDO";
       const isAdmin = authorizedUser && authorizedUser.role.toLowerCase() === "admin";
       const consultant = isAdmin ? $("consultant").value : "";
 
