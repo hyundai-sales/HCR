@@ -1017,7 +1017,48 @@
       opacity: .75;
       cursor: default;
     }
-</style>
+
+    /* iOS-inspired glass notifications for Credit Application */
+    .credit-toast {
+      position:fixed; z-index:100500; top:max(14px, env(safe-area-inset-top));
+      left:50%; transform:translateX(-50%) translateY(-14px);
+      width:min(calc(100% - 24px), 520px); max-height:min(72vh, 620px);
+      overflow:auto; padding:16px; border:1px solid rgba(255,255,255,.78);
+      border-radius:20px; background:rgba(255,255,255,.86);
+      color:#17324d; box-shadow:0 18px 55px rgba(10,35,60,.22);
+      backdrop-filter:blur(22px) saturate(1.45); -webkit-backdrop-filter:blur(22px) saturate(1.45);
+      opacity:0; pointer-events:none; visibility:hidden;
+      transition:opacity .22s ease, transform .22s ease, visibility .22s ease;
+      text-align:left;
+    }
+    .credit-toast.show { opacity:1; pointer-events:auto; visibility:visible; transform:translateX(-50%) translateY(0); }
+    .credit-toast-head { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+    .credit-toast-icon { display:grid; place-items:center; flex:0 0 34px; height:34px; border-radius:50%; font-size:18px; font-weight:800; }
+    .credit-toast.error .credit-toast-icon { background:#fee2e2; color:#b91c1c; }
+    .credit-toast.success .credit-toast-icon { background:#dcfce7; color:#15803d; }
+    .credit-toast-title { margin:0; font-size:15px; font-weight:800; color:#153a5c; }
+    .credit-toast-copy { margin:0 0 11px; color:#536b80; font-size:12px; line-height:1.45; }
+    .credit-toast-list { display:grid; gap:7px; margin:10px 0 2px; }
+    .credit-toast-field {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      width:100%; min-height:42px; padding:10px 12px; border:1px solid rgba(185,28,28,.13);
+      border-radius:12px; background:rgba(254,242,242,.82); color:#991b1b;
+      text-align:left; font-size:12px; font-weight:700; cursor:pointer;
+    }
+    .credit-toast-field:active { transform:scale(.99); background:#fee2e2; }
+    .credit-toast-actions { display:flex; gap:8px; margin-top:13px; }
+    .credit-toast-actions button { min-height:42px; margin:0; border-radius:12px; }
+    .credit-toast-download { flex:1; background:#003b70; color:#fff; }
+    .credit-toast-close { width:auto; padding:10px 14px; background:#e8eef5; color:#29465f; }
+    .credit-field.credit-invalid input, .credit-field.credit-invalid select,
+    .credit-field.credit-invalid textarea { border:2px solid #dc2626 !important; background:#fff7f7 !important; }
+    .credit-field.credit-invalid label { color:#b91c1c; }
+    @media(max-width:480px) {
+      .credit-toast { top:max(9px, env(safe-area-inset-top)); padding:14px; border-radius:17px; }
+      .credit-toast-title { font-size:14px; }
+    }
+
+  </style>
 </head>
 <body>
   <div class="seasonal-decor" aria-hidden="true"></div>
@@ -1352,7 +1393,33 @@
         else {
           if (action === "creditApplication" || action === "creditVariants") {
             setMessage($("creditMessage"), error, "error");
-            if (action === "creditApplication") $("generateCreditBtn").disabled = false;
+            if (action === "creditApplication") {
+              $("generateCreditBtn").disabled = false;
+              const toast = ensureCreditToast();
+              toast.className = "credit-toast error show";
+              toast.replaceChildren();
+              const head = document.createElement("div");
+              head.className = "credit-toast-head";
+              const icon = document.createElement("span");
+              icon.className = "credit-toast-icon";
+              icon.textContent = "!";
+              const title = document.createElement("h3");
+              title.className = "credit-toast-title";
+              title.textContent = "Unable to generate PDF";
+              head.append(icon, title);
+              const copy = document.createElement("p");
+              copy.className = "credit-toast-copy";
+              copy.textContent = error;
+              const close = document.createElement("button");
+              close.type = "button";
+              close.className = "credit-toast-close";
+              close.textContent = "Close";
+              close.addEventListener("click", hideCreditToast);
+              const actions = document.createElement("div");
+              actions.className = "credit-toast-actions";
+              actions.appendChild(close);
+              toast.append(head, copy, actions);
+            }
           } else {
             setMessage($("resultMessage"), error, "error");
             $("pdfFormFields").classList.remove("hidden");
@@ -1412,31 +1479,8 @@
         pendingCreditPdfUrl = URL.createObjectURL(blob);
 
         clearCreditForm();
-        setMessage($("creditMessage"), "Application PDF generated successfully. Your form has been cleared. Tap below to download your PDF.", "success");
-
-        const downloadButton = document.createElement("button");
-        downloadButton.type = "button";
-        downloadButton.className = "credit-download-pdf-btn";
-        downloadButton.textContent = "⬇ Download PDF";
-        downloadButton.addEventListener("click", () => {
-          if (!pendingCreditPdfUrl) return;
-          const downloadLink = document.createElement("a");
-          downloadLink.href = pendingCreditPdfUrl;
-          downloadLink.download = result.fileName || "Hyundai-Credit-Application.pdf";
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          downloadLink.remove();
-          downloadButton.textContent = "PDF Downloaded";
-          downloadButton.disabled = true;
-          setTimeout(() => {
-            if (pendingCreditPdfUrl) {
-              URL.revokeObjectURL(pendingCreditPdfUrl);
-              pendingCreditPdfUrl = null;
-            }
-          }, 30000);
-        });
-        $("creditMessage").appendChild(document.createElement("br"));
-        $("creditMessage").appendChild(downloadButton);
+        setMessage($("creditMessage"), "Application PDF generated successfully. Your form has been cleared.", "success");
+        showCreditSuccessNotification(pendingCreditPdfUrl, result.fileName);
         $("generateCreditBtn").disabled = false;
         return;
       }
@@ -1890,15 +1934,152 @@
     }));
     $("backToMenuFromCredit").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{ $("creditPage").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("appNav").classList.remove("hidden"); }));
     $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
+
+    function ensureCreditToast() {
+      let toast = $("creditToast");
+      if (toast) return toast;
+      toast = document.createElement("section");
+      toast.id = "creditToast";
+      toast.className = "credit-toast";
+      toast.setAttribute("role", "alert");
+      toast.setAttribute("aria-live", "assertive");
+      document.body.appendChild(toast);
+      return toast;
+    }
+
+    function hideCreditToast() {
+      const toast = $("creditToast");
+      if (toast) toast.classList.remove("show");
+      document.querySelectorAll(".credit-field.credit-invalid").forEach(el => el.classList.remove("credit-invalid"));
+    }
+
+    function showCreditFieldErrors(items, intro) {
+      const toast = ensureCreditToast();
+      toast.className = "credit-toast error show";
+      toast.replaceChildren();
+
+      const head = document.createElement("div");
+      head.className = "credit-toast-head";
+      const icon = document.createElement("span");
+      icon.className = "credit-toast-icon";
+      icon.textContent = "!";
+      const title = document.createElement("h3");
+      title.className = "credit-toast-title";
+      title.textContent = "Required information missing";
+      head.append(icon, title);
+      toast.appendChild(head);
+
+      const copy = document.createElement("p");
+      copy.className = "credit-toast-copy";
+      copy.textContent = intro || "Tap any item below to go directly to the field that needs your attention.";
+      toast.appendChild(copy);
+
+      const list = document.createElement("div");
+      list.className = "credit-toast-list";
+      items.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "credit-toast-field";
+        const label = document.createElement("span");
+        label.textContent = item.label;
+        const arrow = document.createElement("span");
+        arrow.textContent = "Go to field  ›";
+        button.append(label, arrow);
+        button.addEventListener("click", () => {
+          const field = item.selector
+            ? document.querySelector(item.selector)
+            : document.querySelector('#creditFormFields [data-cell="' + CSS.escape(item.cell) + '"]');
+          if (!field) return;
+          hideCreditToast();
+          const wrapper = field.closest(".credit-field");
+          if (wrapper) {
+            wrapper.classList.add("credit-invalid");
+            window.setTimeout(() => wrapper.classList.remove("credit-invalid"), 4500);
+          }
+          field.scrollIntoView({ behavior:"smooth", block:"center" });
+          window.setTimeout(() => {
+            field.focus({ preventScroll:true });
+            if (typeof field.select === "function" && field.tagName !== "SELECT") field.select();
+          }, 350);
+        });
+        list.appendChild(button);
+      });
+      toast.appendChild(list);
+
+      const actions = document.createElement("div");
+      actions.className = "credit-toast-actions";
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "credit-toast-close";
+      close.textContent = "Close";
+      close.addEventListener("click", hideCreditToast);
+      actions.appendChild(close);
+      toast.appendChild(actions);
+    }
+
+    function showCreditSuccessNotification(downloadUrl, fileName) {
+      const toast = ensureCreditToast();
+      toast.className = "credit-toast success show";
+      toast.replaceChildren();
+
+      const head = document.createElement("div");
+      head.className = "credit-toast-head";
+      const icon = document.createElement("span");
+      icon.className = "credit-toast-icon";
+      icon.textContent = "✓";
+      const title = document.createElement("h3");
+      title.className = "credit-toast-title";
+      title.textContent = "PDF generated successfully";
+      head.append(icon, title);
+      toast.appendChild(head);
+
+      const copy = document.createElement("p");
+      copy.className = "credit-toast-copy";
+      copy.textContent = "Your credit application PDF is ready. Download it using the button below.";
+      toast.appendChild(copy);
+
+      const actions = document.createElement("div");
+      actions.className = "credit-toast-actions";
+      const download = document.createElement("button");
+      download.type = "button";
+      download.className = "credit-toast-download";
+      download.textContent = "↓  Download PDF";
+      download.addEventListener("click", () => {
+        if (!downloadUrl) return;
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = fileName || "Hyundai-Credit-Application.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        download.textContent = "PDF download started";
+        download.disabled = true;
+      });
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "credit-toast-close";
+      close.textContent = "Close";
+      close.addEventListener("click", hideCreditToast);
+      actions.append(download, close);
+      toast.appendChild(actions);
+    }
+
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
-      const required=["E25:H25","L25:P25","T29:W29","E14:I14"];
-      const missing=required.filter(key=>!String(data.values[key]||"").trim());
-      if (!data.vehicleVariant) missing.push("Vehicle Variant");
-      if(missing.length){setMessage($("creditMessage"),"Please complete the borrower name, mobile number, vehicle model, and variant.","error");return;}
+      const requiredFields = [
+        ["E25:H25","Borrower's Last Name"],
+        ["L25:P25","Borrower's First Name"],
+        ["T29:W29","Borrower's Mobile Number"],
+        ["E14:I14","Vehicle Model"]
+      ];
+      const missingItems = requiredFields
+        .filter(([cell]) => !String(data.values[cell] || "").trim())
+        .map(([cell,label]) => ({cell,label}));
+      if (!data.vehicleVariant) {
+        missingItems.push({selector:'#creditFormFields [data-vehicle-variant="true"]',label:"Vehicle Variant"});
+      }
 
-      // If any co-maker information is entered, require every co-maker detail,
-      // including employment information and monthly income. N/A remains optional.
+      // Unless N/A is explicitly selected, all co-maker details are required.
       const coMakerRequired = [
         ["E33:H33","Co-maker Last Name"],
         ["L33:P33","Co-maker First Name"],
@@ -1913,16 +2094,21 @@
         ["G61:W61","Co-maker Company / Business Address"],
         ["T73:W73","Spouse / Co-maker Monthly Income"]
       ];
-      const hasCoMakerInfo = coMakerRequired.some(([cell]) => String(data.values[cell] || "").trim() !== "");
-      if (hasCoMakerInfo && !data.spouseNa) {
-        const missingCoMaker = coMakerRequired
+      if (!data.spouseNa) {
+        coMakerRequired
           .filter(([cell]) => !String(data.values[cell] || "").trim())
-          .map(([,label]) => label);
-        if (missingCoMaker.length) {
-          setMessage($("creditMessage"),"Complete all co-maker details before generating the PDF. Missing: " + missingCoMaker.join(", ") + ".","error");
-          return;
-        }
+          .forEach(([cell,label]) => missingItems.push({cell,label}));
       }
+
+      if (missingItems.length) {
+        showCreditFieldErrors(
+          missingItems,
+          "Complete the required fields. Select any item to jump straight to it."
+        );
+        $("generateCreditBtn").disabled = false;
+        return;
+      }
+      hideCreditToast();
 
       $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
       try { await submitRequest("creditApplication",{applicationData:data}); }
