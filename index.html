@@ -1018,20 +1018,48 @@
       cursor: default;
     }
 
-    /* iOS-inspired glass notifications for Credit Application */
+    /* Enhanced iOS Liquid Glass modal notifications for Credit Application */
+    .credit-toast-backdrop {
+      position:fixed; inset:0; z-index:100499;
+      background:rgba(7,22,40,.38);
+      backdrop-filter:blur(20px) saturate(1.55);
+      -webkit-backdrop-filter:blur(20px) saturate(1.55);
+      opacity:0; visibility:hidden; pointer-events:none;
+      transition:opacity .28s ease, visibility .28s ease;
+    }
+    .credit-toast-backdrop.show { opacity:1; visibility:visible; pointer-events:auto; }
     .credit-toast {
-      position:fixed; z-index:100500; top:max(14px, env(safe-area-inset-top));
-      left:50%; transform:translateX(-50%) translateY(-14px);
-      width:min(calc(100% - 24px), 520px); max-height:min(72vh, 620px);
-      overflow:auto; padding:16px; border:1px solid rgba(255,255,255,.78);
-      border-radius:20px; background:rgba(255,255,255,.86);
-      color:#17324d; box-shadow:0 18px 55px rgba(10,35,60,.22);
-      backdrop-filter:blur(22px) saturate(1.45); -webkit-backdrop-filter:blur(22px) saturate(1.45);
+      position:fixed; z-index:100500; top:50%; left:50%;
+      transform:translate(-50%,-46%) scale(.965);
+      width:min(calc(100% - 28px), 500px); max-height:min(78vh, 650px);
+      overflow:auto; padding:22px;
+      border:1px solid rgba(255,255,255,.82);
+      border-top-color:rgba(255,255,255,.98);
+      border-left-color:rgba(255,255,255,.9);
+      border-radius:30px;
+      background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(225,240,255,.48) 42%,rgba(255,255,255,.62) 100%);
+      color:#17324d;
+      box-shadow:0 32px 100px rgba(3,18,36,.38), 0 8px 28px rgba(255,255,255,.16), inset 0 2px 0 rgba(255,255,255,.96), inset 0 -2px 0 rgba(255,255,255,.24);
+      backdrop-filter:blur(48px) saturate(2.0);
+      -webkit-backdrop-filter:blur(48px) saturate(2.0);
       opacity:0; pointer-events:none; visibility:hidden;
-      transition:opacity .22s ease, transform .22s ease, visibility .22s ease;
+      transition:opacity .28s ease, transform .28s cubic-bezier(.2,.8,.2,1), visibility .28s ease;
       text-align:left;
     }
-    .credit-toast.show { opacity:1; pointer-events:auto; visibility:visible; transform:translateX(-50%) translateY(0); }
+    .credit-toast.show { opacity:1; pointer-events:auto; visibility:visible; transform:translate(-50%,-50%) scale(1); }
+    .credit-toast::before {
+      content:""; position:absolute; inset:1px 1px auto; height:52%;
+      border-radius:29px 29px 52% 52%;
+      background:linear-gradient(118deg,rgba(255,255,255,.78),rgba(255,255,255,.12) 52%,rgba(255,255,255,.34));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+      pointer-events:none;
+    }
+    .credit-toast::after {
+      content:""; position:absolute; inset:0; border-radius:inherit;
+      background:radial-gradient(ellipse at 8% 0%,rgba(255,255,255,.42),transparent 48%);
+      pointer-events:none;
+    }
+    .credit-toast > * { position:relative; z-index:1; }
     .credit-toast-head { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
     .credit-toast-icon { display:grid; place-items:center; flex:0 0 34px; height:34px; border-radius:50%; font-size:18px; font-weight:800; }
     .credit-toast.error .credit-toast-icon { background:#fee2e2; color:#b91c1c; }
@@ -1054,7 +1082,7 @@
     .credit-field.credit-invalid textarea { border:2px solid #dc2626 !important; background:#fff7f7 !important; }
     .credit-field.credit-invalid label { color:#b91c1c; }
     @media(max-width:480px) {
-      .credit-toast { top:max(9px, env(safe-area-inset-top)); padding:14px; border-radius:17px; }
+      .credit-toast { width:calc(100% - 28px); max-height:82vh; padding:17px; border-radius:24px; }
       .credit-toast-title { font-size:14px; }
     }
 
@@ -1936,12 +1964,22 @@
     $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
 
     function ensureCreditToast() {
+      let backdrop = $("creditToastBackdrop");
+      if (!backdrop) {
+        backdrop = document.createElement("div");
+        backdrop.id = "creditToastBackdrop";
+        backdrop.className = "credit-toast-backdrop";
+        backdrop.setAttribute("aria-hidden", "true");
+        // Deliberately no outside-click or backdrop-click dismissal.
+        document.body.appendChild(backdrop);
+      }
       let toast = $("creditToast");
       if (toast) return toast;
       toast = document.createElement("section");
       toast.id = "creditToast";
       toast.className = "credit-toast";
-      toast.setAttribute("role", "alert");
+      toast.setAttribute("role", "alertdialog");
+      toast.setAttribute("aria-modal", "true");
       toast.setAttribute("aria-live", "assertive");
       document.body.appendChild(toast);
       return toast;
@@ -1949,13 +1987,16 @@
 
     function hideCreditToast() {
       const toast = $("creditToast");
+      const backdrop = $("creditToastBackdrop");
       if (toast) toast.classList.remove("show");
+      if (backdrop) backdrop.classList.remove("show");
       document.querySelectorAll(".credit-field.credit-invalid").forEach(el => el.classList.remove("credit-invalid"));
     }
 
     function showCreditFieldErrors(items, intro) {
       const toast = ensureCreditToast();
       toast.className = "credit-toast error show";
+      $("creditToastBackdrop")?.classList.add("show");
       toast.replaceChildren();
 
       const head = document.createElement("div");
@@ -2020,6 +2061,7 @@
     function showCreditSuccessNotification(downloadUrl, fileName) {
       const toast = ensureCreditToast();
       toast.className = "credit-toast success show";
+      $("creditToastBackdrop")?.classList.add("show");
       toast.replaceChildren();
 
       const head = document.createElement("div");
