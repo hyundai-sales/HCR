@@ -2832,10 +2832,11 @@
         const status = p.status || "Active";
         const promoFreebies = p.freebiesInclusions || p.freebies;
         const bankNames = Array.isArray(p.applicableBanks) ? p.applicableBanks : [];
+        const bankScopeLabel = bankNames.includes("ALL_BANKS") ? "ALL BANKS" : bankNames.filter(x=>x!=="ALL_BANKS").join(", ");
         const details = [
           ["Downpayment Offer",p.downpaymentOffer],
           ["Applicable Downpayment",p.applicableDownpayment ? p.applicableDownpayment+"%" : ""],
-          ["Partner Banks",bankNames.join(", ")],
+          ["Partner Banks",bankScopeLabel],
           ["Cash Discount",p.cashDiscount], ["Fuel Voucher",p.fuelVoucher],
           ["Freebies / Inclusions",promoFreebies], ["Validity",`${promoDate(p.validFrom)} – ${promoDate(p.validUntil)}`]
         ].filter(x => promoText(x[1]));
@@ -2910,14 +2911,17 @@
       const variantOptions=variants.map(item=>`<option value="${promoEsc(item)}" ${item===(record.variant||"")?"selected":""}>${promoEsc(item)}</option>`).join("");
       const dpOptions=promoInventoryData.downpaymentOptions.map(item=>`<option value="${promoEsc(item)}" ${String(item)===String(record.applicableDownpayment||"")?"selected":""}>${promoEsc(item)}%</option>`).join("");
       const activeBanks=promoInventoryData.partnerBanks.filter(b=>String(b.status||"Active").toLowerCase()==="active");
-      const selectedBanks=Array.isArray(record.applicableBanks)?record.applicableBanks:[];
-      const bankOptions=activeBanks.map(bank=>`<label class="promo-bank-option"><input type="checkbox" name="applicableBank" value="${promoEsc(bank.bankName)}" ${selectedBanks.includes(bank.bankName)?"checked":""}><span>${promoEsc(bank.bankName)}</span></label>`).join("");
+      const savedBanks=Array.isArray(record.applicableBanks)?record.applicableBanks:[];
+      const bankScope=savedBanks.includes("ALL_BANKS")?"ALL_BANKS":"SELECTED_BANK";
+      const selectedBank=savedBanks.find(name=>name!=="ALL_BANKS")||"";
+      const bankOptions=activeBanks.map(bank=>`<option value="${promoEsc(bank.bankName)}" ${selectedBank===bank.bankName?"selected":""}>${promoEsc(bank.bankName)}</option>`).join("");
       form.innerHTML=`<h3>${record.id||record.recordId?"Edit Promotion":"Add Promotion"}</h3><div class="promo-form-grid">
         <div class="field"><label for="promoEdit_model">Vehicle Model</label><select id="promoEdit_model" name="model" required><option value="">Choose vehicle model</option>${modelOptions}</select></div>
         <div class="field"><label for="promoEdit_variant">Variant</label><select id="promoEdit_variant" name="variant" required><option value="">Choose variant</option>${variantOptions}</select></div>
         ${promoField("Downpayment Offer","downpaymentOffer",record.downpaymentOffer||"")}
         <div class="field"><label for="promoEdit_applicableDownpayment">Applicable Downpayment (%)</label><select id="promoEdit_applicableDownpayment" name="applicableDownpayment" required><option value="">Select DP percentage</option>${dpOptions}</select></div>
-        <div class="field full"><label>Applicable Partner Banks</label><div class="promo-bank-options">${bankOptions||'<span class="promo-note">No active partner banks yet. Add a bank in the Partner Banks tab first.</span>'}</div></div>
+        <div class="field"><label for="promoEdit_bankScope">Partner Bank Coverage</label><select id="promoEdit_bankScope" name="bankScope"><option value="ALL_BANKS" ${bankScope==="ALL_BANKS"?"selected":""}>ALL BANKS</option><option value="SELECTED_BANK" ${bankScope==="SELECTED_BANK"?"selected":""}>Selected Banks Only</option></select></div>
+        <div class="field" id="promoSelectedBankField" style="${bankScope==="SELECTED_BANK"?"":"display:none;"}"><label for="promoEdit_applicableBank">Select Partner Bank</label><select id="promoEdit_applicableBank" name="applicableBank"><option value="">Choose partner bank</option>${bankOptions}</select>${activeBanks.length?"":'<small class="promo-note">No active partner banks yet. Add a bank in the Partner Banks tab first.</small>'}</div>
         ${promoField("Cash Discount","cashDiscount",record.cashDiscount||"")}
         ${promoField("Fuel Voucher","fuelVoucher",record.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",record.validFrom||"","date")}
@@ -2925,7 +2929,18 @@
         <div class="field"><label for="promoEdit_status">Status</label><select id="promoEdit_status" name="status"><option ${(!record.status||record.status==="Active")?"selected":""}>Active</option><option ${record.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         ${promoTextArea("Description","description",record.description||"")}
         ${promoTextArea("Freebies / Inclusions","freebies",record.freebiesInclusions||record.freebies||"")}
-        </div><p class="promo-note">Choose the DP percentage and at least one active partner bank this promotion applies to. Only admins can manage promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
+        </div><p class="promo-note">Choose ALL BANKS to apply this promotion with any partner bank, or Selected Banks Only to restrict it to one active partner bank. Only admins can manage promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
+      const bankScopeSelect=form.elements.bankScope;
+      const selectedBankField=$("promoSelectedBankField");
+      const selectedBankSelect=form.elements.applicableBank;
+      function syncPromoBankScope(){
+        const selectedOnly=bankScopeSelect.value==="SELECTED_BANK";
+        selectedBankField.style.display=selectedOnly?"":"none";
+        selectedBankSelect.required=selectedOnly;
+        if(!selectedOnly) selectedBankSelect.value="";
+      }
+      bankScopeSelect.addEventListener("change",syncPromoBankScope);
+      syncPromoBankScope();
       form.elements.model.addEventListener("change",()=>{
         const model=form.elements.model.value;
         const choices=[...new Set(quotationVehicles.filter(v=>v.model===model).map(v=>v.variant).filter(Boolean))].sort();
@@ -2934,7 +2949,9 @@
       form.addEventListener("submit",e=>{
         e.preventDefault(); const payload=Object.fromEntries(new FormData(form).entries());
         payload.id=record.id||record.recordId||"";
-        payload.applicableBanks=[...form.querySelectorAll('input[name="applicableBank"]:checked')].map(input=>input.value);
+        payload.applicableBanks=payload.bankScope==="ALL_BANKS"?["ALL_BANKS"]:(payload.applicableBank?[payload.applicableBank]:[]);
+        delete payload.bankScope;
+        delete payload.applicableBank;
         payload.freebiesInclusions=payload.freebies;
         savePromoRecord(payload);
       });
@@ -2983,7 +3000,8 @@
       if(!isTeamRerAdmin()) return;
       if(!promoText(record.model)||!promoText(record.variant)){setMessage($("promoModuleMessage"),"Please select a vehicle model and variant.","error");return;}
       if(!promoText(record.applicableDownpayment)){setMessage($("promoModuleMessage"),"Please select the downpayment percentage this promotion applies to.","error");return;}
-      if(!Array.isArray(record.applicableBanks)||!record.applicableBanks.length){setMessage($("promoModuleMessage"),"Please select at least one partner bank for this promotion.","error");return;}
+      if(!Array.isArray(record.applicableBanks)||!record.applicableBanks.length){setMessage($("promoModuleMessage"),"Choose ALL BANKS or select one active partner bank.","error");return;}
+      if(record.applicableBanks.length>1){record.applicableBanks=[record.applicableBanks[0]];}
       try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})}); }
       catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
     }
