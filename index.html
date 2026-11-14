@@ -1679,6 +1679,10 @@
               <input id="quoteValidity" type="number" min="1" max="90" value="7">
             </div>
             <div class="field">
+              <label for="quoteTpl">TPL</label>
+              <div class="credit-choice"><label><input id="quoteTpl" type="checkbox" value="true"> Include TPL (₱1,700)</label></div>
+            </div>
+            <div class="field">
               <label for="quoteInsurance">Insurance</label>
               <select id="quoteInsurance"><option value="Included">Included</option><option value="Not included">Not included</option></select>
             </div>
@@ -2227,14 +2231,13 @@
       const promoDiscountValue = discountPromo ? Number(String(discountPromo.cashDiscount || "").replace(/[^0-9.]/g,"")) : NaN;
       const hasPromoDiscount = !!discountPromo && Number.isFinite(promoDiscountValue) && promoDiscountValue >= 0;
       const discount = (bankPo || quoteType === "cash") ? (hasPromoDiscount ? promoDiscountValue : (Number(vehicle.discount) || 0)) : 0;
-      const netPrice = srp - discount;
+      const tplIncluded = $("quoteTpl").checked;
+      const netPrice = srp - discount + (tplIncluded ? 1700 : 0);
       const dpPercent = Number($("quoteDownpayment").value);
       const dpRate = dpPercent / 100;
       const matchingPromotion = financing ? getMatchingQuotePromotion(vehicle, String(dpPercent), selectedBank) : null;
       const promoOfferValue = matchingPromotion ? Number(String(matchingPromotion.downpaymentOffer || "").replace(/[^0-9.]/g,"")) : NaN;
       const hasPromoDownpayment = !!matchingPromotion && Number.isFinite(promoOfferValue) && promoOfferValue >= 0;
-      const appliedPromoForExtras = financing ? matchingPromotion : (hasPromoDiscount ? discountPromo : null);
-      const tplIncluded = !!appliedPromoForExtras && (String(appliedPromoForExtras.tplIncluded||"").toLowerCase()==="true" || String(appliedPromoForExtras.tplIncluded||"")==="1");
       // Price List Downpayment entries are applicable only to the 20% DP quotation.
       const usePriceListDownpayment = Math.abs(dpRate - 0.20) < 0.000001;
       const hasDpOverride = usePriceListDownpayment && vehicle.hasDownpaymentOverride === true &&
@@ -2252,6 +2255,7 @@
       if (!financing) {
         rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
         if (hasPromoDiscount) rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO" : "Cash"} Promotion</span><strong>Applied</strong></div>`);
+        if (tplIncluded) rows.push(`<div class="quote-line"><span>TPL</span><strong>${money(1700)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>${bankPo ? "NET BANK PO PRICE" : "NET CASH PRICE"}</span><span>${money(netPrice)}</span></div>`);
       } else {
         const isZeroDpPromo = !hasPromoDownpayment && usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
@@ -2266,7 +2270,7 @@
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
         terms.forEach(t => { const monthly = Math.ceil((balance * t.factor) / t.months); rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`); });
       }
-      if (tplIncluded) {
+      if (financing && tplIncluded) {
         rows.push(`<div class="quote-line"><span>TPL</span><strong>${money(1700)}</strong></div>`);
       }
       if (financing) {
@@ -2994,7 +2998,6 @@
       matrix+=`<tr class="promo-cashpo-row"><th>CASH DISCOUNT</th><td class="promo-cash-discount-cell" colspan="${bankHeaders.length}"><input class="promo-matrix-input promo-cash-input" type="text" inputmode="decimal" data-bank="ALL BANKS" value="${promoEsc(cashRecord?.cashDiscount||"")}" placeholder="Enter global cash discount" aria-label="Global cash transaction discount"></td></tr>`;
       matrix+=`<tr class="promo-cashpo-row"><th>BANK PO DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-bankpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`</tbody></table></div>`;
-      const tplChecked=records.some(r=>String(r.tplIncluded||"").toLowerCase()==="true"||String(r.tplIncluded||"")==="1");
       const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
       form.innerHTML=`<div class="promo-hcr-top"><span>HCR MONTHLY PROMOTIONS</span><small>HYUNDAI CAINTA</small></div>
         <h3>Edit Variant Promotions</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
@@ -3007,7 +3010,6 @@
         ${promoField("Valid Until","validUntil",meta.validUntil||"","date")}
         ${promoTextArea("Description","description",meta.description||"")}
         ${promoTextArea("Freebies / Inclusions","freebies",meta.freebiesInclusions||meta.freebies||"")}
-        <div class="field"><label><input type="checkbox" id="variantPromo_tpl" name="tplIncluded" value="true" ${tplChecked?"checked":""} style="width:auto;min-height:0;margin-right:8px">Includes TPL (₱1,700)</label></div>
         <div class="field"><label for="variantPromo_status">Status</label><select id="variantPromo_status" name="status"><option ${(!meta.status||meta.status==="Active")?"selected":""}>Active</option><option ${meta.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         </div><div class="promo-form-actions"><button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button></div>
         <div class="promo-hcr-bottom"><img src="https://cdn.simpleicons.org/hyundai/79513b" alt="Hyundai" class="promo-hyundai-logo"><strong>HYUNDAI</strong><small>TEAM RER • HYUNDAI CAINTA</small></div>`;
@@ -3022,12 +3024,11 @@
         e.preventDefault(); const submit=form.querySelector('button[type="submit"]'); submit.disabled=true; submit.textContent="Saving offers…";
         const shared=Object.fromEntries(new FormData(form).entries());
         const desired=[];
-        form.querySelectorAll(".promo-matrix-input:not(.promo-cashpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
+        form.querySelectorAll(".promo-matrix-input:not(.promo-cash-input):not(.promo-bankpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
         form.querySelectorAll(".promo-cash-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"CASH",bank:"ALL BANKS",offer});});
         form.querySelectorAll(".promo-bankpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
-        const status=shared.status||"Active", tplIncluded=form.querySelector("#variantPromo_tpl").checked;
-        if(tplIncluded && !desired.length) desired.push({dp:"CASH",bank:"ALL BANKS",offer:""});
-        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";const record={id:old?.id||"",model,variant,downpaymentOffer:isDiscount?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:isDiscount?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",tplIncluded,status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
+        const status=shared.status||"Active";
+        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";const record={id:old?.id||"",model,variant,downpaymentOffer:isDiscount?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:isDiscount?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
         try {
           for(const item of desired) await saveRecord(item);
           for(const old of records){const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);if(!stillPresent&&String(old.status||"Active").toLowerCase()==="active")await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});}
@@ -3257,7 +3258,7 @@
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
-    ["quoteVariant","quoteType","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    ["quoteVariant","quoteType","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
     function closeQuotePreview() {
