@@ -2197,6 +2197,13 @@
       return banks.includes("ALL_BANKS") || banks.includes(String(bankName || "").trim().toUpperCase());
     }
 
+    function parseQuotePromoAmount(value) {
+      const raw = String(value ?? "").trim().toUpperCase();
+      if (["ZERO", "ZERO DP", "0", "₱0", "₱0.00"].includes(raw)) return 0;
+      const amount = Number(raw.replace(/[^0-9.]/g, ""));
+      return Number.isFinite(amount) && raw !== "" ? amount : NaN;
+    }
+
     function getMatchingQuotePromotion(vehicle, dpPercent, bankName) {
       if (!vehicle || !bankName) return null;
       const today = new Date();
@@ -2270,7 +2277,7 @@
       const dpPercent = Number($("quoteDownpayment").value);
       const dpRate = dpPercent / 100;
       const matchingPromotion = financing ? getMatchingQuotePromotion(vehicle, String(dpPercent), selectedBank) : null;
-      const promoOfferValue = matchingPromotion ? Number(String(matchingPromotion.downpaymentOffer || "").replace(/[^0-9.]/g,"")) : NaN;
+      const promoOfferValue = matchingPromotion ? parseQuotePromoAmount(matchingPromotion.downpaymentOffer) : NaN;
       const hasPromoDownpayment = !!matchingPromotion && Number.isFinite(promoOfferValue) && promoOfferValue >= 0;
       // Price List Downpayment entries are applicable only to the 20% DP quotation.
       const usePriceListDownpayment = Math.abs(dpRate - 0.20) < 0.000001;
@@ -2295,7 +2302,7 @@
         const isZeroDpPromo = !hasPromoDownpayment && usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
         const standardDpAmount = srp * dpRate;
         const isSpecialDownpayment = hasPromoDownpayment || isZeroDpPromo || dpAmount < standardDpAmount - 0.01;
-        const dpDisplay = isZeroDpPromo ? "ZERO" : money2(dpAmount);
+        const dpDisplay = (isZeroDpPromo || (hasPromoDownpayment && promoOfferValue === 0)) ? "ZERO" : money2(dpAmount);
         const dpClass = isSpecialDownpayment ? "quote-dp-adjusted" : "";
         rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong class="${dpClass}">${dpDisplay}</strong></div>`);
         if (hasPromoDownpayment) rows.push(`<div class="quote-line"><span>Promotional Downpayment Offer</span><strong>Applied</strong></div>`);
