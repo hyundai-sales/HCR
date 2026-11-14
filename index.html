@@ -1591,6 +1591,11 @@
           el.id = "credit_" + cell.replace(/[^A-Z0-9]/gi,"_"); el.dataset.cell = cell;
           if (type === "select") { const blank=document.createElement("option"); blank.value=""; blank.textContent="Select"; el.appendChild(blank); (options || []).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=cell==="N16"?v+"%":v;el.appendChild(o);}); }
           else if (type !== "textarea") el.type = type;
+          if (cell === "E16") {
+            el.readOnly = true;
+            el.placeholder = "Auto-filled from selected vehicle variant";
+            el.setAttribute("aria-readonly", "true");
+          }
           if (cell === "T71:W71" || cell === "T73:W73") el.placeholder = "Monthly amount (PHP)";
           wrap.appendChild(el); grid.appendChild(wrap);
         });
@@ -1801,7 +1806,8 @@
       const modelSelect = root.querySelector('[data-cell="E14:I14"]');
       const variantSelect = root.querySelector('[data-vehicle-variant="true"]');
       const colorSelect = root.querySelector('[data-cell="K14"]');
-      if (!modelSelect || !variantSelect || !colorSelect) return;
+      const vehicleTypeInput = root.querySelector('[data-cell="E16"]');
+      if (!modelSelect || !variantSelect || !colorSelect || !vehicleTypeInput) return;
 
       const match = quotationVehicles.find(vehicle =>
         vehicle.model === modelSelect.value && vehicle.variant === variantSelect.value
@@ -1810,6 +1816,7 @@
       const selectedColor = colorSelect.value;
       fillSelect(colorSelect, colors, colors.length ? "Choose color" : "Select a variant first");
       if (colors.includes(selectedColor)) colorSelect.value = selectedColor;
+      vehicleTypeInput.value = match && match.vehicleType ? String(match.vehicleType).trim() : "";
     }
 
     function updateCreditPriceFields() {
