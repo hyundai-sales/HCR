@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#003b70">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TEAM RER">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/team-rer-192.png">
+  <link rel="apple-touch-icon" href="./icons/team-rer-192.png">
   <title>TEAM RER | Hyundai Sales Tools</title>
 
   <style>
@@ -29,6 +36,11 @@
     }
 
     * { box-sizing: border-box; }
+    @media (display-mode: standalone), (display-mode: fullscreen) {
+      html { min-height: 100%; }
+      body { min-height: 100vh; min-height: 100dvh; padding-top: max(12px, env(safe-area-inset-top)); padding-right: max(12px, env(safe-area-inset-right)); padding-bottom: max(12px, env(safe-area-inset-bottom)); padding-left: max(12px, env(safe-area-inset-left)); }
+      .wrap { min-height: calc(100vh - 24px); min-height: calc(100dvh - 24px); }
+    }
     body, button, input, select, textarea {
       font-family: "Hyundai Sans Head KR", Arial, sans-serif;
     }
@@ -3643,6 +3655,16 @@
         showLoginError("Unable to restore your session: " + error.message);
       });
     });
+  </script>
+  <script>
+    // TEAM RER PWA: scoped to the GitHub Pages /HCR/ app path.
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(error => {
+          console.warn('TEAM RER app installation support could not be initialized:', error);
+        });
+      }, { once: true });
+    }
   </script>
 </body>
 </html>
