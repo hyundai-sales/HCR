@@ -1625,7 +1625,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
-      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+      initializeAuth, browserLocalPersistence, GoogleAuthProvider,
+      signInWithPopup, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1639,7 +1640,10 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    // Keep Google authentication across page refreshes and browser restarts.
+    const auth = initializeAuth(app, {
+      persistence: browserLocalPersistence
+    });
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
@@ -1690,6 +1694,101 @@
     let previewLoadPending = false;
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
+
+    // TEAM RER session policy: persistent login, automatic sign-out after
+    // 60 minutes without activity. The timestamp is shared across browser tabs.
+    const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
+    const LAST_ACTIVITY_KEY = "teamRerLastActivity";
+    let idleCheckTimer = null;
+    let lastActivityWrite = 0;
+    let authorizationInProgress = false;
+    let idleSignOutInProgress = false;
+
+    function clearIdleMonitor(clearTimestamp = false) {
+      if (idleCheckTimer) {
+        window.clearInterval(idleCheckTimer);
+        idleCheckTimer = null;
+      }
+      if (clearTimestamp) {
+        try { localStorage.removeItem(LAST_ACTIVITY_KEY); } catch (_) {}
+      }
+    }
+
+    function getLastActivity() {
+      try {
+        return Number(localStorage.getItem(LAST_ACTIVITY_KEY)) || 0;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    function saveLastActivity(timestamp = Date.now()) {
+      try {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(timestamp));
+        lastActivityWrite = timestamp;
+      } catch (error) {
+        console.warn("Unable to save TEAM RER activity timestamp:", error);
+      }
+    }
+
+    function recordUserActivity() {
+      if (!currentUser || !authorizedUser) return;
+      const now = Date.now();
+      // Throttle writes while still keeping the shared timestamp current.
+      if (now - lastActivityWrite >= 15000 || !lastActivityWrite) {
+        saveLastActivity(now);
+      }
+    }
+
+    async function signOutForInactivity() {
+      if (idleSignOutInProgress || !currentUser) return;
+      idleSignOutInProgress = true;
+      clearIdleMonitor(true);
+      authorizedUser = null;
+      currentUser = null;
+      showLoading("Signed out after 1 hour of inactivity...");
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Automatic sign-out failed:", error);
+        idleSignOutInProgress = false;
+        hideLoading();
+        setMessage($("loginMessage"), "Automatic sign-out failed. Please sign out manually.", "error");
+      }
+    }
+
+    function checkIdleTimeout() {
+      if (!currentUser || !authorizedUser) return;
+      const lastActivity = getLastActivity();
+      if (!lastActivity) {
+        saveLastActivity();
+        return;
+      }
+      if (Date.now() - lastActivity >= IDLE_TIMEOUT_MS) {
+        signOutForInactivity();
+      }
+    }
+
+    function startIdleMonitor() {
+      if (!getLastActivity()) saveLastActivity();
+      clearIdleMonitor(false);
+      checkIdleTimeout();
+      idleCheckTimer = window.setInterval(checkIdleTimeout, 15000);
+    }
+
+    // Any meaningful interaction keeps the shared session alive.
+    ["pointerdown", "keydown", "input", "change", "scroll", "touchstart", "click"]
+      .forEach(eventName => {
+        window.addEventListener(eventName, recordUserActivity, { passive: true });
+      });
+
+    window.addEventListener("storage", event => {
+      if (event.key === LAST_ACTIVITY_KEY) checkIdleTimeout();
+    });
+    window.addEventListener("focus", checkIdleTimeout);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) checkIdleTimeout();
+    });
 
     function setMessage(element, message, type = "") {
       element.textContent = message;
@@ -1758,7 +1857,10 @@
 
       if (!event.data.success) {
         const error = event.data.error || "Request failed.";
-        if (action === "authorize") showLoginError(error);
+        if (action === "authorize") {
+          authorizationInProgress = false;
+          showLoginError(error);
+        }
         else {
           if (action === "creditApplication" || action === "creditVariants") {
             setMessage($("creditMessage"), error, "error");
@@ -1799,7 +1901,10 @@
       }
 
       if (action === "authorize") {
+        authorizationInProgress = false;
         authorizedUser = event.data.user;
+        if (!getLastActivity()) saveLastActivity();
+        startIdleMonitor();
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
         const firstName = String(authorizedUser.name || "").trim().split(/\\s+/)[0] || "there";
@@ -2555,9 +2660,12 @@
       showLoading("Connecting securely to Google...");
       setMessage($("loginMessage"), "Connecting to Google...");
       try {
+        // A fresh manual login starts a new one-hour inactivity window.
+        clearIdleMonitor(true);
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
-        await submitRequest("authorize");
+        // onAuthStateChanged performs server-side authorization for both
+        // new logins and restored sessions; do not submit it twice here.
       } catch (error) {
         hideLoading();
         console.error(error);
@@ -2648,6 +2756,7 @@
     let signingOut = false;
     $("logoutBtn").addEventListener("click", async () => {
       signingOut = true;
+      clearIdleMonitor(true);
       showLoading("Signing out securely...");
       authorizedUser = null;
       currentUser = null;
@@ -2662,6 +2771,9 @@
     onAuthStateChanged(auth, user => {
       currentUser = user;
       if (!user) {
+        clearIdleMonitor(true);
+        authorizationInProgress = false;
+        idleSignOutInProgress = false;
         showLoading(signingOut ? "Signed out. Returning to sign in..." : "Loading TEAM RER...");
         const transitionDelay = signingOut ? 650 : 750;
         signingOut = false;
@@ -2678,10 +2790,26 @@
         $("creditPage").classList.add("hidden");
         $("creditFormFields").replaceChildren();
         $("creditFormFields").dataset.built = "";
-      } else {
-        // A returning Firebase session still starts at the sign-in screen until access is rechecked.
-        window.setTimeout(hideLoading, 700);
+        return;
       }
+
+      // On refresh, reject a stored session whose last activity is already
+      // older than one hour; otherwise restore and re-check access server-side.
+      const previousActivity = getLastActivity();
+      if (previousActivity && Date.now() - previousActivity >= IDLE_TIMEOUT_MS) {
+        signOutForInactivity();
+        return;
+      }
+      if (!previousActivity) saveLastActivity();
+
+      if (authorizationInProgress || pendingAction === "authorize" || authorizedUser) return;
+      authorizationInProgress = true;
+      showLoading("Restoring your TEAM RER session...");
+      submitRequest("authorize").catch(error => {
+        authorizationInProgress = false;
+        hideLoading();
+        showLoginError("Unable to restore your session: " + error.message);
+      });
     });
   </script>
 </body>
