@@ -2800,7 +2800,7 @@
     }
     function renderPromoCards() {
       const query = $("promoSearch").value.trim().toLowerCase();
-      const items = promoInventoryData.promotions.filter(p => [p.model,p.variant,p.title,p.promotionTitle,p.description,p.status].join(" ").toLowerCase().includes(query));
+      const items = promoInventoryData.promotions.filter(p => [p.model,p.variant,p.description,p.status].join(" ").toLowerCase().includes(query));
       const host = $("promoOffersList");
       host.replaceChildren();
       if (!items.length) {
@@ -2811,14 +2811,13 @@
         const card = document.createElement("article");
         card.className = "promo-card";
         const status = p.status || "Active";
-        const promoTitle = p.promotionTitle || p.title || "Promotion";
         const promoFreebies = p.freebiesInclusions || p.freebies;
         const details = [
-          ["Downpayment",p.downpaymentOffer],["Monthly",p.monthlyAmortization],
+          ["Downpayment",p.downpaymentOffer],
           ["Cash Discount",p.cashDiscount],["Fuel Voucher",p.fuelVoucher],
           ["Freebies / Inclusions",promoFreebies],["Validity",`${promoDate(p.validFrom)} – ${promoDate(p.validUntil)}`]
         ].filter(x => promoText(x[1]));
-        card.innerHTML = `<div class="promo-card-head"><div><h3>${promoEsc(promoTitle)}</h3><p class="promo-sub">${promoEsc(p.model)}${p.variant ? " • "+promoEsc(p.variant) : ""}</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>
+        card.innerHTML = `<div class="promo-card-head"><div><h3>${promoEsc(p.model)}${p.variant ? " • "+promoEsc(p.variant) : ""}</h3><p class="promo-sub">Promotion</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>
           ${p.description ? `<p class="promo-description">${promoEsc(p.description)}</p>` : ""}
           <div class="promo-details">${details.map(d=>`<div class="promo-detail"><small>${promoEsc(d[0])}</small><strong>${promoEsc(d[1])}</strong></div>`).join("")}</div>`;
         if (isTeamRerAdmin()) {
@@ -2863,24 +2862,31 @@
       if(!isTeamRerAdmin()) return;
       const host=$("promoFormHost"); host.replaceChildren();
       const form=document.createElement("form"); form.className="promo-form"; form.id="promoEditForm";
+      const models=[...new Set(quotationVehicles.map(v=>v.model).filter(Boolean))].sort();
+      const selectedModel=record.model||"";
+      const variants=[...new Set(quotationVehicles.filter(v=>v.model===selectedModel).map(v=>v.variant).filter(Boolean))].sort();
+      const modelOptions=models.map(item=>`<option value="${promoEsc(item)}" ${item===selectedModel?"selected":""}>${promoEsc(item)}</option>`).join("");
+      const variantOptions=variants.map(item=>`<option value="${promoEsc(item)}" ${item===(record.variant||"")?"selected":""}>${promoEsc(item)}</option>`).join("");
       form.innerHTML=`<h3>${record.recordId?"Edit Promotion":"Add Promotion"}</h3><div class="promo-form-grid">
-        ${promoField("Vehicle Model","model",record.model||"")}
-        ${promoField("Variant","variant",record.variant||"")}
-        ${promoField("Promotion Title","title",record.title||"")}
+        <div class="field"><label for="promoEdit_model">Vehicle Model</label><select id="promoEdit_model" name="model" required><option value="">Choose vehicle model</option>${modelOptions}</select></div>
+        <div class="field"><label for="promoEdit_variant">Variant</label><select id="promoEdit_variant" name="variant" required><option value="">Choose variant</option>${variantOptions}</select></div>
         ${promoField("Downpayment Offer","downpaymentOffer",record.downpaymentOffer||"")}
-        ${promoField("Monthly Amortization","monthlyAmortization",record.monthlyAmortization||"")}
         ${promoField("Cash Discount","cashDiscount",record.cashDiscount||"")}
         ${promoField("Fuel Voucher","fuelVoucher",record.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",record.validFrom||"","date")}
         ${promoField("Valid Until","validUntil",record.validUntil||"","date")}
         <div class="field"><label for="promoEdit_status">Status</label><select id="promoEdit_status" name="status"><option ${(!record.status||record.status==="Active")?"selected":""}>Active</option><option ${record.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         ${promoTextArea("Description","description",record.description||"")}
-        ${promoTextArea("Freebies / Inclusions","freebies",record.freebies||"")}
+        ${promoTextArea("Freebies / Inclusions","freebies",record.freebiesInclusions||record.freebies||"")}
         </div><p class="promo-note">Only admins can add, edit, activate or deactivate promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
+      form.elements.model.addEventListener("change",()=>{
+        const model=form.elements.model.value;
+        const choices=[...new Set(quotationVehicles.filter(v=>v.model===model).map(v=>v.variant).filter(Boolean))].sort();
+        form.elements.variant.innerHTML='<option value="">Choose variant</option>'+choices.map(item=>`<option value="${promoEsc(item)}">${promoEsc(item)}</option>`).join("");
+      });
       form.addEventListener("submit",e=>{
         e.preventDefault(); const payload=Object.fromEntries(new FormData(form).entries());
         payload.recordId=record.recordId||"";
-        payload.promotionTitle=payload.title;
         payload.freebiesInclusions=payload.freebies;
         savePromoRecord(payload);
       });
@@ -2914,7 +2920,7 @@
     }
     async function savePromoRecord(record) {
       if(!isTeamRerAdmin()) return;
-      if(!promoText(record.model)||!promoText(record.variant)||!promoText(record.title)){setMessage($("promoModuleMessage"),"Vehicle model, variant and promotion title are required.","error");return;}
+      if(!promoText(record.model)||!promoText(record.variant)){setMessage($("promoModuleMessage"),"Please select a vehicle model and variant.","error");return;}
       try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})}); }
       catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
     }
