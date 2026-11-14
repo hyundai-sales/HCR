@@ -1596,6 +1596,20 @@
             el.placeholder = "Auto-filled from selected vehicle variant";
             el.setAttribute("aria-readonly", "true");
           }
+          if (cell === "E35:G35") {
+            el.type = "text";
+            el.placeholder = "MM-DD-YYYY";
+            el.maxLength = 10;
+            el.inputMode = "numeric";
+            el.addEventListener("input", () => {
+              const digits = el.value.replace(/\D/g, "").slice(0, 8);
+              el.value = digits.length > 4
+                ? digits.slice(0, 2) + "-" + digits.slice(2, 4) + "-" + digits.slice(4)
+                : digits.length > 2
+                  ? digits.slice(0, 2) + "-" + digits.slice(2)
+                  : digits;
+            });
+          }
           if (cell === "T71:W71" || cell === "T73:W73") el.placeholder = "Monthly amount (PHP)";
           wrap.appendChild(el); grid.appendChild(wrap);
         });
@@ -1882,6 +1896,34 @@
       const missing=required.filter(key=>!String(data.values[key]||"").trim());
       if (!data.vehicleVariant) missing.push("Vehicle Variant");
       if(missing.length){setMessage($("creditMessage"),"Please complete the borrower name, mobile number, vehicle model, and variant.","error");return;}
+
+      // If any co-maker information is entered, require every co-maker detail,
+      // including employment information and monthly income. N/A remains optional.
+      const coMakerRequired = [
+        ["E33:H33","Co-maker Last Name"],
+        ["L33:P33","Co-maker First Name"],
+        ["T33:W33","Co-maker Middle Name"],
+        ["E35:G35","Co-maker Birthday"],
+        ["O35:R35","Co-maker Citizenship"],
+        ["T35:W35","Co-maker Mobile Number"],
+        ["G57:W57","Co-maker Employer / Business Name"],
+        ["E59:H59","Co-maker Position / Title"],
+        ["O59:P59","Co-maker Length of Stay / Establishment"],
+        ["U59:W59","Co-maker Company Telephone"],
+        ["G61:W61","Co-maker Company / Business Address"],
+        ["T73:W73","Spouse / Co-maker Monthly Income"]
+      ];
+      const hasCoMakerInfo = coMakerRequired.some(([cell]) => String(data.values[cell] || "").trim() !== "");
+      if (hasCoMakerInfo && !data.spouseNa) {
+        const missingCoMaker = coMakerRequired
+          .filter(([cell]) => !String(data.values[cell] || "").trim())
+          .map(([,label]) => label);
+        if (missingCoMaker.length) {
+          setMessage($("creditMessage"),"Complete all co-maker details before generating the PDF. Missing: " + missingCoMaker.join(", ") + ".","error");
+          return;
+        }
+      }
+
       $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
       try { await submitRequest("creditApplication",{applicationData:data}); }
       catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
