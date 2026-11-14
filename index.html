@@ -1647,6 +1647,10 @@
                 <option value="35">35%</option><option value="40">40%</option><option value="45">45%</option><option value="50">50%</option>
               </select>
             </div>
+            <div class="field hidden" id="quoteBankField">
+              <label for="quotePartnerBank">Partner Bank</label>
+              <select id="quotePartnerBank"><option value="">Loading partner banks...</option></select>
+            </div>
             <div class="field">
               <label for="quoteFreebies">Freebies / inclusions</label>
               <input id="quoteFreebies" type="text" placeholder="Enter freebies or inclusions">
@@ -1787,6 +1791,18 @@
     let previewLoadPending = false;
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
+    let promoInventoryLoaded = false;
+    const LAST_APP_VIEW_KEY = "TEAM_RER_LAST_APP_VIEW_V1";
+
+    function saveLastAppView(view) {
+      try { localStorage.setItem(LAST_APP_VIEW_KEY, JSON.stringify(view)); } catch (_) {}
+    }
+    function readLastAppView() {
+      try { return JSON.parse(localStorage.getItem(LAST_APP_VIEW_KEY) || "null"); } catch (_) { return null; }
+    }
+    function clearLastAppView() {
+      try { localStorage.removeItem(LAST_APP_VIEW_KEY); } catch (_) {}
+    }
 
     // TEAM RER session policy: persistent login, automatic sign-out after
     // 60 minutes without activity. The timestamp is shared across browser tabs.
@@ -2035,6 +2051,14 @@
           updateCreditColorDropdown();
         }
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
+        const lastView = readLastAppView();
+        if (lastView && lastView.page === "promos") {
+          $("appNav").classList.add("hidden");
+          ["pdfPage","quotePage","creditPage"].forEach(id => $(id).classList.add("hidden"));
+          $("promoPage").classList.remove("hidden");
+          setPromoView(["promos","stock","banks"].includes(lastView.tab) ? lastView.tab : "promos");
+          submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
+        }
         return;
       }
 
@@ -2104,11 +2128,39 @@
       updateQuotePreview();
     }
 
+    function refreshQuotePartnerBanks() {
+      const select = $("quotePartnerBank");
+      if (!select) return;
+      const previous = select.value;
+      const banks = (promoInventoryData.partnerBanks || [])
+        .filter(bank => String(bank.status || "Active").toLowerCase() === "active")
+        .map(bank => String(bank.bankName || "").trim()).filter(Boolean);
+      fillSelect(select, [...new Set(banks)].sort(), "Select partner bank");
+      if (banks.includes(previous)) select.value = previous;
+    }
+
+    function getMatchingQuotePromotion(vehicle, dpPercent, bankName) {
+      if (!vehicle || !bankName) return null;
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      return (promoInventoryData.promotions || []).find(promo => {
+        if (String(promo.status || "Active").toLowerCase() !== "active") return false;
+        if (String(promo.model || "").trim() !== String(vehicle.model || "").trim()) return false;
+        if (String(promo.variant || "").trim() !== String(vehicle.variant || "").trim()) return false;
+        if (String(promo.applicableDownpayment || "") !== String(dpPercent)) return false;
+        if (promo.validFrom && String(promo.validFrom).slice(0,10) > todayKey) return false;
+        if (promo.validUntil && String(promo.validUntil).slice(0,10) < todayKey) return false;
+        const banks = Array.isArray(promo.applicableBanks) ? promo.applicableBanks : [];
+        return banks.includes("ALL_BANKS") || banks.includes(bankName);
+      }) || null;
+    }
+
     function updateQuotePreview() {
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       const preview = $("quotePreview");
       const financing = $("quoteType").value === "financing";
       $("quoteDpField").classList.toggle("hidden", !financing);
+      $("quoteBankField").classList.toggle("hidden", !financing);
       if (!vehicle) {
         preview.innerHTML = "<p>Select a vehicle and variant to preview the quotation.</p>";
         return;
@@ -2117,23 +2169,23 @@
       const srp = Number(vehicle.srp) || 0;
       const discount = financing ? 0 : (Number(vehicle.discount) || 0);
       const netPrice = srp - discount;
-      const dpRate = Number($("quoteDownpayment").value) / 100;
+      const dpPercent = Number($("quoteDownpayment").value);
+      const dpRate = dpPercent / 100;
+      const selectedBank = financing ? $("quotePartnerBank").value : "";
+      const matchingPromotion = financing ? getMatchingQuotePromotion(vehicle, String(dpPercent), selectedBank) : null;
+      const promoOfferValue = matchingPromotion ? Number(String(matchingPromotion.downpaymentOffer || "").replace(/[^0-9.]/g,"")) : NaN;
+      const hasPromoDownpayment = !!matchingPromotion && Number.isFinite(promoOfferValue) && promoOfferValue >= 0;
       // Price List Downpayment entries are applicable only to the 20% DP quotation.
       const usePriceListDownpayment = Math.abs(dpRate - 0.20) < 0.000001;
-      const hasDpOverride = usePriceListDownpayment &&
-        vehicle.hasDownpaymentOverride === true &&
-        vehicle.downpaymentOverride !== null &&
-        vehicle.downpaymentOverride !== undefined;
-      // For DP selections above/below 20%, calculate the displayed amount from SRP.
-      const dpAmount = hasDpOverride ? Number(vehicle.downpaymentOverride) : Math.round(srp * dpRate * 100) / 100;
-      // Financing balance and amortization always follow the selected DP percentage,
-      // regardless of a ZERO DP or reduced peso amount shown as the actual downpayment.
+      const hasDpOverride = usePriceListDownpayment && vehicle.hasDownpaymentOverride === true &&
+        vehicle.downpaymentOverride !== null && vehicle.downpaymentOverride !== undefined;
+      // TEAM RER promo behavior: the promotional peso offer replaces the displayed computed DP amount.
+      const dpAmount = hasPromoDownpayment ? promoOfferValue : (hasDpOverride ? Number(vehicle.downpaymentOverride) : Math.round(srp * dpRate * 100) / 100);
+      // Preserve the existing financing-balance rule: amortization follows the selected DP percentage.
       const balance = Math.round(srp * (1 - dpRate) * 100) / 100;
       const freebies = $("quoteFreebies").value.trim();
       const validity = Math.max(1, Math.min(90, Number($("quoteValidity").value) || 7));
-      const generatedDate = new Date().toLocaleDateString("en-PH", {
-        year: "numeric", month: "long", day: "numeric"
-      });
+      const generatedDate = new Date().toLocaleDateString("en-PH", { year:"numeric", month:"long", day:"numeric" });
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
@@ -2141,19 +2193,17 @@
         rows.push(`<div class="quote-line"><span>Cash Discount</span><strong>${money(discount)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>NET CASH PRICE</span><span>${money(netPrice)}</span></div>`);
       } else {
-        const isZeroDpPromo = usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
+        const isZeroDpPromo = !hasPromoDownpayment && usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
         const standardDpAmount = srp * dpRate;
-        const isSpecialDownpayment = isZeroDpPromo || dpAmount < standardDpAmount - 0.01;
+        const isSpecialDownpayment = hasPromoDownpayment || isZeroDpPromo || dpAmount < standardDpAmount - 0.01;
         const dpDisplay = isZeroDpPromo ? "ZERO" : money2(dpAmount);
         const dpClass = isSpecialDownpayment ? "quote-dp-adjusted" : "";
         rows.push(`<div class="quote-line"><span>Downpayment (${Math.round(dpRate*100)}%)</span><strong class="${dpClass}">${dpDisplay}</strong></div>`);
+        if (hasPromoDownpayment) rows.push(`<div class="quote-line"><span>Promotional Downpayment Offer</span><strong>Applied</strong></div>`);
         rows.push(`<div class="quote-line"><span>Financed Balance</span><strong>${money2(balance)}</strong></div>`);
         const terms = [{months:36,factor:1.379},{months:48,factor:1.4515},{months:60,factor:1.553}];
         rows.push(`<div style="margin-top:15px;font-weight:bold;color:#003b70">ESTIMATED MONTHLY AMORTIZATION</div>`);
-        terms.forEach(t => {
-          const monthly = Math.ceil((balance * t.factor) / t.months);
-          rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`);
-        });
+        terms.forEach(t => { const monthly = Math.ceil((balance * t.factor) / t.months); rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`); });
       }
       rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
@@ -2514,7 +2564,7 @@
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); clearLastAppView(); buildCreditForm();
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -2788,6 +2838,7 @@
     };
     function setPromoView(view) {
       promoActiveView = view;
+      saveLastAppView({page:"promos",tab:view});
       const panels = {promos:"promoOffersPanel",stock:"promoStockPanel",banks:"promoBanksPanel"};
       const tabs = {promos:"promoOffersTab",stock:"promoStockTab",banks:"promoBanksTab"};
       Object.entries(panels).forEach(([key,id]) => $(id).classList.toggle("hidden",key!==view));
@@ -2801,6 +2852,7 @@
       return ["inactive","incoming","reserved","sold-out"].includes(v) ? v : "";
     }
     function renderPromoInventory(data) {
+      promoInventoryLoaded = true;
       promoInventoryData = {
         promotions: Array.isArray(data.promotions) ? data.promotions : [],
         inventory: Array.isArray(data.inventory) ? data.inventory : [],
@@ -2815,6 +2867,8 @@
       renderPromoCards();
       renderStockCards();
       renderPartnerBankCards();
+      refreshQuotePartnerBanks();
+      updateQuotePreview();
       setMessage($("promoModuleMessage"),"Promotions, vehicle availability and partner banks are up to date.","success");
     }
     function renderPromoCards() {
@@ -2931,7 +2985,7 @@
         ${promoTextArea("Freebies / Inclusions","freebies",record.freebiesInclusions||record.freebies||"")}
         </div><p class="promo-note">Choose ALL BANKS to apply this promotion with any partner bank, or Selected Banks Only to restrict it to one active partner bank. Only admins can manage promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
       const bankScopeSelect=form.elements.bankScope;
-      const selectedBankField=$("promoSelectedBankField");
+      const selectedBankField=form.querySelector("#promoSelectedBankField");
       const selectedBankSelect=form.elements.applicableBank;
       function syncPromoBankScope(){
         const selectedOnly=bankScopeSelect.value==="SELECTED_BANK";
@@ -3036,6 +3090,7 @@
     }));
     $("backToMenuFromPromo").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{
       $("promoPage").classList.add("hidden");
+      clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
 
@@ -3046,6 +3101,7 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      clearLastAppView();
     }));
     $("quoteTabBtn").addEventListener("click", () => runPageTransition("Opening Vehicle Quotation...",() => {
       $("appNav").classList.add("hidden");
@@ -3053,6 +3109,8 @@
       $("quotePage").classList.remove("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      clearLastAppView();
+      if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to load promotion matching data:", error));
       updateQuotePreview();
     }));
     $("backToMenuFromPdf").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
@@ -3060,6 +3118,7 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
     $("backToMenuFromQuote").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
@@ -3067,9 +3126,10 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
-    ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    ["quoteVariant","quoteType","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
     function closeQuotePreview() {
@@ -3078,6 +3138,9 @@
     $("openQuotePreviewBtn").addEventListener("click", () => {
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
         alert("Please select a vehicle model and variant first."); return;
+      }
+      if ($("quoteType").value === "financing" && !$("quotePartnerBank").value) {
+        alert("Please select a partner bank for this bank financing quotation."); $("quotePartnerBank").focus(); return;
       }
       updateQuotePreview();
       $("quotePreviewWrap").classList.remove("hidden");
@@ -3090,6 +3153,10 @@
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
         alert("Please select a vehicle model and variant first."); return;
       }
+      if ($("quoteType").value === "financing" && !$("quotePartnerBank").value) {
+        alert("Please select a partner bank for this bank financing quotation."); $("quotePartnerBank").focus(); return;
+      }
+      updateQuotePreview();
       document.body.classList.add("printing-quote");
       window.print();
     });
