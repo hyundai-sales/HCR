@@ -1432,6 +1432,45 @@
       #appSection .app-nav button { transition: none !important; }
     }
 
+
+    /* Promo & Vehicle Availability — liquid glass module */
+    .promo-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}
+    .promo-tabs{display:flex;gap:8px;padding:5px;border:1px solid rgba(160,187,209,.42);border-radius:15px;background:rgba(231,241,249,.72);margin:14px 0}
+    .promo-tabs button{flex:1;min-height:40px;margin:0;padding:9px;border-radius:11px;background:transparent;color:#315674;font-size:13px}
+    .promo-tabs button.active{background:rgba(255,255,255,.94);color:#003b70;box-shadow:0 3px 10px rgba(23,61,91,.10)}
+    .promo-tools{display:flex;gap:8px;align-items:center;margin:12px 0}
+    .promo-tools input{flex:1;min-width:0}
+    .promo-add{width:auto;min-height:42px;padding:10px 14px;white-space:nowrap}
+    .promo-card{margin:11px 0;padding:15px;border:1px solid rgba(185,205,221,.68);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(240,247,252,.84));box-shadow:0 7px 20px rgba(21,58,87,.055);text-align:left}
+    .promo-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .promo-card h3{margin:0;color:#123d63;font-size:15px}
+    .promo-sub{margin:5px 0 0;color:#6b8296;font-size:12px}
+    .promo-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:99px;background:#e7f4ec;color:#237044;font-size:10px;font-weight:700;white-space:nowrap}
+    .promo-status.inactive,.promo-status.sold-out{background:#fcebea;color:#a33b35}
+    .promo-status.incoming{background:#fff3d9;color:#8a5a0a}
+    .promo-status.reserved{background:#e9effa;color:#365b91}
+    .promo-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+    .promo-detail{padding:9px 10px;border-radius:10px;background:rgba(226,237,246,.55);min-width:0}
+    .promo-detail small{display:block;color:#71869a;font-size:10px}
+    .promo-detail strong{display:block;margin-top:3px;color:#244866;font-size:12px;overflow-wrap:anywhere}
+    .promo-description{margin:11px 0 0;color:#526c82;font-size:12px;line-height:1.5;white-space:pre-wrap}
+    .promo-card-actions{display:flex;gap:8px;margin-top:12px}
+    .promo-card-actions button{min-height:36px;padding:8px 12px;font-size:12px}
+    .promo-card-actions .secondary{margin:0}
+    .promo-empty{padding:28px 16px;text-align:center;border:1px dashed #c5d5e2;border-radius:16px;color:#71869a;font-size:13px;background:rgba(246,250,253,.7)}
+    .promo-form{margin:14px 0;padding:16px;border:1px solid rgba(164,190,211,.65);border-radius:17px;background:rgba(244,249,253,.92);text-align:left}
+    .promo-form h3{margin:0 0 12px;color:#123d63;font-size:15px}
+    .promo-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .promo-form .field{margin:0 0 10px}
+    .promo-form .field.full{grid-column:1/-1}
+    .promo-form label{font-size:11px}
+    .promo-form input,.promo-form select,.promo-form textarea{min-height:40px;font-size:13px}
+    .promo-form textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;resize:vertical}
+    .promo-form-actions{display:flex;gap:8px;margin-top:8px}
+    .promo-form-actions button{margin:0}
+    .promo-note{color:#71869a;font-size:11px;line-height:1.45;margin:8px 0}
+    @media(max-width:520px){.promo-form-grid{grid-template-columns:1fr}.promo-form .field.full{grid-column:auto}.promo-tools{align-items:stretch}.promo-add{width:auto}.promo-details{gap:6px}.promo-card{padding:12px}}
+
   </style>
 </head>
 <body>
@@ -1489,8 +1528,39 @@
               <span class="nav-icon nav-icon-credit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4.5h10a2 2 0 0 1 2 2v13H5v-13a2 2 0 0 1 2-2Z"/><path d="M9 4.5v-1h6v1M8.5 9h7M8.5 12.5h7M8.5 16h4"/><path d="m15.5 16.5 1.2 1.2 2.3-2.5"/></svg></span>
               <span class="nav-copy"><span class="nav-title">Credit Application</span><span class="nav-description">Complete financing applications</span></span>
             </button>
+            <button id="promoTabBtn" type="button">
+              <span class="nav-icon nav-icon-promo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21M8 5.2l8 4.6"/></svg></span>
+              <span class="nav-copy"><span class="nav-title">Promos & Availability</span><span class="nav-description">Current offers and vehicle stock updates</span></span>
+            </button>
           </nav>
         </div>
+
+        <section id="promoPage" class="hidden">
+          <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Promos & Vehicle Availability</h2>
+          <p class="app-caption">Check the latest offers and vehicle stock updates maintained by TEAM RER admins.</p>
+          <div class="promo-tabs" role="tablist" aria-label="Promo and inventory views">
+            <button id="promoOffersTab" class="active" type="button" role="tab" aria-selected="true">Promotions</button>
+            <button id="promoStockTab" type="button" role="tab" aria-selected="false">Vehicle Availability</button>
+          </div>
+          <div id="promoOffersPanel">
+            <div class="promo-tools">
+              <input id="promoSearch" type="search" placeholder="Search model or promotion..." aria-label="Search promotions">
+              <button id="addPromoBtn" class="promo-add hidden" type="button">＋ Add Promo</button>
+            </div>
+            <div id="promoOffersList"></div>
+            <div id="promoFormHost"></div>
+          </div>
+          <div id="promoStockPanel" class="hidden">
+            <div class="promo-tools">
+              <input id="stockSearch" type="search" placeholder="Search model, variant or color..." aria-label="Search vehicle availability">
+              <button id="addStockBtn" class="promo-add hidden" type="button">＋ Add Stock</button>
+            </div>
+            <div id="promoStockList"></div>
+            <div id="stockFormHost"></div>
+          </div>
+          <div id="promoModuleMessage" class="message hidden" aria-live="polite"></div>
+        </section>
 
         <section id="pdfPage" class="hidden">
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
@@ -1625,6 +1695,7 @@
     <input type="hidden" name="consultant" id="consultantRequestField">
     <input type="hidden" name="applicationData" id="applicationDataField">
     <input type="hidden" name="vehicle" id="vehicleField">
+    <input type="hidden" name="payload" id="payloadField">
   </form>
 
   <script type="module">
@@ -1666,7 +1737,9 @@
       authorize: "Checking your access...",
       appData: "Loading vehicle information...",
       generate: "Generating your PDF...",
-      creditApplication: "Preparing your application PDF..."
+      creditApplication: "Preparing your application PDF...",
+      promoInventoryGet: "Loading promotions and vehicle availability...",
+      promoInventorySave: "Saving your update..."
     };
 
     function showLoading(message) {
@@ -1822,6 +1895,7 @@
       $("consultantRequestField").value = extra.consultant || "";
       $("applicationDataField").value = extra.applicationData ? JSON.stringify(extra.applicationData) : "";
       $("vehicleField").value = extra.vehicle || "";
+      $("payloadField").value = extra.payload || "";
       $("bridgeForm").submit();
     }
 
@@ -1868,7 +1942,9 @@
           showLoginError(error);
         }
         else {
-          if (action === "creditApplication" || action === "creditVariants") {
+          if (action === "promoInventoryGet" || action === "promoInventorySave") {
+            setMessage($("promoModuleMessage"), error, "error");
+          } else if (action === "creditApplication" || action === "creditVariants") {
             setMessage($("creditMessage"), error, "error");
             if (action === "creditApplication") {
               $("generateCreditBtn").disabled = false;
@@ -1921,6 +1997,7 @@
         $("pdfPage").classList.add("hidden");
         $("quotePage").classList.add("hidden");
         $("creditPage").classList.add("hidden");
+        $("promoPage").classList.add("hidden");
         loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
         return;
       }
@@ -1944,6 +2021,19 @@
           updateCreditColorDropdown();
         }
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
+        return;
+      }
+
+      if (action === "promoInventoryGet") {
+        renderPromoInventory(event.data.promoInventory || {});
+        return;
+      }
+
+      if (action === "promoInventorySave") {
+        setMessage($("promoModuleMessage"), "Your update has been saved.", "success");
+        $("promoFormHost").replaceChildren();
+        $("stockFormHost").replaceChildren();
+        submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         return;
       }
 
@@ -2409,7 +2499,7 @@
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); buildCreditForm();
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -2669,30 +2759,218 @@
       catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
     });
 
+
+    // PROMOS & VEHICLE AVAILABILITY
+    let promoInventoryData = { promotions: [], inventory: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"] };
+    let promoActiveView = "promos";
+    const isTeamRerAdmin = () => String(authorizedUser?.role || "").trim().toLowerCase() === "admin";
+    const promoText = value => String(value ?? "").trim();
+    const promoEsc = value => escapeHtml(value);
+    const promoDate = value => {
+      if (!value) return "—";
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"});
+    };
+    function setPromoView(view) {
+      promoActiveView = view;
+      const offers = view === "promos";
+      $("promoOffersPanel").classList.toggle("hidden",!offers);
+      $("promoStockPanel").classList.toggle("hidden",offers);
+      $("promoOffersTab").classList.toggle("active",offers);
+      $("promoStockTab").classList.toggle("active",!offers);
+      $("promoOffersTab").setAttribute("aria-selected",String(offers));
+      $("promoStockTab").setAttribute("aria-selected",String(!offers));
+    }
+    function promoBadgeClass(status) {
+      const v = String(status || "").toLowerCase().replace(/\s+/g,"-");
+      return ["inactive","incoming","reserved","sold-out"].includes(v) ? v : "";
+    }
+    function renderPromoInventory(data) {
+      promoInventoryData = {
+        promotions: Array.isArray(data.promotions) ? data.promotions : [],
+        inventory: Array.isArray(data.inventory) ? data.inventory : [],
+        stockStatuses: Array.isArray(data.stockStatuses) ? data.stockStatuses : ["Available","Incoming","Reserved","Sold Out"]
+      };
+      const admin = isTeamRerAdmin();
+      $("addPromoBtn").classList.toggle("hidden",!admin);
+      $("addStockBtn").classList.toggle("hidden",!admin);
+      renderPromoCards();
+      renderStockCards();
+      setMessage($("promoModuleMessage"),"Promotions and vehicle availability are up to date.","success");
+    }
+    function renderPromoCards() {
+      const query = $("promoSearch").value.trim().toLowerCase();
+      const items = promoInventoryData.promotions.filter(p => [p.model,p.variant,p.title,p.promotionTitle,p.description,p.status].join(" ").toLowerCase().includes(query));
+      const host = $("promoOffersList");
+      host.replaceChildren();
+      if (!items.length) {
+        host.innerHTML = `<div class="promo-empty">${promoInventoryData.promotions.length ? "No promotions match your search." : "No promotions added yet."}</div>`;
+        return;
+      }
+      items.forEach(p => {
+        const card = document.createElement("article");
+        card.className = "promo-card";
+        const status = p.status || "Active";
+        const promoTitle = p.promotionTitle || p.title || "Promotion";
+        const promoFreebies = p.freebiesInclusions || p.freebies;
+        const details = [
+          ["Downpayment",p.downpaymentOffer],["Monthly",p.monthlyAmortization],
+          ["Cash Discount",p.cashDiscount],["Fuel Voucher",p.fuelVoucher],
+          ["Freebies / Inclusions",promoFreebies],["Validity",`${promoDate(p.validFrom)} – ${promoDate(p.validUntil)}`]
+        ].filter(x => promoText(x[1]));
+        card.innerHTML = `<div class="promo-card-head"><div><h3>${promoEsc(promoTitle)}</h3><p class="promo-sub">${promoEsc(p.model)}${p.variant ? " • "+promoEsc(p.variant) : ""}</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div>
+          ${p.description ? `<p class="promo-description">${promoEsc(p.description)}</p>` : ""}
+          <div class="promo-details">${details.map(d=>`<div class="promo-detail"><small>${promoEsc(d[0])}</small><strong>${promoEsc(d[1])}</strong></div>`).join("")}</div>`;
+        if (isTeamRerAdmin()) {
+          const actions=document.createElement("div"); actions.className="promo-card-actions";
+          const edit=document.createElement("button"); edit.type="button"; edit.className="secondary"; edit.textContent="Edit";
+          edit.addEventListener("click",()=>openPromoForm(p));
+          const toggle=document.createElement("button"); toggle.type="button"; toggle.textContent=String(status).toLowerCase()==="active"?"Deactivate":"Activate";
+          toggle.addEventListener("click",()=>savePromoRecord({...p,status:String(status).toLowerCase()==="active"?"Inactive":"Active"}));
+          actions.append(edit,toggle); card.appendChild(actions);
+        }
+        host.appendChild(card);
+      });
+    }
+    function renderStockCards() {
+      const query = $("stockSearch").value.trim().toLowerCase();
+      const items = promoInventoryData.inventory.filter(v => [v.model,v.variant,v.color,v.modelYear,v.stockStatus,v.remarks].join(" ").toLowerCase().includes(query));
+      const host = $("promoStockList"); host.replaceChildren();
+      if (!items.length) {
+        host.innerHTML = `<div class="promo-empty">${promoInventoryData.inventory.length ? "No vehicle records match your search." : "No vehicle availability records added yet."}</div>`;
+        return;
+      }
+      items.forEach(v => {
+        const card=document.createElement("article"); card.className="promo-card";
+        const status=v.stockStatus || "Available";
+        const details=[["Model Year",v.modelYear],["Color",v.color],["Quantity",v.quantity],["Expected Arrival",promoDate(v.expectedArrival)],["Remarks",v.remarks]].filter(x=>promoText(x[1]));
+        card.innerHTML=`<div class="promo-card-head"><div><h3>${promoEsc(v.model)}${v.variant ? " • "+promoEsc(v.variant):""}</h3><p class="promo-sub">Vehicle stock information</p></div><span class="promo-status ${promoBadgeClass(status)}">${promoEsc(status)}</span></div><div class="promo-details">${details.map(d=>`<div class="promo-detail"><small>${promoEsc(d[0])}</small><strong>${promoEsc(d[1])}</strong></div>`).join("")}</div>`;
+        if(isTeamRerAdmin()){
+          const actions=document.createElement("div"); actions.className="promo-card-actions";
+          const edit=document.createElement("button"); edit.type="button"; edit.className="secondary"; edit.textContent="Edit"; edit.addEventListener("click",()=>openStockForm(v));
+          actions.appendChild(edit); card.appendChild(actions);
+        }
+        host.appendChild(card);
+      });
+    }
+    function promoField(label,name,value="",type="text",full=false,placeholder="") {
+      return `<div class="field ${full?"full":""}"><label for="promoEdit_${name}">${label}</label><input id="promoEdit_${name}" name="${name}" type="${type}" value="${promoEsc(value)}" placeholder="${promoEsc(placeholder)}"></div>`;
+    }
+    function promoTextArea(label,name,value="",full=true) {
+      return `<div class="field ${full?"full":""}"><label for="promoEdit_${name}">${label}</label><textarea id="promoEdit_${name}" name="${name}" rows="3">${promoEsc(value)}</textarea></div>`;
+    }
+    function openPromoForm(record={}) {
+      if(!isTeamRerAdmin()) return;
+      const host=$("promoFormHost"); host.replaceChildren();
+      const form=document.createElement("form"); form.className="promo-form"; form.id="promoEditForm";
+      form.innerHTML=`<h3>${record.recordId?"Edit Promotion":"Add Promotion"}</h3><div class="promo-form-grid">
+        ${promoField("Vehicle Model","model",record.model||"")}
+        ${promoField("Variant","variant",record.variant||"")}
+        ${promoField("Promotion Title","title",record.title||"")}
+        ${promoField("Downpayment Offer","downpaymentOffer",record.downpaymentOffer||"")}
+        ${promoField("Monthly Amortization","monthlyAmortization",record.monthlyAmortization||"")}
+        ${promoField("Cash Discount","cashDiscount",record.cashDiscount||"")}
+        ${promoField("Fuel Voucher","fuelVoucher",record.fuelVoucher||"")}
+        ${promoField("Valid From","validFrom",record.validFrom||"","date")}
+        ${promoField("Valid Until","validUntil",record.validUntil||"","date")}
+        <div class="field"><label for="promoEdit_status">Status</label><select id="promoEdit_status" name="status"><option ${(!record.status||record.status==="Active")?"selected":""}>Active</option><option ${record.status==="Inactive"?"selected":""}>Inactive</option></select></div>
+        ${promoTextArea("Description","description",record.description||"")}
+        ${promoTextArea("Freebies / Inclusions","freebies",record.freebies||"")}
+        </div><p class="promo-note">Only admins can add, edit, activate or deactivate promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
+      form.addEventListener("submit",e=>{
+        e.preventDefault(); const payload=Object.fromEntries(new FormData(form).entries());
+        payload.recordId=record.recordId||"";
+        payload.promotionTitle=payload.title;
+        payload.freebiesInclusions=payload.freebies;
+        savePromoRecord(payload);
+      });
+      host.appendChild(form);
+      $("cancelPromoForm").addEventListener("click",()=>host.replaceChildren());
+      form.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    function openStockForm(record={}) {
+      if(!isTeamRerAdmin()) return;
+      const host=$("stockFormHost"); host.replaceChildren();
+      const statuses=promoInventoryData.stockStatuses;
+      const form=document.createElement("form"); form.className="promo-form"; form.id="stockEditForm";
+      form.innerHTML=`<h3>${record.recordId?"Edit Vehicle Stock":"Add Vehicle Stock"}</h3><div class="promo-form-grid">
+        ${promoField("Vehicle Model","model",record.model||"")}
+        ${promoField("Variant","variant",record.variant||"")}
+        ${promoField("Model Year","modelYear",record.modelYear||"")}
+        ${promoField("Color","color",record.color||"")}
+        <div class="field"><label for="stockEdit_stockStatus">Stock Status</label><select id="stockEdit_stockStatus" name="stockStatus">${statuses.map(x=>`<option ${x===(record.stockStatus||"Available")?"selected":""}>${promoEsc(x)}</option>`).join("")}</select></div>
+        ${promoField("Quantity","quantity",record.quantity??"","number")}
+        ${promoField("Expected Arrival","expectedArrival",record.expectedArrival||"","date")}
+        ${promoTextArea("Remarks","remarks",record.remarks||"")}
+        </div><p class="promo-note">Only admins can add or update vehicle stock information.</p><div class="promo-form-actions"><button type="submit">Save Stock Record</button><button type="button" class="secondary" id="cancelStockForm">Cancel</button></div>`;
+      form.addEventListener("submit",e=>{
+        e.preventDefault(); const payload=Object.fromEntries(new FormData(form).entries());
+        payload.recordId=record.recordId||"";
+        saveStockRecord(payload);
+      });
+      host.appendChild(form);
+      $("cancelStockForm").addEventListener("click",()=>host.replaceChildren());
+      form.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    async function savePromoRecord(record) {
+      if(!isTeamRerAdmin()) return;
+      if(!promoText(record.model)||!promoText(record.variant)||!promoText(record.title)){setMessage($("promoModuleMessage"),"Vehicle model, variant and promotion title are required.","error");return;}
+      try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})}); }
+      catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
+    }
+    async function saveStockRecord(record) {
+      if(!isTeamRerAdmin()) return;
+      if(!promoText(record.model)||!promoText(record.variant)){setMessage($("promoModuleMessage"),"Vehicle model and variant are required.","error");return;}
+      try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"inventory",record})}); }
+      catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
+    }
+    $("promoOffersTab").addEventListener("click",()=>setPromoView("promos"));
+    $("promoStockTab").addEventListener("click",()=>setPromoView("stock"));
+    $("promoSearch").addEventListener("input",renderPromoCards);
+    $("stockSearch").addEventListener("input",renderStockCards);
+    $("addPromoBtn").addEventListener("click",()=>openPromoForm());
+    $("addStockBtn").addEventListener("click",()=>openStockForm());
+    $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos & Availability...",()=>{
+      $("appNav").classList.add("hidden");
+      ["pdfPage","quotePage","creditPage"].forEach(id=>$(id).classList.add("hidden"));
+      $("promoPage").classList.remove("hidden");
+      setPromoView("promos");
+      $("promoModuleMessage").classList.add("hidden");
+      submitRequest("promoInventoryGet").catch(error=>setMessage($("promoModuleMessage"),error.message,"error"));
+    }));
+    $("backToMenuFromPromo").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{
+      $("promoPage").classList.add("hidden");
+      $("appNav").classList.remove("hidden");
+    }));
+
     $("pdfTabBtn").addEventListener("click", () => runPageTransition("Opening Price List...",() => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.remove("hidden");
       $("pdfFormFields").classList.remove("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
+      $("promoPage").classList.add("hidden");
     }));
     $("quoteTabBtn").addEventListener("click", () => runPageTransition("Opening Vehicle Quotation...",() => {
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.remove("hidden");
       $("creditPage").classList.add("hidden");
+      $("promoPage").classList.add("hidden");
       updateQuotePreview();
     }));
     $("backToMenuFromPdf").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
+      $("promoPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
     }));
     $("backToMenuFromQuote").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
       $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
+      $("promoPage").classList.add("hidden");
       $("appNav").classList.remove("hidden");
     }));
     ["quoteVariant","quoteType","quoteDownpayment","quoteFreebies","quoteValidity","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
