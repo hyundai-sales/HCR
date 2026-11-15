@@ -1686,6 +1686,29 @@
 
   <style id="team-rer-edge-panel">
     /* TEAM RER — floating Liquid Glass Edge Panel */
+    /* Keep module navigation on the floating Quick Switch only.
+       The original buttons remain in the DOM for their existing handlers. */
+    #backToMenuFromPromo,
+    #backToMenuFromPdf,
+    #backToMenuFromQuote,
+    #backToMenuFromCredit {
+      display:none !important;
+    }
+
+    /* Viewport-centered floating control: remains centered while the page scrolls. */
+    #teamRerEdgeNav .edge-toggle {
+      position:fixed;
+      top:50%;
+      right:0;
+      transform:translateY(-50%);
+    }
+    #teamRerEdgeNav .edge-panel {
+      position:fixed;
+      top:50%;
+      right:8px;
+    }
+
+
     #teamRerEdgeNav { display:none; }
     #teamRerEdgeNav.is-visible { display:block; }
     #teamRerEdgeNav .edge-toggle {
