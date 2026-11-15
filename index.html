@@ -2012,6 +2012,13 @@
         else {
           if (action === "promoInventoryGet" || action === "promoInventorySave") {
             setMessage($("promoModuleMessage"), error, "error");
+            if (action === "promoInventorySave") {
+              const promoSubmit = document.querySelector("#variantPromoEditor button[type='submit']");
+              if (promoSubmit) {
+                promoSubmit.disabled = false;
+                promoSubmit.textContent = "Save Variant Promotions";
+              }
+            }
           } else if (action === "creditApplication" || action === "creditVariants") {
             setMessage($("creditMessage"), error, "error");
             if (action === "creditApplication") {
@@ -2107,7 +2114,12 @@
 
       if (action === "promoInventorySave") {
         const savedType = event.data.promoInventory && event.data.promoInventory.type;
-        setMessage($("promoModuleMessage"), savedType === "bankOrder" ? "Partner bank order saved and applied throughout TEAM RER." : "Your update has been saved.", "success");
+        const successMessage = savedType === "bankOrder"
+          ? "Partner bank order saved and applied throughout TEAM RER."
+          : savedType === "promotionBatch"
+            ? "Variant promotions saved successfully. Price List formulas have been refreshed."
+            : "Your update has been saved.";
+        setMessage($("promoModuleMessage"), successMessage, "success");
         $("promoFormHost").replaceChildren();
         $("stockFormHost").replaceChildren();
         $("stockOptionsHost").replaceChildren();
@@ -3135,12 +3147,46 @@
         form.querySelectorAll(".promo-matrix-input:not(.promo-bankpo-input)").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:input.dataset.dp,bank:input.dataset.bank,offer});});
         form.querySelectorAll(".promo-bankpo-input").forEach(input=>{const offer=input.value.trim();if(offer)desired.push({dp:"BANK_PO",bank:input.dataset.bank,offer});});
         const status=shared.status||"Active";
-        const saveRecord=async(item)=>{const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;const old=existing(item.dp,bankKey);const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";const record={id:old?.id||"",model,variant,downpaymentOffer:isDiscount?"":item.offer,applicableDownpayment:item.dp,applicableBanks:[bankKey],cashDiscount:isDiscount?item.offer:"",fuelVoucher:shared.fuelVoucher||"",validFrom:shared.validFrom||"",validUntil:shared.validUntil||"",description:shared.description||"",freebies:shared.freebies||"",status};await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})});};
+        const batchRecords=[];
+        desired.forEach(item=>{
+          const bankKey=item.bank==="ALL BANKS"?"ALL_BANKS":item.bank;
+          const old=existing(item.dp,bankKey);
+          const isDiscount=item.dp==="BANK_PO"||item.dp==="CASH";
+          batchRecords.push({
+            id:old?.id||"",model,variant,
+            downpaymentOffer:isDiscount?"":item.offer,
+            applicableDownpayment:item.dp,
+            applicableBanks:[bankKey],
+            cashDiscount:isDiscount?item.offer:"",
+            fuelVoucher:shared.fuelVoucher||"",
+            validFrom:shared.validFrom||"",
+            validUntil:shared.validUntil||"",
+            description:shared.description||"",
+            freebies:shared.freebies||"",
+            status
+          });
+        });
+        records.forEach(old=>{
+          const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];
+          const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);
+          if(!stillPresent&&String(old.status||"Active").toLowerCase()==="active"){
+            batchRecords.push({...old,status:"Inactive"});
+          }
+        });
         try {
-          for(const item of desired) await saveRecord(item);
-          for(const old of records){const key=(old.applicableBanks||[]).includes("ALL_BANKS")?"ALL BANKS":(old.applicableBanks||[])[0];const stillPresent=desired.some(x=>x.dp===String(old.applicableDownpayment)&&x.bank===key);if(!stillPresent&&String(old.status||"Active").toLowerCase()==="active")await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record:{...old,status:"Inactive"}})});}
-          host.replaceChildren(); await submitRequest("promoInventoryGet");setMessage($("promoModuleMessage"),"Variant promotions saved successfully.","success");
-        } catch(error){submit.disabled=false;submit.textContent="Save Variant Promotions";setMessage($("promoModuleMessage"),error.message,"error");}
+          if(!batchRecords.length){
+            throw new Error("Enter at least one offer before saving.");
+          }
+          // One request prevents overlapping submissions and updates the
+          // Price List formulas once after the complete set is saved.
+          await submitRequest("promoInventorySave",{
+            payload:JSON.stringify({type:"promotionBatch",records:batchRecords})
+          });
+        } catch(error){
+          submit.disabled=false;
+          submit.textContent="Save Variant Promotions";
+          setMessage($("promoModuleMessage"),error.message,"error");
+        }
       });
 
       }
