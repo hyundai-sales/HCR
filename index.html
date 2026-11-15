@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-rer-theme="dark" style="color-scheme:dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1790,16 +1790,17 @@
   <style id="team-rer-admin-lock-styles">
     .admin-manual-lock {
       position: fixed; top: auto; right: auto;
-      left: 50%; bottom: max(14px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      z-index: 2147483000; display: inline-flex; align-items: center; gap: 7px;
-      min-height: 40px; padding: 8px 13px; border: 1px solid rgba(255,255,255,.86);
-      border-radius: 999px; color: #173f62; font: 700 12px/1 Arial,sans-serif;
-      background: rgba(239,247,253,.78); box-shadow: 0 8px 24px rgba(20,55,83,.15), inset 0 1px 0 #fff;
+      left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom));
+      transform: none;
+      z-index: 2147483000; display: inline-flex; align-items: center; justify-content:center; gap: 5px;
+      min-height: 32px; padding: 6px 10px; border: 1px solid rgba(190,215,238,.28);
+      border-radius: 999px; color: #e8f2fc; font: 650 10px/1 Arial,sans-serif;
+      background: rgba(25,43,62,.76); box-shadow: 0 6px 20px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.10);
       -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
       cursor: pointer;
     }
-    .admin-manual-lock svg { width: 17px; height: 17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .admin-manual-lock svg { width: 14px; height: 14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    #appSection { padding-bottom: 58px; }
     .admin-lock-screen {
       position: fixed; inset: 0; z-index: 2147483600; display: grid; place-items: center;
       padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
@@ -1833,145 +1834,16 @@
     .admin-pin-dots span.filled { background:#245d89; border-color:#245d89; box-shadow:0 0 0 3px rgba(36,93,137,.10); }
     .admin-pin-error { min-height:17px; margin:5px 0 7px; color:#b33b45; font-size:11px; }
     .admin-pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px 15px; width:min(100%,250px); margin:0 auto; }
-    .admin-pin-keypad button { width:58px; height:48px; justify-self:center; border:1px solid rgba(255,255,255,.82); border-radius:17px; color:#1b496d; font-size:20px; font-weight:600; background:rgba(255,255,255,.32); box-shadow:0 8px 20px rgba(35,75,108,.06),inset 0 1px 0 rgba(255,255,255,.86),inset 0 -1px 0 rgba(255,255,255,.20); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); }
+    .admin-pin-keypad button { width:58px; height:58px; justify-self:center; border:1px solid rgba(235,244,252,.30); border-radius:50%; color:#1b496d; font-size:20px; font-weight:600; background:rgba(255,255,255,.32); box-shadow:0 8px 20px rgba(35,75,108,.06),inset 0 1px 0 rgba(255,255,255,.86),inset 0 -1px 0 rgba(255,255,255,.20); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); }
     .admin-pin-keypad button:active { transform:scale(.96); background:rgba(213,231,245,.8); }
-    .admin-keypad-spacer { width:58px; height:48px; }
+    .admin-keypad-spacer { width:58px; height:58px; }
     .admin-lock-footnote { margin-top:17px; color:#8394a3; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
     body.admin-screen-locked { overflow:hidden !important; }
-    @media(max-height:700px) { .admin-lock-card { padding:17px 20px; } .admin-lock-time { font-size:46px; margin-top:12px; } .admin-lock-icon { margin-top:13px; } .admin-pin-keypad { gap:7px 12px; } .admin-pin-keypad button,.admin-keypad-spacer { height:42px; } }
+    @media(max-height:700px) { .admin-lock-card { padding:17px 20px; } .admin-lock-time { font-size:46px; margin-top:12px; } .admin-lock-icon { margin-top:13px; } .admin-pin-keypad { gap:7px 12px; } .admin-pin-keypad button,.admin-keypad-spacer { height:48px; } }
   </style>
-
-  
-  <style id="team-rer-appearance-theme">
-    .team-rer-theme-toggle{
-      position:fixed;left:max(14px,env(safe-area-inset-left));
-      bottom:max(18px,env(safe-area-inset-bottom));z-index:99990;
-      display:flex;align-items:center;gap:8px;padding:10px 15px;
-      border:1px solid rgba(255,255,255,.72);border-radius:999px;
-      color:#18334d;background:rgba(255,255,255,.68);
-      box-shadow:0 8px 28px rgba(16,53,86,.16),inset 0 1px 0 rgba(255,255,255,.9);
-      -webkit-backdrop-filter:blur(22px) saturate(180%);
-      backdrop-filter:blur(22px) saturate(180%);
-      font-family:inherit;font-size:12px;font-weight:600;line-height:1.1;letter-spacing:.02em;cursor:pointer;
-      -webkit-tap-highlight-color:transparent
-    }
-    .team-rer-theme-toggle:active{transform:scale(.97)}
-    .team-rer-theme-toggle .theme-toggle-icon{font-size:16px;line-height:1}
-    html[data-rer-theme="dark"]{color-scheme:dark;background:#0b1420}
-    html[data-rer-theme="dark"] body{
-      color:#e6edf6!important;
-      background:
-        radial-gradient(ellipse at 10% 8%,rgba(40,105,158,.25),transparent 36%),
-        radial-gradient(ellipse at 90% 18%,rgba(39,74,111,.25),transparent 34%),
-        linear-gradient(145deg,#0b1420 0%,#101d2b 52%,#0b1522 100%)!important;
-      background-attachment:fixed!important
-    }
-    html[data-rer-theme="dark"] .wrap,
-    html[data-rer-theme="dark"] .card,
-    html[data-rer-theme="dark"] .module-card,
-    html[data-rer-theme="dark"] .credit-section,
-    html[data-rer-theme="dark"] .quote-panel,
-    html[data-rer-theme="dark"] .panel,
-    html[data-rer-theme="dark"] .dashboard-welcome,
-    html[data-rer-theme="dark"] .dashboard-card,
-    html[data-rer-theme="dark"] .app-nav button,
-    html[data-rer-theme="dark"] .app-nav a,
-    html[data-rer-theme="dark"] .promo-card,
-    html[data-rer-theme="dark"] .vehicle-card,
-    html[data-rer-theme="dark"] .bank-card,
-    html[data-rer-theme="dark"] .accordion,
-    html[data-rer-theme="dark"] .accordion-item{
-      color:#e6edf6!important;
-      background:rgba(24,39,56,.82)!important;
-      border-color:rgba(161,190,218,.20)!important;
-      box-shadow:0 16px 42px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035)!important
-    }
-    html[data-rer-theme="dark"] h1,
-    html[data-rer-theme="dark"] h2,
-    html[data-rer-theme="dark"] h3,
-    html[data-rer-theme="dark"] h4,
-    html[data-rer-theme="dark"] .brand,
-    html[data-rer-theme="dark"] .brand h1,
-    html[data-rer-theme="dark"] .dashboard-label,
-    html[data-rer-theme="dark"] .welcome-eyebrow,
-    html[data-rer-theme="dark"] .module-title,
-    html[data-rer-theme="dark"] label{
-      color:#e7f1fb!important
-    }
-    html[data-rer-theme="dark"] p,
-    html[data-rer-theme="dark"] small,
-    html[data-rer-theme="dark"] .app-caption,
-    html[data-rer-theme="dark"] .welcome-note,
-    html[data-rer-theme="dark"] .muted,
-    html[data-rer-theme="dark"] .hint,
-    html[data-rer-theme="dark"] .description{
-      color:#aebed0
-    }
-    html[data-rer-theme="dark"] input,
-    html[data-rer-theme="dark"] select,
-    html[data-rer-theme="dark"] textarea,
-    html[data-rer-theme="dark"] .form-control{
-      color:#edf4fb!important;background:rgba(9,20,32,.78)!important;
-      border-color:rgba(166,193,218,.28)!important
-    }
-    html[data-rer-theme="dark"] input::placeholder,
-    html[data-rer-theme="dark"] textarea::placeholder{color:#8297ad!important}
-    html[data-rer-theme="dark"] button:not(.team-rer-theme-toggle):not(.admin-pin-keypad button),
-    html[data-rer-theme="dark"] .btn{
-      border-color:rgba(166,193,218,.24)
-    }
-    html[data-rer-theme="dark"] table,
-    html[data-rer-theme="dark"] th,
-    html[data-rer-theme="dark"] td{
-      color:#dce8f4!important;border-color:rgba(166,193,218,.20)!important
-    }
-    html[data-rer-theme="dark"] th,
-    html[data-rer-theme="dark"] thead th{
-      background:rgba(48,70,94,.88)!important;color:#f0f6fc!important
-    }
-    html[data-rer-theme="dark"] tr:nth-child(even) td{
-      background:rgba(255,255,255,.025)!important
-    }
-    html[data-rer-theme="dark"] .message,
-    html[data-rer-theme="dark"] .status,
-    html[data-rer-theme="dark"] .notice,
-    html[data-rer-theme="dark"] .info-box{
-      color:#dce8f4!important;background:rgba(41,68,93,.48)!important;
-      border-color:rgba(166,193,218,.20)!important
-    }
-    html[data-rer-theme="dark"] .team-rer-theme-toggle{
-      color:#e8f2fc;background:rgba(30,48,68,.72);
-      border-color:rgba(190,215,238,.22);
-      box-shadow:0 8px 28px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08)
-    }
-    html[data-rer-theme="dark"] .admin-lock-card{
-      color:#e6edf6;background:rgba(22,37,54,.58)!important;
-      border-color:rgba(220,235,248,.22)!important
-    }
-    html[data-rer-theme="dark"] .admin-lock-time,
-    html[data-rer-theme="dark"] .admin-lock-brand,
-    html[data-rer-theme="dark"] .admin-lock-card h1{color:#edf5fd!important}
-    html[data-rer-theme="dark"] .admin-lock-date,
-    html[data-rer-theme="dark"] .admin-lock-card p{color:#b7c7d8!important}
-    html[data-rer-theme="dark"] .admin-pin-keypad button{
-      color:#edf5fd!important;background:rgba(235,244,252,.12)!important;
-      border-color:rgba(235,244,252,.22)!important
-    }
-    @media(max-width:480px){
-      .team-rer-theme-toggle{padding:9px 12px;bottom:max(16px,env(safe-area-inset-bottom))}
-      .team-rer-theme-toggle .theme-toggle-label{font-size:11px}
-    }
-    @media print{.team-rer-theme-toggle{display:none!important}}
-  </style>
-
-  </head>
+</head>
 <body>
-  <button id="teamRerThemeToggle" class="team-rer-theme-toggle" type="button"
-    aria-label="Change appearance" title="Appearance: Light">
-    <span class="theme-toggle-icon" aria-hidden="true">☀</span>
-    <span class="theme-toggle-label">Light</span>
-  </button>
-  <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
+<button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
     <span>Lock</span>
   </button>
@@ -1990,8 +1862,8 @@
       </div>
       <h2>Admin Workspace Locked</h2>
       <p id="adminLockMessage">Enter your admin PIN to continue.</p>
-      <div id="adminPinDots" class="admin-pin-dots" aria-label="Six digit PIN">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
+      <div id="adminPinDots" class="admin-pin-dots" aria-label="Five digit PIN">
+        <span></span><span></span><span></span><span></span><span></span>
       </div>
       <div id="adminPinError" class="admin-pin-error" role="alert" aria-live="polite"></div>
       <div class="admin-pin-keypad">
@@ -2295,43 +2167,9 @@
     const SEASONAL_THEME = "CHRISTMAS";
     document.body.dataset.season = SEASONAL_THEME;
 
-    // Appearance preference: Light -> Dark -> System. Saved locally per browser.
-    (() => {
-      const root = document.documentElement;
-      const button = document.getElementById("teamRerThemeToggle");
-      const icon = button && button.querySelector(".theme-toggle-icon");
-      const label = button && button.querySelector(".theme-toggle-label");
-      const key = "TEAM_RER_APPEARANCE";
-      const valid = ["light", "dark", "system"];
-      let preference = "light";
-      try {
-        const saved = localStorage.getItem(key);
-        if (valid.includes(saved)) preference = saved;
-      } catch (_) {}
-      const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-      const apply = () => {
-        const dark = preference === "dark" || (preference === "system" && media && media.matches);
-        root.dataset.rerTheme = dark ? "dark" : "light";
-        root.style.colorScheme = dark ? "dark" : "light";
-        if (icon) icon.textContent = preference === "system" ? "◐" : (dark ? "☾" : "☀");
-        if (label) label.textContent = preference === "system" ? "System" : (dark ? "Dark" : "Light");
-        if (button) {
-          button.title = "Appearance: " + (preference.charAt(0).toUpperCase() + preference.slice(1)) + " (tap to change)";
-          button.setAttribute("aria-label", button.title);
-        }
-      };
-      if (button) button.addEventListener("click", () => {
-        preference = valid[(valid.indexOf(preference) + 1) % valid.length];
-        try { localStorage.setItem(key, preference); } catch (_) {}
-        apply();
-      });
-      if (media) {
-        if (media.addEventListener) media.addEventListener("change", () => { if (preference === "system") apply(); });
-        else if (media.addListener) media.addListener(() => { if (preference === "system") apply(); });
-      }
-      apply();
-    })();
-
+    // TEAM RER now uses the dark appearance permanently.
+    document.documentElement.dataset.rerTheme = "dark";
+    document.documentElement.style.colorScheme = "dark";
 
     const loadingMessages = {
       authorize: "Checking your access...",
@@ -2391,7 +2229,7 @@
     // after 5 minutes of inactivity. Other users retain the 60-minute sign-out.
     const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
     const ADMIN_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
-    const ADMIN_UNLOCK_PIN = "168888"; // UI lock only; server authorization remains the security boundary.
+    const ADMIN_UNLOCK_PIN = "16888"; // UI lock only; server authorization remains the security boundary.
     const LAST_ACTIVITY_KEY = "teamRerLastActivity";
     let idleCheckTimer = null;
     let lastActivityWrite = 0;
@@ -2495,11 +2333,11 @@
       if (!adminScreenLocked) return;
       if (key === "delete") {
         adminPinEntry = adminPinEntry.slice(0, -1);
-      } else if (/^\d$/.test(key) && adminPinEntry.length < 6) {
+      } else if (/^\d$/.test(key) && adminPinEntry.length < 5) {
         adminPinEntry += key;
       }
       renderAdminPinDots();
-      if (adminPinEntry.length === 6) unlockAdminScreen();
+      if (adminPinEntry.length === 5) unlockAdminScreen();
     }
 
     async function signOutForInactivity() {
