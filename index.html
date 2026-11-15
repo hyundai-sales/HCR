@@ -4048,15 +4048,36 @@
         if (edge.classList.contains("is-open") && !edge.contains(event.target)) closePanel();
       });
       document.addEventListener("keydown",event => { if (event.key === "Escape") closePanel(); });
-      // Keep the panel hidden on the main menu and whenever the signed-in workspace is hidden.
+      // Detect the currently visible module, including modules restored from
+      // the saved last-view state (which do not generate a tab-button click).
       const appSection = document.getElementById("appSection");
+      const appNav = document.getElementById("appNav");
+      const detectActiveModule = () => {
+        if (!appSection || appSection.classList.contains("hidden") ||
+            (appNav && !appNav.classList.contains("hidden"))) {
+          hideEdge();
+          return;
+        }
+        const visibleKey = Object.keys(modulePages).find(key => {
+          const page = document.getElementById(modulePages[key]);
+          return page && !page.classList.contains("hidden");
+        });
+        if (visibleKey) showEdge(visibleKey);
+        else hideEdge();
+      };
       if (appSection) new MutationObserver(() => {
         if (appSection.classList.contains("hidden")) hideEdge();
+        else detectActiveModule();
       }).observe(appSection,{attributes:true,attributeFilter:["class"]});
-      const appNav = document.getElementById("appNav");
       if (appNav) new MutationObserver(() => {
         if (!appNav.classList.contains("hidden")) hideEdge();
+        else detectActiveModule();
       }).observe(appNav,{attributes:true,attributeFilter:["class"]});
+      // Watch module page visibility as navigation changes or saved views restore.
+      if (appSection) new MutationObserver(detectActiveModule).observe(appSection,{
+        subtree:true,attributes:true,attributeFilter:["class"]
+      });
+      detectActiveModule();
     })();
   </script>
   <script>
