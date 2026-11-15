@@ -1787,8 +1787,101 @@
 
 
 
+  <style id="team-rer-admin-lock-styles">
+    .admin-manual-lock {
+      position: fixed; top: max(14px, env(safe-area-inset-top)); right: 14px;
+      z-index: 2147483000; display: inline-flex; align-items: center; gap: 7px;
+      min-height: 40px; padding: 8px 13px; border: 1px solid rgba(255,255,255,.86);
+      border-radius: 999px; color: #173f62; font: 700 12px/1 Arial,sans-serif;
+      background: rgba(239,247,253,.78); box-shadow: 0 8px 24px rgba(20,55,83,.15), inset 0 1px 0 #fff;
+      -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+      cursor: pointer;
+    }
+    .admin-manual-lock svg { width: 17px; height: 17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .admin-lock-screen {
+      position: fixed; inset: 0; z-index: 2147483600; display: grid; place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      overflow-y: auto; isolation: isolate;
+    }
+    .admin-lock-screen.hidden { display:none !important; }
+    .admin-lock-backdrop {
+      position:absolute; inset:0; z-index:-1;
+      background: linear-gradient(145deg,rgba(217,232,245,.76),rgba(245,249,252,.82)),
+        url("./hyundai-cainta-cover.jpg") center/cover no-repeat;
+      -webkit-backdrop-filter: blur(30px) saturate(135%); backdrop-filter: blur(30px) saturate(135%);
+    }
+    .admin-lock-backdrop::after { content:""; position:absolute; inset:0; background:rgba(240,247,252,.58); -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px); }
+    .admin-lock-card {
+      width:min(100%,360px); position:relative; padding:25px 24px 22px; text-align:center;
+      border:1px solid rgba(255,255,255,.82); border-radius:30px;
+      background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(232,242,250,.54));
+      box-shadow:0 25px 80px rgba(24,65,99,.19),inset 0 1px 0 rgba(255,255,255,.95);
+      -webkit-backdrop-filter:blur(28px) saturate(160%); backdrop-filter:blur(28px) saturate(160%);
+    }
+    .admin-lock-brand { display:flex; align-items:center; justify-content:center; gap:8px; color:#174b75; font-size:11px; font-weight:800; letter-spacing:.16em; }
+    .admin-lock-brand img { width:31px; height:24px; object-fit:contain; }
+    .admin-lock-time { margin-top:18px; color:#153f63; font-size:58px; line-height:1; font-weight:300; letter-spacing:-.055em; font-variant-numeric:tabular-nums; }
+    .admin-lock-date { margin-top:8px; color:#5d7285; font-size:14px; }
+    .admin-lock-icon { width:42px; height:42px; display:grid; place-items:center; margin:23px auto 8px; border-radius:15px; color:#315f84; background:rgba(255,255,255,.62); box-shadow:inset 0 1px 0 #fff,0 5px 15px rgba(36,77,111,.08); }
+    .admin-lock-icon svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    .admin-lock-card h2 { margin:8px 0 5px; color:#173f62; font-size:19px; }
+    .admin-lock-card p { margin:0; color:#64788b; font-size:12px; line-height:1.5; }
+    .admin-pin-dots { display:flex; justify-content:center; gap:13px; margin:20px 0 7px; }
+    .admin-pin-dots span { width:10px; height:10px; border:1.5px solid rgba(41,83,119,.5); border-radius:50%; background:rgba(255,255,255,.45); }
+    .admin-pin-dots span.filled { background:#245d89; border-color:#245d89; box-shadow:0 0 0 3px rgba(36,93,137,.10); }
+    .admin-pin-error { min-height:17px; margin:5px 0 7px; color:#b33b45; font-size:11px; }
+    .admin-pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px 15px; width:min(100%,250px); margin:0 auto; }
+    .admin-pin-keypad button { width:58px; height:48px; justify-self:center; border:1px solid rgba(255,255,255,.82); border-radius:17px; color:#1b496d; font-size:20px; font-weight:600; background:rgba(255,255,255,.58); box-shadow:0 5px 13px rgba(35,75,108,.07),inset 0 1px 0 #fff; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+    .admin-pin-keypad button:active { transform:scale(.96); background:rgba(213,231,245,.8); }
+    .admin-keypad-spacer { width:58px; height:48px; }
+    .admin-lock-footnote { margin-top:17px; color:#8394a3; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
+    body.admin-screen-locked { overflow:hidden !important; }
+    @media(max-height:700px) { .admin-lock-card { padding:17px 20px; } .admin-lock-time { font-size:46px; margin-top:12px; } .admin-lock-icon { margin-top:13px; } .admin-pin-keypad { gap:7px 12px; } .admin-pin-keypad button,.admin-keypad-spacer { height:42px; } }
+  </style>
+
   </head>
 <body>
+  <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
+    <span>Lock</span>
+  </button>
+
+  <section id="adminLockScreen" class="admin-lock-screen hidden" aria-hidden="true" aria-label="Admin workspace locked">
+    <div class="admin-lock-backdrop"></div>
+    <div class="admin-lock-card">
+      <div class="admin-lock-brand">
+        <img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai">
+        <span>TEAM RER</span>
+      </div>
+      <div class="admin-lock-time" id="adminLockClock">--:--</div>
+      <div class="admin-lock-date" id="adminLockDate"> </div>
+      <div class="admin-lock-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
+      </div>
+      <h2>Admin Workspace Locked</h2>
+      <p id="adminLockMessage">Enter your admin PIN to continue.</p>
+      <div id="adminPinDots" class="admin-pin-dots" aria-label="Six digit PIN">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div id="adminPinError" class="admin-pin-error" role="alert" aria-live="polite"></div>
+      <div class="admin-pin-keypad">
+        <button type="button" data-admin-pin="1">1</button>
+        <button type="button" data-admin-pin="2">2</button>
+        <button type="button" data-admin-pin="3">3</button>
+        <button type="button" data-admin-pin="4">4</button>
+        <button type="button" data-admin-pin="5">5</button>
+        <button type="button" data-admin-pin="6">6</button>
+        <button type="button" data-admin-pin="7">7</button>
+        <button type="button" data-admin-pin="8">8</button>
+        <button type="button" data-admin-pin="9">9</button>
+        <span class="admin-keypad-spacer"></span>
+        <button type="button" data-admin-pin="0">0</button>
+        <button type="button" data-admin-pin="delete" aria-label="Delete last digit">⌫</button>
+      </div>
+      <div class="admin-lock-footnote">Authorized administrator access only</div>
+    </div>
+  </section>
+
   <aside id="teamRerEdgeNav" aria-label="Quick module navigation">
           <button id="teamRerEdgeToggle" class="edge-toggle" type="button" aria-expanded="false" aria-controls="teamRerEdgePanel" aria-label="Open quick navigation">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg><span>QUICK MENU</span>
@@ -2125,14 +2218,19 @@
       try { localStorage.removeItem(LAST_APP_VIEW_KEY); } catch (_) {}
     }
 
-    // TEAM RER session policy: persistent login, automatic sign-out after
-    // 60 minutes without activity. The timestamp is shared across browser tabs.
+    // TEAM RER session policy:
+    // Admins keep their Google sign-in indefinitely and are locally locked
+    // after 5 minutes of inactivity. Other users retain the 60-minute sign-out.
     const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
+    const ADMIN_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+    const ADMIN_UNLOCK_PIN = "168888"; // UI lock only; server authorization remains the security boundary.
     const LAST_ACTIVITY_KEY = "teamRerLastActivity";
     let idleCheckTimer = null;
     let lastActivityWrite = 0;
     let authorizationInProgress = false;
     let idleSignOutInProgress = false;
+    let adminScreenLocked = false;
+    let adminPinEntry = "";
 
     function clearIdleMonitor(clearTimestamp = false) {
       if (idleCheckTimer) {
@@ -2161,13 +2259,79 @@
       }
     }
 
+    function isAdminSession() {
+      return String(authorizedUser && authorizedUser.role || "").trim().toLowerCase() === "admin";
+    }
+
     function recordUserActivity() {
-      if (!currentUser || !authorizedUser) return;
+      if (!currentUser || !authorizedUser || adminScreenLocked) return;
       const now = Date.now();
       // Throttle writes while still keeping the shared timestamp current.
       if (now - lastActivityWrite >= 15000 || !lastActivityWrite) {
         saveLastActivity(now);
       }
+    }
+
+    function renderAdminPinDots() {
+      const dots = $("adminPinDots");
+      if (!dots) return;
+      dots.querySelectorAll("span").forEach((dot, index) => {
+        dot.classList.toggle("filled", index < adminPinEntry.length);
+      });
+    }
+
+    function lockAdminScreen(reason = "manual") {
+      if (!isAdminSession() || adminScreenLocked) return;
+      adminScreenLocked = true;
+      adminPinEntry = "";
+      renderAdminPinDots();
+      const overlay = $("adminLockScreen");
+      if (overlay) {
+        overlay.classList.remove("hidden");
+        overlay.setAttribute("aria-hidden", "false");
+        $("adminLockMessage").textContent = reason === "idle"
+          ? "Locked for your privacy after 5 minutes of inactivity."
+          : "Your workspace is locked. Enter your admin PIN to continue.";
+        $("adminPinError").textContent = "";
+      }
+      const lockButton = $("adminManualLock");
+      if (lockButton) lockButton.classList.add("hidden");
+      document.body.classList.add("admin-screen-locked");
+      const edgeNav = $("teamRerEdgeNav");
+      const edgeToggle = $("teamRerEdgeToggle");
+      if (edgeNav) edgeNav.classList.remove("is-open");
+      if (edgeToggle) edgeToggle.setAttribute("aria-expanded", "false");
+    }
+
+    function unlockAdminScreen() {
+      if (!adminScreenLocked || !isAdminSession()) return;
+      if (adminPinEntry !== ADMIN_UNLOCK_PIN) {
+        $("adminPinError").textContent = "Incorrect PIN. Please try again.";
+        adminPinEntry = "";
+        renderAdminPinDots();
+        return;
+      }
+      adminScreenLocked = false;
+      adminPinEntry = "";
+      saveLastActivity();
+      renderAdminPinDots();
+      $("adminLockScreen").classList.add("hidden");
+      $("adminLockScreen").setAttribute("aria-hidden", "true");
+      $("adminPinError").textContent = "";
+      document.body.classList.remove("admin-screen-locked");
+      const lockButton = $("adminManualLock");
+      if (lockButton) lockButton.classList.remove("hidden");
+    }
+
+    function handleAdminPinKey(key) {
+      if (!adminScreenLocked) return;
+      if (key === "delete") {
+        adminPinEntry = adminPinEntry.slice(0, -1);
+      } else if (/^\\d$/.test(key) && adminPinEntry.length < 6) {
+        adminPinEntry += key;
+      }
+      renderAdminPinDots();
+      if (adminPinEntry.length === 6) unlockAdminScreen();
     }
 
     async function signOutForInactivity() {
@@ -2188,15 +2352,18 @@
     }
 
     function checkIdleTimeout() {
-      if (!currentUser || !authorizedUser) return;
+      if (!currentUser || !authorizedUser || adminScreenLocked) return;
       const lastActivity = getLastActivity();
       if (!lastActivity) {
         saveLastActivity();
         return;
       }
-      if (Date.now() - lastActivity >= IDLE_TIMEOUT_MS) {
-        signOutForInactivity();
+      const idleFor = Date.now() - lastActivity;
+      if (isAdminSession()) {
+        if (idleFor >= ADMIN_LOCK_TIMEOUT_MS) lockAdminScreen("idle");
+        return; // Admin Google sign-in never expires because of inactivity.
       }
+      if (idleFor >= IDLE_TIMEOUT_MS) signOutForInactivity();
     }
 
     function startIdleMonitor() {
@@ -2345,6 +2512,11 @@
         authorizationInProgress = false;
         authorizedUser = event.data.user;
         if (!getLastActivity()) saveLastActivity();
+        adminScreenLocked = false;
+        adminPinEntry = "";
+        document.body.classList.remove("admin-screen-locked");
+        const manualLockButton = $("adminManualLock");
+        if (manualLockButton) manualLockButton.classList.toggle("hidden", !isAdminSession());
         startIdleMonitor();
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
@@ -3929,6 +4101,21 @@
       }
     });
 
+    // Admin-only manual lock and iPhone-style PIN keypad.
+    $("adminManualLock").addEventListener("click", () => lockAdminScreen("manual"));
+    document.querySelectorAll("[data-admin-pin]").forEach(button => {
+      button.addEventListener("click", () => handleAdminPinKey(button.dataset.adminPin));
+    });
+    function updateAdminLockClock() {
+      const now = new Date();
+      const clock = $("adminLockClock");
+      const date = $("adminLockDate");
+      if (clock) clock.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+      if (date) date.textContent = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+    }
+    updateAdminLockClock();
+    window.setInterval(updateAdminLockClock, 30000);
+
     let signingOut = false;
     $("logoutBtn").addEventListener("click", async () => {
       signingOut = true;
@@ -3955,6 +4142,12 @@
         signingOut = false;
         window.setTimeout(hideLoading, transitionDelay);
         authorizedUser = null;
+        adminScreenLocked = false;
+        adminPinEntry = "";
+        document.body.classList.remove("admin-screen-locked");
+        $("adminLockScreen").classList.add("hidden");
+        $("adminLockScreen").setAttribute("aria-hidden", "true");
+        $("adminManualLock").classList.add("hidden");
         pendingNonce = null;
         pendingAction = null;
         $("appSection").classList.add("hidden");
@@ -3969,15 +4162,8 @@
         return;
       }
 
-      // On refresh, reject a stored session whose last activity is already
-      // older than one hour; otherwise restore and re-check access server-side.
-      const previousActivity = getLastActivity();
-      if (previousActivity && Date.now() - previousActivity >= IDLE_TIMEOUT_MS) {
-        signOutForInactivity();
-        return;
-      }
-      if (!previousActivity) saveLastActivity();
-
+      // Restore the Firebase session first so the server can identify the role.
+      // The role-aware idle policy is applied once the authorize response arrives.
       if (authorizationInProgress || pendingAction === "authorize" || authorizedUser) return;
       authorizationInProgress = true;
       showLoading("Restoring your TEAM RER session...");
