@@ -3938,20 +3938,22 @@
     function openVariantPromoEditor(model, variant, readOnly=false) {
       if(!readOnly && !isTeamRerAdmin()) return;
       const records=(promoInventoryData.promotions||[]).filter(p=>p.model===model&&p.variant===variant);
-      const activeBanks=getOrderedPartnerBanks().filter(b=>String(b.status||"Active").toLowerCase()==="active").map(b=>String(b.bankName||"").trim()).filter(Boolean);
+      const partnerBanks=getOrderedPartnerBanks().filter(b=>String(b.bankName||"").trim());
+      const allPartnerBankNames=partnerBanks.map(b=>String(b.bankName||"").trim());
+      const bankDisplayName=name=>{const bank=partnerBanks.find(b=>String(b.bankName||"").trim()===name);return bank&&String(bank.status||"Active").trim().toLowerCase()!=="active"?name+" (Inactive)":name;};
       const dps=(promoInventoryData.downpaymentOptions||["20","25","30","35","40","45","50"]).map(String);
       const existing=(dp,bank)=>records.find(p=>String(p.applicableDownpayment||"")===String(dp)&&(Array.isArray(p.applicableBanks)&&p.applicableBanks.includes(bank)));
       const meta=records.find(p=>String(p.status||"Active").toLowerCase()==="active")||records[0]||{};
       const host=$("promoFormHost"); host.replaceChildren();
       const form=document.createElement("form"); form.className="promo-form promo-hcr-frame"; form.id="variantPromoEditor";
-      const bankHeaders=["ALL BANKS",...activeBanks];
-      let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b)}</th>`).join("")}</tr></thead><tbody>`;
+      const bankHeaders=["ALL BANKS",...allPartnerBankNames];
+      let matrix=`<div class="promo-matrix-wrap"><table class="promo-matrix"><thead><tr><th>DP %</th>${bankHeaders.map(b=>`<th>${promoEsc(b==="ALL BANKS"?b:bankDisplayName(b))}</th>`).join("")}</tr></thead><tbody>`;
       dps.forEach(dp=>{matrix+=`<tr><th>${promoEsc(dp)}%</th>${bankHeaders.map(bank=>{const rec=existing(dp,bank==="ALL BANKS"?"ALL_BANKS":bank);const value=rec?.downpaymentOffer||"";return `<td><input class="promo-matrix-input" type="text" inputmode="decimal" data-dp="${promoEsc(dp)}" data-bank="${promoEsc(bank)}" value="${promoEsc(value)}" placeholder="—" aria-label="${promoEsc(dp)} percent ${promoEsc(bank)} offer"></td>`;}).join("")}</tr>`;});
       // CASH and BANK PO are separate transaction discounts, each configurable by bank.
       matrix+=`<tr class="promo-cashpo-row"><th>CASH DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("CASH",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-cash-input" type="text" inputmode="decimal" data-dp="CASH" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Cash transaction discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`<tr class="promo-cashpo-row"><th>BANK PO DISCOUNT</th>${bankHeaders.map(bank=>{const rec=existing("BANK_PO",bank==="ALL BANKS"?"ALL_BANKS":bank);return `<td><input class="promo-matrix-input promo-bankpo-input" type="text" inputmode="decimal" data-bank="${promoEsc(bank)}" value="${promoEsc(rec?.cashDiscount||"")}" placeholder="—" aria-label="Bank PO discount for ${promoEsc(bank)}"></td>`;}).join("")}</tr>`;
       matrix+=`</tbody></table></div>`;
-      const copyOptions=activeBanks.map(b=>`<option value="${promoEsc(b)}">${promoEsc(b)}</option>`).join("");
+      const copyOptions=partnerBanks.map(b=>{const name=String(b.bankName).trim();return `<option value="${promoEsc(name)}">${promoEsc(bankDisplayName(name))}</option>`;}).join("");
       form.innerHTML=`<div class="promo-hcr-top"><span>HCR MONTHLY PROMOTIONS</span><small>HYUNDAI CAINTA</small></div>
         <h3>${readOnly?"View Variant Promotions":"Edit Variant Promotions"}</h3><p class="promo-editor-vehicle"><strong>${promoEsc(model)}</strong><br>${promoEsc(variant)}</p>
         ${readOnly?"":`<div class="promo-copy-tools"><label for="promoCopySource">Copy offers from</label><select id="promoCopySource"><option value="">Select source bank</option>${copyOptions}</select><label for="promoCopyTarget">to</label><select id="promoCopyTarget"><option value="">Select destination bank</option>${copyOptions}</select><button type="button" class="secondary" id="copyBankPromoBtn">Copy bank promo</button></div>`}
@@ -4148,18 +4150,18 @@
       const modelOptions=models.map(item=>`<option value="${promoEsc(item)}" ${item===selectedModel?"selected":""}>${promoEsc(item)}</option>`).join("");
       const variantOptions=variants.map(item=>`<option value="${promoEsc(item)}" ${item===(record.variant||"")?"selected":""}>${promoEsc(item)}</option>`).join("");
       const dpOptions=promoInventoryData.downpaymentOptions.map(item=>`<option value="${promoEsc(item)}" ${String(item)===String(record.applicableDownpayment||"")?"selected":""}>${promoEsc(item)}%</option>`).join("");
-      const activeBanks=getOrderedPartnerBanks().filter(b=>String(b.status||"Active").toLowerCase()==="active");
+      const partnerBanks=getOrderedPartnerBanks().filter(b=>String(b.bankName||"").trim());
       const savedBanks=Array.isArray(record.applicableBanks)?record.applicableBanks:[];
       const bankScope=savedBanks.includes("ALL_BANKS")?"ALL_BANKS":"SELECTED_BANK";
       const selectedBank=savedBanks.find(name=>name!=="ALL_BANKS")||"";
-      const bankOptions=activeBanks.map(bank=>`<option value="${promoEsc(bank.bankName)}" ${selectedBank===bank.bankName?"selected":""}>${promoEsc(bank.bankName)}</option>`).join("");
+      const bankOptions=partnerBanks.map(bank=>{const name=String(bank.bankName).trim();const inactive=String(bank.status||"Active").trim().toLowerCase()!=="active";return `<option value="${promoEsc(name)}" ${selectedBank===name?"selected":""}>${promoEsc(name+(inactive?" (Inactive)":""))}</option>`;}).join("");
       form.innerHTML=`<h3>${record.id||record.recordId?"Edit Promotion":"Add Promotion"}</h3><div class="promo-form-grid">
         <div class="field"><label for="promoEdit_model">Vehicle Model</label><select id="promoEdit_model" name="model" required><option value="">Choose vehicle model</option>${modelOptions}</select></div>
         <div class="field"><label for="promoEdit_variant">Variant</label><select id="promoEdit_variant" name="variant" required><option value="">Choose variant</option>${variantOptions}</select></div>
         ${promoField("Downpayment Offer","downpaymentOffer",record.downpaymentOffer||"")}
         <div class="field"><label for="promoEdit_applicableDownpayment">Applicable Downpayment (%)</label><select id="promoEdit_applicableDownpayment" name="applicableDownpayment" required><option value="">Select DP percentage</option>${dpOptions}</select></div>
         <div class="field"><label for="promoEdit_bankScope">Partner Bank Coverage</label><select id="promoEdit_bankScope" name="bankScope"><option value="ALL_BANKS" ${bankScope==="ALL_BANKS"?"selected":""}>ALL BANKS</option><option value="SELECTED_BANK" ${bankScope==="SELECTED_BANK"?"selected":""}>Selected Banks Only</option></select></div>
-        <div class="field" id="promoSelectedBankField" style="${bankScope==="SELECTED_BANK"?"":"display:none;"}"><label for="promoEdit_applicableBank">Select Partner Bank</label><select id="promoEdit_applicableBank" name="applicableBank"><option value="">Choose partner bank</option>${bankOptions}</select>${activeBanks.length?"":'<small class="promo-note">No active partner banks yet. Add a bank in the Partner Banks tab first.</small>'}</div>
+        <div class="field" id="promoSelectedBankField" style="${bankScope==="SELECTED_BANK"?"":"display:none;"}"><label for="promoEdit_applicableBank">Select Partner Bank</label><select id="promoEdit_applicableBank" name="applicableBank"><option value="">Choose partner bank</option>${bankOptions}</select>${partnerBanks.length?"":'<small class="promo-note">No partner banks yet. Add a bank in the Partner Banks tab first.</small>'}</div>
         ${promoField("Cash Discount","cashDiscount",record.cashDiscount||"")}
         ${promoField("Fuel Voucher","fuelVoucher",record.fuelVoucher||"")}
         ${promoField("Valid From","validFrom",record.validFrom||"","date")}
@@ -4167,7 +4169,7 @@
         <div class="field"><label for="promoEdit_status">Status</label><select id="promoEdit_status" name="status"><option ${(!record.status||record.status==="Active")?"selected":""}>Active</option><option ${record.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         ${promoTextArea("Description","description",record.description||"")}
         ${promoTextArea("Freebies / Inclusions","freebies",record.freebiesInclusions||record.freebies||"")}
-        </div><p class="promo-note">Choose ALL BANKS to apply this promotion with any partner bank, or Selected Banks Only to restrict it to one active partner bank. Only admins can manage promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
+        </div><p class="promo-note">Choose ALL BANKS to apply this promotion with any partner bank, or Selected Banks Only to restrict it to one listed partner bank. Inactive banks remain selectable for promotion setup. Only admins can manage promotions.</p><div class="promo-form-actions"><button type="submit">Save Promotion</button><button type="button" class="secondary" id="cancelPromoForm">Cancel</button></div>`;
       const bankScopeSelect=form.elements.bankScope;
       const selectedBankField=form.querySelector("#promoSelectedBankField");
       const selectedBankSelect=form.elements.applicableBank;
@@ -4293,7 +4295,7 @@
       if(!isTeamRerAdmin()) return;
       if(!promoText(record.model)||!promoText(record.variant)){setMessage($("promoModuleMessage"),"Please select a vehicle model and variant.","error");return;}
       if(!promoText(record.applicableDownpayment)){setMessage($("promoModuleMessage"),"Please select the downpayment percentage this promotion applies to.","error");return;}
-      if(!Array.isArray(record.applicableBanks)||!record.applicableBanks.length){setMessage($("promoModuleMessage"),"Choose ALL BANKS or select one active partner bank.","error");return;}
+      if(!Array.isArray(record.applicableBanks)||!record.applicableBanks.length){setMessage($("promoModuleMessage"),"Choose ALL BANKS or select one partner bank.","error");return;}
       if(record.applicableBanks.length>1){record.applicableBanks=[record.applicableBanks[0]];}
       try { await submitRequest("promoInventorySave",{payload:JSON.stringify({type:"promotion",record})}); }
       catch(error){setMessage($("promoModuleMessage"),error.message,"error");}
