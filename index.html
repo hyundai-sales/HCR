@@ -3011,7 +3011,7 @@
       if (!financing) {
         rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
         if (hasPromoDiscount) rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO" : "Cash"} Promotion</span><strong>Applied</strong></div>`);
-        if (tplIncluded) rows.push(`<div class="quote-line"><span>TPL</span><strong>${money(1700)}</strong></div>`);
+        if (tplIncluded) rows.push(`<div class="quote-line"><span>TPL</span><strong>${money2(1700)}</strong></div>`);
         rows.push(`<div class="quote-total"><span>${bankPo ? "NET BANK PO PRICE" : "NET CASH PRICE"}</span><span>${money(netPrice)}</span></div>`);
       } else {
         const isZeroDpPromo = !hasPromoDownpayment && usePriceListDownpayment && vehicle.downpaymentIsZeroDp === true;
@@ -3027,7 +3027,7 @@
         terms.forEach(t => { const monthly = Math.ceil((balance * t.factor) / t.months); rows.push(`<div class="quote-line"><span>${t.months} months</span><strong>${money(monthly)} / month</strong></div>`); });
       }
       if (financing && tplIncluded) {
-        rows.push(`<div class="quote-line"><span>TPL</span><strong>${money(1700)}</strong></div>`);
+        rows.push(`<div class="quote-line"><span>TPL</span><strong>${money2(1700)}</strong></div>`);
       }
       if (financing) {
         const totalCashout = dpAmount + (tplIncluded ? 1700 : 0);
