@@ -2185,6 +2185,7 @@
           </div>
           <p id="auditSummary" class="promo-note">Loading activity...</p>
           <div id="auditTableHost" class="audit-table-wrap"></div>
+          <div id="auditPagination" class="audit-pagination hidden" aria-label="Activity log pages"></div>
           <div id="auditMessage" class="message hidden" aria-live="polite"></div>
         </section>
 
@@ -4323,8 +4324,12 @@
     $("manageStockOptionsBtn").addEventListener("click",openStockOptionsManager);
     $("addBankBtn").addEventListener("click",()=>openBankForm());
     let auditRows = [];
+    let auditPageNumber = 1;
+    const AUDIT_PAGE_SIZE = 20;
+
     function loadAuditLogs() {
       if (!isAdminSession()) return;
+      auditPageNumber = 1;
       const filter = {
         search: $("auditSearch").value.trim(),
         module: $("auditModule").value,
@@ -4333,25 +4338,47 @@
         to: $("auditTo").value
       };
       $("auditSummary").textContent = "Loading activity...";
+      $("auditPagination").classList.add("hidden");
       $("auditMessage").classList.add("hidden");
       submitRequest("auditLogsGet", { payload: JSON.stringify(filter) })
         .catch(error => setMessage($("auditMessage"), error.message, "error"));
     }
+
     function renderAuditLogs(data) {
       auditRows = Array.isArray(data.rows) ? data.rows : [];
-      $("auditSummary").textContent = `${data.total || auditRows.length} activity record(s) shown${data.capped ? " (latest 500 matching records)" : ""}.`;
+      auditPageNumber = 1;
+      renderAuditLogPage(data);
+    }
+
+    function renderAuditLogPage(data = {}) {
       const host = $("auditTableHost");
-      if (!auditRows.length) {
+      const pagination = $("auditPagination");
+      const totalLoaded = auditRows.length;
+      const pageCount = Math.max(1, Math.ceil(totalLoaded / AUDIT_PAGE_SIZE));
+
+      if (auditPageNumber > pageCount) auditPageNumber = pageCount;
+      if (!totalLoaded) {
+        $("auditSummary").textContent = "0 activity records match these filters.";
         host.innerHTML = '<div class="message">No activity records match these filters.</div>';
+        pagination.classList.add("hidden");
+        pagination.replaceChildren();
         return;
       }
+
+      const startIndex = (auditPageNumber - 1) * AUDIT_PAGE_SIZE;
+      const endIndex = Math.min(startIndex + AUDIT_PAGE_SIZE, totalLoaded);
+      const visibleRows = auditRows.slice(startIndex, endIndex);
+      const capNote = data.capped ? ` Latest ${totalLoaded} matching records are available in this view.` : "";
+      $("auditSummary").textContent =
+        `Showing ${startIndex + 1}–${endIndex} of ${totalLoaded} matching activity records.${capNote}`;
+
       const table = document.createElement("table");
       table.className = "audit-table";
       const thead = document.createElement("thead");
       thead.innerHTML = "<tr><th>Date & Time</th><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr>";
       table.appendChild(thead);
       const tbody = document.createElement("tbody");
-      auditRows.forEach(row => {
+      visibleRows.forEach(row => {
         const tr = document.createElement("tr");
         [row.timestamp, row.name, row.action, row.module, row.details, row.status].forEach((value, index) => {
           const td = document.createElement("td");
@@ -4363,6 +4390,59 @@
       });
       table.appendChild(tbody);
       host.replaceChildren(table);
+
+      pagination.replaceChildren();
+      if (pageCount <= 1) {
+        pagination.classList.add("hidden");
+        return;
+      }
+      pagination.classList.remove("hidden");
+
+      const previous = document.createElement("button");
+      previous.type = "button";
+      previous.className = "secondary audit-page-btn";
+      previous.textContent = "Previous";
+      previous.disabled = auditPageNumber === 1;
+      previous.addEventListener("click", () => {
+        if (auditPageNumber > 1) {
+          auditPageNumber--;
+          renderAuditLogPage(data);
+        }
+      });
+      pagination.appendChild(previous);
+
+      const pageWindowStart = Math.max(1, Math.min(
+        auditPageNumber - 2,
+        pageCount - 4
+      ));
+      const pageWindowEnd = Math.min(pageCount, pageWindowStart + 4);
+      for (let page = pageWindowStart; page <= pageWindowEnd; page++) {
+        const pageButton = document.createElement("button");
+        pageButton.type = "button";
+        pageButton.className = "audit-page-btn" + (page === auditPageNumber ? " is-current" : " secondary");
+        pageButton.textContent = String(page);
+        pageButton.setAttribute("aria-label", `Page ${page}`);
+        pageButton.setAttribute("aria-current", page === auditPageNumber ? "page" : "false");
+        pageButton.disabled = page === auditPageNumber;
+        pageButton.addEventListener("click", () => {
+          auditPageNumber = page;
+          renderAuditLogPage(data);
+        });
+        pagination.appendChild(pageButton);
+      }
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "secondary audit-page-btn";
+      next.textContent = "Next";
+      next.disabled = auditPageNumber === pageCount;
+      next.addEventListener("click", () => {
+        if (auditPageNumber < pageCount) {
+          auditPageNumber++;
+          renderAuditLogPage(data);
+        }
+      });
+      pagination.appendChild(next);
     }
     function exportAuditCsv() {
       if (!auditRows.length) {
@@ -5198,6 +5278,11 @@
 .audit-table th{position:sticky;top:0;background:#123d63;color:#fff;font-weight:700}
 .audit-table td{color:var(--text-color,#dbe7f2)}
 .audit-table tr:last-child td{border-bottom:0}
+.audit-pagination{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;padding:14px 4px}
+.audit-pagination.hidden{display:none}
+.audit-pagination .audit-page-btn{margin:0;min-width:38px;min-height:36px;padding:7px 10px;font-size:12px}
+.audit-pagination .audit-page-btn:disabled{opacity:.55;cursor:default}
+.audit-pagination .audit-page-btn.is-current{background:#174f7c;color:#fff;border:1px solid #2d78ae;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .audit-success{color:#20a56b!important;font-weight:700}
 .audit-failed{color:#e35b5b!important;font-weight:700}
 @media(max-width:560px){.audit-filters{grid-template-columns:1fr}.audit-table{min-width:680px}}
