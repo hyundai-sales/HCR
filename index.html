@@ -3929,6 +3929,27 @@
         <div class="field"><label for="variantPromo_status">Status</label><select id="variantPromo_status" name="status"><option ${(!meta.status||meta.status==="Active")?"selected":""}>Active</option><option ${meta.status==="Inactive"?"selected":""}>Inactive</option></select></div>
         </div><div class="promo-form-actions">${readOnly?'<button type="button" class="secondary" id="cancelVariantPromo">Close</button>':'<button type="submit">Save Variant Promotions</button><button type="button" class="secondary" id="cancelVariantPromo">Cancel</button>'}</div>
         <div class="promo-hcr-bottom"><img src="https://cdn.simpleicons.org/hyundai/79513b" alt="Hyundai" class="promo-hyundai-logo"><strong>HYUNDAI</strong><small>TEAM RER • HYUNDAI CAINTA</small></div>`;
+      // Apply readable colors directly to this dynamically-created editor.
+      // Inline !important prevents the global dark-theme rules from washing out labels.
+      form.style.setProperty("background", "rgba(242,246,251,.98)", "important");
+      form.style.setProperty("color", "#173b56", "important");
+      form.querySelectorAll(".field label, .promo-copy-tools label").forEach(label=>{
+        label.style.setProperty("color", "#173f60", "important");
+        label.style.setProperty("opacity", "1", "important");
+        label.style.setProperty("font-weight", "750", "important");
+        label.style.setProperty("text-shadow", "none", "important");
+      });
+      form.querySelectorAll(".promo-note").forEach(note=>{
+        note.style.setProperty("color", "#405b72", "important");
+        note.style.setProperty("opacity", "1", "important");
+        note.style.setProperty("font-weight", "600", "important");
+        note.style.setProperty("text-shadow", "none", "important");
+      });
+      form.querySelectorAll(".promo-editor-vehicle, h3, h4").forEach(heading=>{
+        heading.style.setProperty("color", "#153e5d", "important");
+        heading.style.setProperty("opacity", "1", "important");
+      });
+
       if(readOnly) {
         form.querySelectorAll("input,select,textarea").forEach(control=>{ control.disabled=true; control.setAttribute("aria-readonly","true"); });
       } else {
@@ -4878,6 +4899,23 @@
     color:#ffffff !important;
     -webkit-text-fill-color:#ffffff !important;
     opacity:1 !important;
+  }
+</style>
+
+
+<style id="team-rer-promo-editor-readability-v24">
+  #variantPromoEditor .field > label,
+  #variantPromoEditor .promo-copy-tools > label {
+    color:#173f60 !important;
+    opacity:1 !important;
+    font-weight:750 !important;
+    text-shadow:none !important;
+  }
+  #variantPromoEditor .promo-note {
+    color:#405b72 !important;
+    opacity:1 !important;
+    font-weight:600 !important;
+    text-shadow:none !important;
   }
 </style>
 
