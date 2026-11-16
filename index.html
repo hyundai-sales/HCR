@@ -2173,7 +2173,7 @@
           <h2 class="section-title">Activity Logs</h2>
           <p class="app-caption">Admin-only record of actions performed in TEAM RER. Logs are recorded by the server using the signed-in account.</p>
           <div class="audit-filters">
-            <input id="auditSearch" type="search" placeholder="Search name, email, action or details...">
+            <input id="auditSearch" type="search" placeholder="Search name, action or details...">
             <select id="auditModule"><option value="">All modules</option><option>Authentication</option><option>Workspace</option><option>Price List</option><option>Credit Application</option><option>Promos and Vehicle Info</option><option>SRP Editor</option><option>System</option></select>
             <select id="auditStatus"><option value="">All statuses</option><option value="SUCCESS">Success</option><option value="FAILED">Failed</option></select>
             <input id="auditFrom" type="date" aria-label="From date">
@@ -4351,7 +4351,7 @@
       const tbody = document.createElement("tbody");
       auditRows.forEach(row => {
         const tr = document.createElement("tr");
-        [row.timestamp, `${row.name}\n${row.email}`, row.action, row.module, row.details, row.status].forEach((value, index) => {
+        [row.timestamp, row.name, row.action, row.module, row.details, row.status].forEach((value, index) => {
           const td = document.createElement("td");
           td.textContent = value || "—";
           if (index === 5) td.className = String(value).toUpperCase() === "FAILED" ? "audit-failed" : "audit-success";
@@ -4367,7 +4367,7 @@
         setMessage($("auditMessage"), "There are no activity records to export.", "error");
         return;
       }
-      const columns = ["timestamp","name","email","role","action","module","details","status"];
+      const columns = ["timestamp","name","role","action","module","details","status"];
       const quote = value => '"' + String(value ?? "").replace(/"/g, '""') + '"';
       const csv = [columns.join(","), ...auditRows.map(row => columns.map(key => quote(row[key])).join(","))].join("\r\n");
       const blob = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8"});
