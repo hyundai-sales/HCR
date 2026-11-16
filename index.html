@@ -1454,7 +1454,7 @@
     .promo-tabs button{flex:1;min-height:40px;margin:0;padding:9px;border-radius:11px;background:transparent;color:#315674;font-size:13px}
     .promo-tabs button.active{background:rgba(255,255,255,.94);color:#003b70;box-shadow:0 3px 10px rgba(23,61,91,.10)}
     .promo-tools{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
-    .promo-tools input{flex:1;min-width:0}
+    .promo-tools input,.promo-tools select{flex:1;min-width:0}
     .promo-add{width:auto;min-height:42px;padding:10px 14px;white-space:nowrap}
     #manageStockOptionsBtn{white-space:nowrap;min-height:42px}
     @media(max-width:700px){#promoStockPanel .promo-tools #stockSearch{flex:1 1 100%;width:100%}#promoStockPanel .promo-tools button{flex:1 1 auto}}
@@ -1489,6 +1489,9 @@
     .promo-form-actions{display:flex;gap:8px;margin-top:8px}
     .promo-form-actions button{margin:0}
     .promo-note{color:#71869a;font-size:11px;line-height:1.45;margin:8px 0}
+    .srp-editor-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(118px,170px) auto;align-items:center;gap:10px;margin:9px 0;padding:12px;border:1px solid rgba(164,190,211,.65);border-radius:14px;background:rgba(255,255,255,.82)}
+    .srp-editor-vehicle{min-width:0;display:flex;flex-direction:column;gap:4px}.srp-editor-vehicle strong{font-size:13px;color:#234865}.srp-editor-vehicle small{font-size:11px;color:#71869a}.srp-editor-price{width:100%;min-width:0;min-height:40px;padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums}.srp-editor-row button{min-height:38px;margin:0;padding:8px 12px;white-space:nowrap}.srp-editor-row button:disabled{opacity:.55;cursor:wait}
+    @media(max-width:520px){.srp-editor-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.srp-editor-price{grid-column:1;grid-row:2;text-align:left}.srp-editor-row button{grid-column:2;grid-row:1 / span 2}}
     .promo-bank-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px;border:1px solid rgba(164,190,211,.7);border-radius:11px;background:rgba(255,255,255,.72);max-height:190px;overflow:auto}
     .promo-bank-option{display:flex;align-items:center;gap:7px;padding:6px;border-radius:8px;background:rgba(230,240,248,.55);font-size:12px;color:#244866}
     .promo-bank-option input{width:16px;min-height:16px;margin:0;flex:0 0 auto}
@@ -2075,7 +2078,7 @@
             <button class="edge-item" type="button" data-edge-target="pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 12h8M8 16h8"/></svg><span>Price List</span></button>
             <button class="edge-item" type="button" data-edge-target="quote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14 5 8h14l2 6v5H3zM5 14h14M7 18h.01M17 18h.01M7 8l1-3h8l1 3"/></svg><span>Vehicle Quotation</span></button>
             <button class="edge-item" type="button" data-edge-target="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>Credit Application</span></button>
-            <button class="edge-item" type="button" data-edge-target="promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path d="m4 7 8 5 8-5M12 12v9"/></svg><span>Promos & Availability</span></button>
+            <button class="edge-item" type="button" data-edge-target="promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path d="m4 7 8 5 8-5M12 12v9"/></svg><span>Promos and Vehicle Info</span></button>
           </nav>
         </aside>
 
@@ -2136,23 +2139,24 @@
             </button>
             <button id="promoTabBtn" type="button">
               <span class="nav-icon nav-icon-promo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21M8 5.2l8 4.6"/></svg></span>
-              <span class="nav-copy"><span class="nav-title">Promos & Availability</span><span class="nav-description">Current offers and vehicle stock updates</span></span>
+              <span class="nav-copy"><span class="nav-title">Promos and Vehicle Info</span><span class="nav-description">Promotions, vehicle availability and SRP management</span></span>
             </button>
           </nav>
         </div>
 
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
-          <h2 class="section-title">Promos & Vehicle Availability</h2>
-          <p class="app-caption">Check the latest offers and vehicle stock updates maintained by TEAM RER admins.</p>
-          <div class="promo-tabs" role="tablist" aria-label="Promo, inventory and partner bank views">
+          <h2 class="section-title">Promos and Vehicle Info</h2>
+          <p class="app-caption">Manage promotions, vehicle availability, partner banks and vehicle SRPs in one place.</p>
+          <div class="promo-tabs" role="tablist" aria-label="Promotions, vehicle information, partner banks and SRP editor">
             <button id="promoOffersTab" class="active" type="button" role="tab" aria-selected="true">Promotions</button>
             <button id="promoStockTab" type="button" role="tab" aria-selected="false">Vehicle Availability</button>
             <button id="promoBanksTab" type="button" role="tab" aria-selected="false">Partner Banks</button>
+            <button id="promoSrpTab" type="button" role="tab" aria-selected="false">SRP Editor</button>
           </div>
           <div id="promoOffersPanel">
             <div class="promo-tools">
-              <input id="promoSearch" type="search" placeholder="Search model or promotion..." aria-label="Search promotions">
+              <select id="promoVehicleSelect" aria-label="Select vehicle for promotions"><option value="">Select vehicle model and variant...</option></select>
               <button id="addPromoBtn" class="promo-add hidden" type="button">＋ Add Promo</button>
             </div>
             <div id="promoOffersList"></div>
@@ -2167,6 +2171,14 @@
             <div id="promoStockList"></div>
             <div id="stockOptionsHost"></div>
             <div id="stockFormHost"></div>
+          </div>
+          <div id="promoSrpPanel" class="hidden">
+            <div class="promo-tools">
+              <input id="srpSearch" type="search" placeholder="Search model or variant..." aria-label="Search SRP Editor vehicles">
+              <button id="refreshSrpBtn" class="secondary" type="button">Refresh SRP</button>
+            </div>
+            <p class="promo-note">SRP values are read from the existing Google Sheets tab named <strong>SRP Editor</strong>. Admin changes here are saved directly to that same tab and will be reflected in the Price List and Vehicle Quotation.</p>
+            <div id="srpEditorList"></div>
           </div>
           <div id="promoBanksPanel" class="hidden">
             <div class="promo-tools">
@@ -2365,7 +2377,8 @@
       appData: "Loading vehicle information...",
       generate: "Generating your PDF...",
       creditApplication: "Preparing your application PDF...",
-      promoInventoryGet: "Loading promotions and vehicle availability...",
+      promoInventoryGet: "Loading promotions and vehicle information...",
+      srpEditorSave: "Updating SRP in the master sheet...",
       promoInventorySave: "Saving your update..."
     };
 
@@ -2656,8 +2669,9 @@
           showLoginError(error);
         }
         else {
-          if (action === "promoInventoryGet" || action === "promoInventorySave") {
+          if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
             setMessage($("promoModuleMessage"), error, "error");
+            if (action === "srpEditorSave") renderSrpEditorCards();
             if (action === "promoInventorySave") {
               const promoSubmit = document.querySelector("#variantPromoEditor button[type='submit']");
               if (promoSubmit) {
@@ -2753,7 +2767,7 @@
           $("appNav").classList.add("hidden");
           ["pdfPage","quotePage","creditPage"].forEach(id => $(id).classList.add("hidden"));
           $("promoPage").classList.remove("hidden");
-          setPromoView(["promos","stock","banks"].includes(lastView.tab) ? lastView.tab : "promos");
+          setPromoView(["promos","stock","banks","srp"].includes(lastView.tab) ? lastView.tab : "promos");
           submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         }
         return;
@@ -2761,6 +2775,12 @@
 
       if (action === "promoInventoryGet") {
         renderPromoInventory(event.data.promoInventory || {});
+        return;
+      }
+
+      if (action === "srpEditorSave") {
+        setMessage($("promoModuleMessage"), "SRP updated in the existing SRP Editor sheet. Refreshing vehicle data...", "success");
+        submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         return;
       }
 
@@ -3619,8 +3639,9 @@
 
 
     // PROMOS & VEHICLE AVAILABILITY
-    let promoInventoryData = { promotions: [], inventory: [], partnerBanks: [], inventoryOptions: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"], downpaymentOptions: ["20","25","30","35","40","45","50"] };
+    let promoInventoryData = { promotions: [], inventory: [], partnerBanks: [], inventoryOptions: [], srpEditor: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"], downpaymentOptions: ["20","25","30","35","40","45","50"] };
     let promoActiveView = "promos";
+    let promoVehicleOptions = [];
     const isTeamRerAdmin = () => String(authorizedUser?.role || "").trim().toLowerCase() === "admin";
     const promoText = value => String(value ?? "").trim();
     const promoEsc = value => escapeHtml(value);
@@ -3632,8 +3653,8 @@
     function setPromoView(view) {
       promoActiveView = view;
       saveLastAppView({page:"promos",tab:view});
-      const panels = {promos:"promoOffersPanel",stock:"promoStockPanel",banks:"promoBanksPanel"};
-      const tabs = {promos:"promoOffersTab",stock:"promoStockTab",banks:"promoBanksTab"};
+      const panels = {promos:"promoOffersPanel",stock:"promoStockPanel",banks:"promoBanksPanel",srp:"promoSrpPanel"};
+      const tabs = {promos:"promoOffersTab",stock:"promoStockTab",banks:"promoBanksTab",srp:"promoSrpTab"};
       Object.entries(panels).forEach(([key,id]) => $(id).classList.toggle("hidden",key!==view));
       Object.entries(tabs).forEach(([key,id]) => {
         $(id).classList.toggle("active",key===view);
@@ -3697,6 +3718,7 @@
         inventory: Array.isArray(data.inventory) ? data.inventory : [],
         partnerBanks: Array.isArray(data.partnerBanks) ? data.partnerBanks : [],
         inventoryOptions: Array.isArray(data.inventoryOptions) ? data.inventoryOptions : [],
+        srpEditor: Array.isArray(data.srpEditor) ? data.srpEditor : [],
         stockStatuses: Array.isArray(data.stockStatuses) ? data.stockStatuses : ["Available","Incoming","Reserved","Sold Out"],
         downpaymentOptions: Array.isArray(data.downpaymentOptions) ? data.downpaymentOptions : ["20","25","30","35","40","45","50"]
       };
@@ -3709,51 +3731,155 @@
       renderPromoCards();
       renderStockCards();
       renderPartnerBankCards();
+      renderSrpEditorCards();
       refreshQuotePartnerBanks();
       updateQuotePreview();
-      setMessage($("promoModuleMessage"),"Promotions, vehicle availability and partner banks are up to date.","success");
+      setMessage($("promoModuleMessage"),"Promotions, vehicle information, SRP and partner banks are up to date.","success");
     }
+    function renderSrpEditorCards() {
+      const host = $("srpEditorList");
+      if (!host) return;
+      const query = String($("srpSearch")?.value || "").trim().toLowerCase();
+      const admin = isTeamRerAdmin();
+      const rows = (promoInventoryData.srpEditor || []).filter(item =>
+        !query || `${item.model} ${item.variant}`.toLowerCase().includes(query)
+      );
+      host.replaceChildren();
+      if (!rows.length) {
+        host.innerHTML = '<div class="promo-empty">No SRP Editor vehicle variants match your search.</div>';
+        return;
+      }
+      rows.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "srp-editor-row";
+        const info = document.createElement("div");
+        info.className = "srp-editor-vehicle";
+        const model = document.createElement("strong");
+        model.textContent = item.model || "Hyundai";
+        const variant = document.createElement("small");
+        variant.textContent = item.variant || "";
+        info.append(model, variant);
+        const input = document.createElement("input");
+        input.className = "srp-editor-price";
+        input.type = "number";
+        input.min = "1";
+        input.step = "1";
+        input.inputMode = "numeric";
+        input.value = String(Number(item.srp) || "");
+        input.setAttribute("aria-label", `SRP for ${item.model} ${item.variant}`);
+        input.readOnly = !admin;
+        input.title = admin ? "Edit SRP" : "View only";
+        row.append(info, input);
+        if (admin) {
+          const save = document.createElement("button");
+          save.type = "button";
+          save.textContent = "Save";
+          save.addEventListener("click", () => saveSrpEditorValue(item, input, save));
+          row.appendChild(save);
+        } else {
+          input.disabled = true;
+          const view = document.createElement("small");
+          view.textContent = "View only";
+          view.style.color = "var(--muted, #71869a)";
+          row.appendChild(view);
+        }
+        host.appendChild(row);
+      });
+    }
+
+    async function saveSrpEditorValue(item, input, button) {
+      if (!isTeamRerAdmin()) return;
+      const value = String(input.value || "").trim();
+      if (!value || !Number.isFinite(Number(value)) || Number(value) <= 0) {
+        setMessage($("promoModuleMessage"), "Enter a valid SRP greater than zero.", "error");
+        input.focus();
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "Saving...";
+      try {
+        await submitRequest("srpEditorSave", {payload: JSON.stringify({row:item.row, model:item.model, variant:item.variant, srp:value})});
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "Save";
+        setMessage($("promoModuleMessage"), error.message, "error");
+      }
+    }
+
     function renderPromoCards() {
-      const query = $("promoSearch").value.trim().toLowerCase();
+      const select = $("promoVehicleSelect");
+      const previousSelection = select ? select.value : "";
       const allVariants = new Map();
       quotationVehicles.forEach(v => {
         if (!v.model || !v.variant) return;
-        if (!allVariants.has(v.model)) allVariants.set(v.model, new Set());
-        allVariants.get(v.model).add(v.variant);
+        const key = `${v.model}\u001f${v.variant}`;
+        allVariants.set(key, {model:v.model, variant:v.variant});
       });
       promoInventoryData.promotions.forEach(p => {
-        if (p.model && p.variant) {
-          if (!allVariants.has(p.model)) allVariants.set(p.model, new Set());
-          allVariants.get(p.model).add(p.variant);
-        }
+        if (!p.model || !p.variant) return;
+        const key = `${p.model}\u001f${p.variant}`;
+        if (!allVariants.has(key)) allVariants.set(key, {model:p.model, variant:p.variant});
       });
-      const host = $("promoOffersList"); host.replaceChildren();
-      const models = [...allVariants.keys()].sort((a,b)=>a.localeCompare(b));
-      const filtered = models.map(model => ({model, variants:[...allVariants.get(model)].filter(variant => {
-        const records=promoInventoryData.promotions.filter(p=>p.model===model&&p.variant===variant);
-        return !query || `${model} ${variant} ${records.map(p=>[p.description,p.status,p.applicableDownpayment,(p.applicableBanks||[]).join(" ")].join(" ")).join(" ")}`.toLowerCase().includes(query);
-      })})).filter(x=>x.variants.length);
-      if (!filtered.length) { host.innerHTML='<div class="promo-empty">No vehicle variants match your search.</div>'; return; }
-      filtered.forEach(group => {
-        const section=document.createElement("section"); section.className="promo-model-group";
-        const details=document.createElement("details"); details.className="promo-model-accordion";
-        const summary=document.createElement("summary"); summary.innerHTML=`<span>${promoEsc(group.model)}</span><small>${group.variants.length} variant${group.variants.length===1?"":"s"}</small>`;
-        details.appendChild(summary);
-        const list=document.createElement("div"); list.className="promo-variant-list";
-        group.variants.sort((a,b)=>a.localeCompare(b)).forEach(variant=>{
-          const records=promoInventoryData.promotions.filter(p=>p.model===group.model&&p.variant===variant);
-          const active=records.filter(p=>String(p.status||"Active").toLowerCase()==="active").length;
-          const row=document.createElement("div"); row.className="promo-variant-row";
-          row.innerHTML=`<div class="promo-variant-info"><strong>${promoEsc(variant)}</strong><small>${active?`${active} active offer${active===1?"":"s"}`:"No active offers"}</small></div>`;
-          const actions=document.createElement("div"); actions.className="promo-card-actions"; actions.style.marginTop="0";
-          const view=document.createElement("button"); view.type="button"; view.className="secondary"; view.textContent="View"; view.addEventListener("click",()=>openVariantPromoEditor(group.model,variant,true)); actions.appendChild(view);
-          if(isTeamRerAdmin()) { const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit"; edit.addEventListener("click",()=>openVariantPromoEditor(group.model,variant,false)); actions.appendChild(edit); }
-          row.appendChild(actions);
-          list.appendChild(row);
+      promoVehicleOptions = [...allVariants.values()].sort((a,b) =>
+        a.model.localeCompare(b.model) || a.variant.localeCompare(b.variant)
+      );
+      if (select) {
+        select.replaceChildren();
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select vehicle model and variant...";
+        select.appendChild(placeholder);
+        promoVehicleOptions.forEach((item,index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = `${item.model} — ${item.variant}`;
+          select.appendChild(option);
         });
-        details.appendChild(list); section.appendChild(details); host.appendChild(section);
-      });
+        if (previousSelection && Number.isInteger(Number(previousSelection)) && promoVehicleOptions[Number(previousSelection)]) {
+          select.value = previousSelection;
+        }
+      }
+
+      const host = $("promoOffersList");
+      host.replaceChildren();
+      const selectedIndex = select && select.value !== "" ? Number(select.value) : -1;
+      const selected = Number.isInteger(selectedIndex) && selectedIndex >= 0 ? promoVehicleOptions[selectedIndex] : null;
+      if (!selected) {
+        host.innerHTML = '<div class="promo-empty">Choose a vehicle above to view or edit its promotions.</div>';
+        return;
+      }
+
+      const records = promoInventoryData.promotions.filter(p => p.model === selected.model && p.variant === selected.variant);
+      const active = records.filter(p => String(p.status || "Active").toLowerCase() === "active").length;
+      const row = document.createElement("div");
+      row.className = "promo-variant-row";
+      const info = document.createElement("div");
+      info.className = "promo-variant-info";
+      const title = document.createElement("strong");
+      title.textContent = `${selected.model} — ${selected.variant}`;
+      const subtitle = document.createElement("small");
+      subtitle.textContent = active ? `${active} active offer${active === 1 ? "" : "s"}` : "No active offers";
+      info.append(title, subtitle);
+      const actions = document.createElement("div");
+      actions.className = "promo-card-actions";
+      actions.style.marginTop = "0";
+      const view = document.createElement("button");
+      view.type = "button";
+      view.className = "secondary";
+      view.textContent = "View";
+      view.addEventListener("click", () => openVariantPromoEditor(selected.model, selected.variant, true));
+      actions.appendChild(view);
+      if (isTeamRerAdmin()) {
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => openVariantPromoEditor(selected.model, selected.variant, false));
+        actions.appendChild(edit);
+      }
+      row.append(info, actions);
+      host.appendChild(row);
     }
+
     function openVariantPromoEditor(model, variant, readOnly=false) {
       if(!readOnly && !isTeamRerAdmin()) return;
       const records=(promoInventoryData.promotions||[]).filter(p=>p.model===model&&p.variant===variant);
@@ -4111,14 +4237,17 @@
     $("promoOffersTab").addEventListener("click",()=>setPromoView("promos"));
     $("promoStockTab").addEventListener("click",()=>setPromoView("stock"));
     $("promoBanksTab").addEventListener("click",()=>setPromoView("banks"));
-    $("promoSearch").addEventListener("input",renderPromoCards);
+    $("promoSrpTab").addEventListener("click",()=>setPromoView("srp"));
+    $("srpSearch").addEventListener("input",renderSrpEditorCards);
+    $("refreshSrpBtn").addEventListener("click",()=>submitRequest("promoInventoryGet").catch(error=>setMessage($("promoModuleMessage"),error.message,"error")));
+    $("promoVehicleSelect").addEventListener("change",renderPromoCards);
     $("stockSearch").addEventListener("input",renderStockCards);
     $("bankSearch").addEventListener("input",renderPartnerBankCards);
     $("addPromoBtn").addEventListener("click",()=>{});
     $("addStockBtn").addEventListener("click",()=>openStockForm());
     $("manageStockOptionsBtn").addEventListener("click",openStockOptionsManager);
     $("addBankBtn").addEventListener("click",()=>openBankForm());
-    $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos & Availability...",()=>{
+    $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos and Vehicle Info...",()=>{
       $("appNav").classList.add("hidden");
       ["pdfPage","quotePage","creditPage"].forEach(id=>$(id).classList.add("hidden"));
       $("promoPage").classList.remove("hidden");
