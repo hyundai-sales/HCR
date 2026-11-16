@@ -1992,6 +1992,34 @@
     box-shadow:0 0 0 2px rgba(110,190,255,.18),0 0 18px 5px rgba(73,164,239,.42),inset 0 0 14px rgba(190,230,255,.34) !important;
   }
   #adminLockScreen .admin-pin-keypad button::-moz-focus-inner { border:0 !important; }
+
+  /* Improve readability on the light glass cards in Vehicle Availability and Partner Banks. */
+  body #promoStockList .promo-card h3,
+  body #promoBanksList .promo-card h3,
+  body #promoStockList .promo-card .bank-card-title h3,
+  body #promoBanksList .promo-card .bank-card-title h3 {
+    color:#123d63 !important;
+    text-shadow:none !important;
+    font-weight:750 !important;
+  }
+  body #promoStockList .promo-card .promo-sub,
+  body #promoBanksList .promo-card .promo-sub {
+    color:#526b80 !important;
+  }
+  body #promoStockList .promo-card .promo-detail small {
+    color:#60788d !important;
+  }
+  body #promoStockList .promo-card .promo-detail strong {
+    color:#183b56 !important;
+    font-weight:650 !important;
+  }
+  body #promoStockList .promo-card .promo-detail {
+    background:rgba(226,237,246,.78) !important;
+  }
+  body #promoBanksList .promo-card .bank-drag-handle {
+    color:#315875 !important;
+  }
+
 </style>
 
 </head>
@@ -2257,7 +2285,16 @@
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Credit Application</h2>
           <p class="app-caption">Fill in the application details. Customer information is only used temporarily to generate the PDF.</p>
-          <button id="prefillCreditBtn" class="secondary" type="button">Use Current Vehicle Quotation</button>
+          <div class="credit-section credit-consultant-section">
+            <div class="credit-grid">
+              <div class="credit-field full">
+                <label for="creditConsultant">Sales Consultant</label>
+                <select id="creditConsultant" required>
+                  <option value="">Loading Sales Consultants...</option>
+                </select>
+              </div>
+            </div>
+          </div>
           <div id="creditFormFields"></div>
           <button id="generateCreditBtn" type="button">Generate Application PDF</button>
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
@@ -2702,6 +2739,7 @@
           $("consultantField").classList.add("hidden");
           $("roleNote").textContent = "Your registered TEAM RER name will be used.";
         }
+        fillSelect($("creditConsultant"), data.consultants || [], "Select Sales Consultant");
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
@@ -3312,7 +3350,8 @@
       if (spouseNa) spouseNaCells.forEach(cell => { values[cell] = "N/A"; });
       const vehicleModel = document.querySelector('#creditFormFields [data-cell="E14:I14"]')?.value || "";
       const vehicleVariant = document.querySelector('#creditFormFields [data-vehicle-variant="true"]')?.value || "";
-      return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa};
+      const consultant = String($("creditConsultant")?.value || "").trim();
+      return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa,consultant};
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
@@ -3381,8 +3420,6 @@
       if (creditFormHasEntries()) showCreditLeaveConfirmation();
       else returnToMainMenuFromCredit();
     });
-    $("prefillCreditBtn").addEventListener("click",prefillCreditFromQuote);
-
     function ensureCreditToast() {
       let backdrop = $("creditToastBackdrop");
       if (!backdrop) {
@@ -3537,6 +3574,9 @@
       const missingItems = requiredFields
         .filter(([cell]) => !String(data.values[cell] || "").trim())
         .map(([cell,label]) => ({cell,label}));
+      if (!data.consultant) {
+        missingItems.push({selector:"#creditConsultant",label:"Sales Consultant"});
+      }
       if (!data.vehicleVariant) {
         missingItems.push({selector:'#creditFormFields [data-vehicle-variant="true"]',label:"Vehicle Variant"});
       }
