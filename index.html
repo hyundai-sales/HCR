@@ -2161,8 +2161,30 @@
               <span class="nav-icon nav-icon-promo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21M8 5.2l8 4.6"/></svg></span>
               <span class="nav-copy"><span class="nav-title">Promos and Vehicle Info</span><span class="nav-description">Promotions, vehicle availability and SRP management</span></span>
             </button>
+            <button id="auditTabBtn" type="button" class="hidden">
+              <span class="nav-icon" aria-hidden="true">◷</span>
+              <span class="nav-copy"><span class="nav-title">Activity Logs</span><span class="nav-description">Review user actions and system changes</span></span>
+            </button>
           </nav>
         </div>
+
+        <section id="auditPage" class="hidden">
+          <button id="backToMenuFromAudit" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Activity Logs</h2>
+          <p class="app-caption">Admin-only record of actions performed in TEAM RER. Logs are recorded by the server using the signed-in account.</p>
+          <div class="audit-filters">
+            <input id="auditSearch" type="search" placeholder="Search name, email, action or details...">
+            <select id="auditModule"><option value="">All modules</option><option>Authentication</option><option>Workspace</option><option>Price List</option><option>Credit Application</option><option>Promos and Vehicle Info</option><option>SRP Editor</option><option>System</option></select>
+            <select id="auditStatus"><option value="">All statuses</option><option value="SUCCESS">Success</option><option value="FAILED">Failed</option></select>
+            <input id="auditFrom" type="date" aria-label="From date">
+            <input id="auditTo" type="date" aria-label="To date">
+            <button id="refreshAuditBtn" type="button">Apply Filters</button>
+            <button id="exportAuditBtn" class="secondary" type="button">Export CSV</button>
+          </div>
+          <p id="auditSummary" class="promo-note">Loading activity...</p>
+          <div id="auditTableHost" class="audit-table-wrap"></div>
+          <div id="auditMessage" class="message hidden" aria-live="polite"></div>
+        </section>
 
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
@@ -2689,7 +2711,10 @@
           showLoginError(error);
         }
         else {
-          if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
+          if (action === "auditLogsGet") {
+            setMessage($("auditMessage"), error, "error");
+            $("auditSummary").textContent = "Unable to load activity logs.";
+          } else if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
             setMessage($("promoModuleMessage"), error, "error");
             if (action === "srpEditorSave") renderSrpEditorCards();
             if (action === "promoInventorySave") {
@@ -2765,6 +2790,7 @@
       if (action === "appData") {
         const data = event.data.appData;
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
+        $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
@@ -2790,6 +2816,11 @@
           setPromoView(["promos","stock","banks","srp"].includes(lastView.tab) ? lastView.tab : "promos");
           submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         }
+        return;
+      }
+
+      if (action === "auditLogsGet") {
+        renderAuditLogs(event.data.auditLogs || {});
         return;
       }
 
@@ -3395,7 +3426,7 @@
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); clearLastAppView(); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); clearLastAppView(); buildCreditForm();
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -3409,6 +3440,7 @@
         $("creditPage").classList.add("hidden");
         $("pdfPage").classList.add("hidden");
         $("quotePage").classList.add("hidden");
+        $("auditPage").classList.add("hidden");
         $("appNav").classList.remove("hidden");
       });
     }
@@ -4288,9 +4320,85 @@
     $("addStockBtn").addEventListener("click",()=>openStockForm());
     $("manageStockOptionsBtn").addEventListener("click",openStockOptionsManager);
     $("addBankBtn").addEventListener("click",()=>openBankForm());
+    let auditRows = [];
+    function loadAuditLogs() {
+      if (!isAdminSession()) return;
+      const filter = {
+        search: $("auditSearch").value.trim(),
+        module: $("auditModule").value,
+        status: $("auditStatus").value,
+        from: $("auditFrom").value,
+        to: $("auditTo").value
+      };
+      $("auditSummary").textContent = "Loading activity...";
+      $("auditMessage").classList.add("hidden");
+      submitRequest("auditLogsGet", { payload: JSON.stringify(filter) })
+        .catch(error => setMessage($("auditMessage"), error.message, "error"));
+    }
+    function renderAuditLogs(data) {
+      auditRows = Array.isArray(data.rows) ? data.rows : [];
+      $("auditSummary").textContent = `${data.total || auditRows.length} activity record(s) shown${data.capped ? " (latest 500 matching records)" : ""}.`;
+      const host = $("auditTableHost");
+      if (!auditRows.length) {
+        host.innerHTML = '<div class="message">No activity records match these filters.</div>';
+        return;
+      }
+      const table = document.createElement("table");
+      table.className = "audit-table";
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Date & Time</th><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr>";
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      auditRows.forEach(row => {
+        const tr = document.createElement("tr");
+        [row.timestamp, `${row.name}\n${row.email}`, row.action, row.module, row.details, row.status].forEach((value, index) => {
+          const td = document.createElement("td");
+          td.textContent = value || "—";
+          if (index === 5) td.className = String(value).toUpperCase() === "FAILED" ? "audit-failed" : "audit-success";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      host.replaceChildren(table);
+    }
+    function exportAuditCsv() {
+      if (!auditRows.length) {
+        setMessage($("auditMessage"), "There are no activity records to export.", "error");
+        return;
+      }
+      const columns = ["timestamp","name","email","role","action","module","details","status"];
+      const quote = value => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+      const csv = [columns.join(","), ...auditRows.map(row => columns.map(key => quote(row[key])).join(","))].join("\r\n");
+      const blob = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `TEAM_RER_Activity_Logs_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    $("auditTabBtn").addEventListener("click", () => {
+      if (!isAdminSession()) return;
+      runPageTransition("Opening Activity Logs...", () => {
+        $("appNav").classList.add("hidden");
+        ["pdfPage","quotePage","creditPage","promoPage"].forEach(id => $(id).classList.add("hidden"));
+        $("auditPage").classList.remove("hidden");
+        clearLastAppView();
+        loadAuditLogs();
+      });
+    });
+    $("backToMenuFromAudit").addEventListener("click", () => runPageTransition("Returning to Main Menu...", () => {
+      $("auditPage").classList.add("hidden");
+      $("appNav").classList.remove("hidden");
+    }));
+    $("refreshAuditBtn").addEventListener("click", loadAuditLogs);
+    $("exportAuditBtn").addEventListener("click", exportAuditCsv);
+
     $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos and Vehicle Info...",()=>{
       $("appNav").classList.add("hidden");
-      ["pdfPage","quotePage","creditPage"].forEach(id=>$(id).classList.add("hidden"));
+      ["pdfPage","quotePage","creditPage","auditPage"].forEach(id=>$(id).classList.add("hidden"));
+      $("auditPage").classList.add("hidden");
       $("promoPage").classList.remove("hidden");
       setPromoView("promos");
       $("promoModuleMessage").classList.add("hidden");
@@ -4298,6 +4406,7 @@
     }));
     $("backToMenuFromPromo").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{
       $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden");
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
@@ -4309,6 +4418,7 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden");
       clearLastAppView();
       if (!promoInventoryLoaded) {
         submitRequest("promoInventoryGet").catch(error => setMessage($("resultMessage"), "Unable to load active partner banks: " + error.message, "error"));
@@ -4322,6 +4432,7 @@
       $("quotePage").classList.remove("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden");
       clearLastAppView();
       if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to load promotion matching data:", error));
       updateQuotePreview();
@@ -4331,6 +4442,7 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden");
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
@@ -4339,6 +4451,7 @@
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden");
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
@@ -5069,6 +5182,21 @@
   syncChristmasMenu();
 })();
 </script>
+
+
+<style id="team-rer-activity-logs">
+.audit-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.audit-filters button{margin:0}
+.audit-table-wrap{width:100%;overflow:auto;border:1px solid var(--panel-border,rgba(140,170,200,.25));border-radius:12px}
+.audit-table{width:100%;border-collapse:collapse;min-width:760px;font-size:12px;text-align:left}
+.audit-table th,.audit-table td{padding:10px 11px;border-bottom:1px solid rgba(130,160,190,.2);vertical-align:top;white-space:pre-line}
+.audit-table th{position:sticky;top:0;background:#123d63;color:#fff;font-weight:700}
+.audit-table td{color:var(--text-color,#dbe7f2)}
+.audit-table tr:last-child td{border-bottom:0}
+.audit-success{color:#20a56b!important;font-weight:700}
+.audit-failed{color:#e35b5b!important;font-weight:700}
+@media(max-width:560px){.audit-filters{grid-template-columns:1fr}.audit-table{min-width:680px}}
+</style>
 
 </body>
 </html>
