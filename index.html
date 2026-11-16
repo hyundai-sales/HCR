@@ -1971,6 +1971,27 @@
   @media(prefers-reduced-motion:reduce) {
     #adminManualLock.admin-manual-lock { transition:none !important; }
   }
+  /* PIN keypad: remove rectangular browser tap/focus highlights; illuminate only the round key. */
+  #adminLockScreen .admin-pin-keypad button,
+  #adminLockScreen .admin-pin-keypad button:focus,
+  #adminLockScreen .admin-pin-keypad button:focus-visible {
+    -webkit-appearance:none !important;
+    appearance:none !important;
+    -webkit-tap-highlight-color:transparent !important;
+    outline:none !important;
+    border-radius:50% !important;
+    overflow:hidden !important;
+    background-clip:padding-box !important;
+    box-shadow:0 8px 20px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.08) !important;
+    transition:transform .14s ease,background .14s ease,box-shadow .14s ease,border-color .14s ease !important;
+  }
+  #adminLockScreen .admin-pin-keypad button:active {
+    transform:scale(.94) !important;
+    background:rgba(119,190,244,.34) !important;
+    border-color:rgba(174,220,255,.95) !important;
+    box-shadow:0 0 0 2px rgba(110,190,255,.18),0 0 18px 5px rgba(73,164,239,.42),inset 0 0 14px rgba(190,230,255,.34) !important;
+  }
+  #adminLockScreen .admin-pin-keypad button::-moz-focus-inner { border:0 !important; }
 </style>
 
 </head>
