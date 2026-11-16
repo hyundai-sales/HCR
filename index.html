@@ -1744,7 +1744,24 @@
       font-size:12px; font-weight:700;
     }
     #teamRerEdgeNav .edge-item svg { width:19px;height:19px; flex:0 0 19px; stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round; }
-    #teamRerEdgeNav .edge-item.is-active { color:#064d80; border-color:rgba(38,119,178,.42); background:linear-gradient(135deg,rgba(216,237,252,.95),rgba(255,255,255,.8)); box-shadow:inset 0 0 0 1px rgba(255,255,255,.8),0 4px 13px rgba(20,92,146,.10); }
+    #teamRerEdgeNav .edge-item.is-active {
+      position:relative;
+      color:#06365d !important;
+      border:1px solid rgba(20,126,214,.82) !important;
+      background:linear-gradient(135deg,rgba(183,226,255,.99),rgba(226,243,255,.96)) !important;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.92),0 0 0 2px rgba(37,151,239,.22),0 7px 20px rgba(16,102,174,.24) !important;
+      font-weight:850 !important;
+    }
+    #teamRerEdgeNav .edge-item.is-active::before {
+      content:""; position:absolute; left:-1px; top:7px; bottom:7px; width:4px;
+      border-radius:0 5px 5px 0; background:#087bd1; box-shadow:0 0 9px rgba(8,123,209,.55);
+    }
+    #teamRerEdgeNav .edge-item.is-active::after {
+      content:"CURRENT"; margin-left:auto; flex:0 0 auto; padding:3px 5px;
+      border-radius:6px; color:#fff; background:#087bd1; font-size:7px;
+      line-height:1; letter-spacing:.45px; font-weight:900;
+    }
+    #teamRerEdgeNav .edge-item.is-active svg { color:#075b9b; filter:drop-shadow(0 1px 1px rgba(255,255,255,.75)); }
     #teamRerEdgeNav .edge-divider { height:1px; margin:2px 4px; background:rgba(86,126,158,.18); }
     #teamRerEdgeNav .edge-item.edge-home { color:#0a568c; background:rgba(221,239,252,.68); }
     @media(max-width:560px) {
@@ -1941,16 +1958,17 @@
     border:1px solid rgba(220,239,255,.42) !important;
     color:#eaf6ff !important;
     background:
-      radial-gradient(circle at 30% 20%,rgba(255,255,255,.78),rgba(255,255,255,.12) 27%,transparent 48%),
-      linear-gradient(145deg,rgba(107,169,215,.72),rgba(22,66,105,.88) 58%,rgba(8,28,49,.96)) !important;
+      radial-gradient(circle at 29% 18%,rgba(255,255,255,.48),rgba(255,255,255,.08) 29%,transparent 51%),
+      radial-gradient(circle at 72% 82%,rgba(18,91,148,.24),transparent 58%),
+      linear-gradient(145deg,rgba(171,215,246,.30),rgba(64,132,184,.25) 54%,rgba(8,36,64,.48)) !important;
     box-shadow:
-      0 12px 26px rgba(0,0,0,.42),
-      0 3px 8px rgba(0,0,0,.24),
-      inset 0 2px 2px rgba(255,255,255,.48),
-      inset 0 -4px 8px rgba(0,0,0,.34),
-      inset 0 0 0 1px rgba(255,255,255,.10) !important;
-    -webkit-backdrop-filter:blur(22px) saturate(190%) !important;
-    backdrop-filter:blur(22px) saturate(190%) !important;
+      0 13px 30px rgba(0,0,0,.30),
+      0 3px 9px rgba(0,0,0,.16),
+      inset 0 2px 3px rgba(255,255,255,.52),
+      inset 0 -5px 10px rgba(0,15,32,.22),
+      inset 0 0 0 1px rgba(255,255,255,.14) !important;
+    -webkit-backdrop-filter:blur(26px) saturate(205%) !important;
+    backdrop-filter:blur(26px) saturate(205%) !important;
     cursor:pointer;
     -webkit-tap-highlight-color:transparent;
     transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
@@ -2151,8 +2169,8 @@
           <div class="promo-tabs" role="tablist" aria-label="Promotions, vehicle information, partner banks and SRP editor">
             <button id="promoOffersTab" class="active" type="button" role="tab" aria-selected="true">Promotions</button>
             <button id="promoStockTab" type="button" role="tab" aria-selected="false">Vehicle Availability</button>
-            <button id="promoBanksTab" type="button" role="tab" aria-selected="false">Partner Banks</button>
             <button id="promoSrpTab" type="button" role="tab" aria-selected="false">SRP Editor</button>
+            <button id="promoBanksTab" type="button" role="tab" aria-selected="false">Partner Banks</button>
           </div>
           <div id="promoOffersPanel">
             <div class="promo-tools">
@@ -4615,6 +4633,97 @@
     }
   </script>
 
+
+
+
+<style id="team-rer-dark-theme-readability-v21">
+  /* Contrast pass for the active dark theme. */
+  html[data-rer-theme="dark"] body .promo-tabs {
+    background:linear-gradient(145deg,rgba(29,48,68,.96),rgba(17,31,47,.98)) !important;
+    border-color:rgba(143,177,207,.25) !important;
+  }
+  html[data-rer-theme="dark"] body .promo-tabs button {
+    color:#c6d7e7 !important;
+    background:transparent !important;
+    border:1px solid transparent !important;
+    text-shadow:none !important;
+  }
+  html[data-rer-theme="dark"] body .promo-tabs button.active {
+    color:#ffffff !important;
+    background:linear-gradient(145deg,#17649d,#104a79) !important;
+    border-color:rgba(131,202,255,.68) !important;
+    box-shadow:0 3px 12px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.22) !important;
+  }
+  html[data-rer-theme="dark"] body .promo-note,
+  html[data-rer-theme="dark"] body .promo-sort-hint,
+  html[data-rer-theme="dark"] body .bank-sort-hint,
+  html[data-rer-theme="dark"] body .promo-empty,
+  html[data-rer-theme="dark"] body .promo-form .field > small,
+  html[data-rer-theme="dark"] body .field > small,
+  html[data-rer-theme="dark"] body .credit-field small,
+  html[data-rer-theme="dark"] body .form-hint,
+  html[data-rer-theme="dark"] body .helper-text {
+    color:#b4c7d9 !important;
+  }
+  html[data-rer-theme="dark"] body .promo-tools > input,
+  html[data-rer-theme="dark"] body .promo-tools > select,
+  html[data-rer-theme="dark"] body .promo-form input,
+  html[data-rer-theme="dark"] body .promo-form select,
+  html[data-rer-theme="dark"] body .promo-form textarea,
+  html[data-rer-theme="dark"] body .srp-editor-price {
+    color:#f0f6fc !important;
+    background:#101f30 !important;
+    border-color:#49627b !important;
+  }
+  html[data-rer-theme="dark"] body .promo-tools input::placeholder,
+  html[data-rer-theme="dark"] body .promo-form input::placeholder {
+    color:#9aafc3 !important; opacity:1 !important;
+  }
+  html[data-rer-theme="dark"] body .promo-form label,
+  html[data-rer-theme="dark"] body .promo-form .field label,
+  html[data-rer-theme="dark"] body .field label,
+  html[data-rer-theme="dark"] body .credit-field label {
+    color:#edf5ff !important;
+  }
+  html[data-rer-theme="dark"] body .promo-form .secondary,
+  html[data-rer-theme="dark"] body .promo-card-actions .secondary,
+  html[data-rer-theme="dark"] body #promoModuleMessage {
+    text-shadow:none !important;
+  }
+  /* Light glass data cards retain dark typography for strong contrast. */
+  html[data-rer-theme="dark"] body .promo-card {
+    color:#183b56;
+  }
+  html[data-rer-theme="dark"] body .promo-card h3,
+  html[data-rer-theme="dark"] body .promo-card .promo-detail strong,
+  html[data-rer-theme="dark"] body .srp-editor-vehicle strong {
+    color:#173e5e !important;
+  }
+  html[data-rer-theme="dark"] body .promo-card .promo-sub,
+  html[data-rer-theme="dark"] body .promo-card .promo-detail small,
+  html[data-rer-theme="dark"] body .srp-editor-vehicle small {
+    color:#526b80 !important;
+  }
+  html[data-rer-theme="dark"] body .srp-editor-row {
+    color:#183b56 !important;
+    background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(235,245,252,.94)) !important;
+    border-color:rgba(164,190,211,.78) !important;
+  }
+  html[data-rer-theme="dark"] body .promo-card .promo-detail {
+    background:rgba(226,237,246,.86) !important;
+  }
+  /* Explicit readable states for validation and disabled controls. */
+  html[data-rer-theme="dark"] body button:disabled,
+  html[data-rer-theme="dark"] body input:disabled,
+  html[data-rer-theme="dark"] body select:disabled {
+    color:#a9bbcd !important; opacity:.72;
+  }
+  html[data-rer-theme="dark"] body a:not(.button):not(.btn) { color:#8ecbff; }
+  html[data-rer-theme="dark"] body a:not(.button):not(.btn):visited { color:#c0a8f5; }
+  @media(max-width:560px) {
+    #teamRerEdgeNav .edge-item.is-active::after { font-size:6px; padding:3px 4px; }
+  }
+</style>
 
 </body>
 </html>
