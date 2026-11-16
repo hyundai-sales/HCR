@@ -2134,7 +2134,9 @@
       </section>
 
             <section id="appSection" class="hidden">
-        
+
+        <img id="teamRerSantaPeek" src="./santa-peeking.png" alt="" aria-hidden="true">
+        <div id="teamRerChristmasSnow" aria-hidden="true"></div>
         <div id="appNav">
           <div class="dashboard-welcome">
             <p class="welcome-eyebrow">TEAM RER • SALES WORKSPACE</p>
@@ -4918,6 +4920,155 @@
     text-shadow:none !important;
   }
 </style>
+
+
+<style id="team-rer-christmas-main-menu-v26">
+  #teamRerSantaPeek {
+    position:fixed;
+    z-index:1200;
+    left:0;
+    top:32%;
+    width:clamp(104px, 15vw, 176px);
+    height:auto;
+    max-height:48vh;
+    object-fit:contain;
+    object-position:left center;
+    pointer-events:none;
+    user-select:none;
+    opacity:0;
+    transform:translate3d(-88%,0,0) scale(.96);
+    transform-origin:left center;
+    filter:drop-shadow(0 9px 13px rgba(0,0,0,.32));
+    transition:opacity .25s ease;
+  }
+  #teamRerSantaPeek.santa-ready { opacity:1; }
+  #teamRerSantaPeek.santa-peek {
+    animation:teamRerSantaPeekMotion 2.15s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes teamRerSantaPeekMotion {
+    0% { transform:translate3d(-88%,0,0) scale(.96); }
+    22% { transform:translate3d(-5%,0,0) scale(1); }
+    68% { transform:translate3d(-5%,0,0) scale(1); }
+    100% { transform:translate3d(-88%,0,0) scale(.96); }
+  }
+  #teamRerChristmasSnow {
+    position:fixed;
+    inset:0;
+    z-index:1190;
+    overflow:hidden;
+    pointer-events:none;
+    contain:strict;
+  }
+  #teamRerChristmasSnow .christmas-flake {
+    position:absolute;
+    top:-18px;
+    left:var(--snow-left);
+    width:var(--snow-size);
+    height:var(--snow-size);
+    border-radius:50%;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 0 7px rgba(210,235,255,.9);
+    opacity:0;
+    animation:teamRerSnowFall var(--snow-duration) linear var(--snow-delay) forwards;
+  }
+  @keyframes teamRerSnowFall {
+    0% { transform:translate3d(0,-3vh,0); opacity:0; }
+    10% { opacity:var(--snow-opacity); }
+    88% { opacity:var(--snow-opacity); }
+    100% { transform:translate3d(var(--snow-drift),108vh,0); opacity:0; }
+  }
+  @media (max-width:600px) {
+    #teamRerSantaPeek { top:35%; width:clamp(88px,25vw,132px); max-height:38vh; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    #teamRerSantaPeek.santa-peek { animation:none; transform:translate3d(-5%,0,0); }
+    #teamRerChristmasSnow { display:none !important; }
+  }
+</style>
+<script id="team-rer-christmas-main-menu-v26-script">
+(function(){
+  const app = document.getElementById("appSection");
+  const menu = document.getElementById("appNav");
+  const santa = document.getElementById("teamRerSantaPeek");
+  const snow = document.getElementById("teamRerChristmasSnow");
+  if (!app || !menu || !santa || !snow || window.__teamRerChristmasV26) return;
+  window.__teamRerChristmasV26 = true;
+
+  let snowTimer = null;
+  let santaTimer = null;
+  let santaHideTimer = null;
+
+  function menuIsActive(){
+    return !app.classList.contains("hidden") && !menu.classList.contains("hidden");
+  }
+  function playSantaPeek(){
+    if (!menuIsActive() || document.hidden) return;
+    santa.classList.remove("santa-peek");
+    santa.classList.add("santa-ready");
+    void santa.offsetWidth;
+    santa.classList.add("santa-peek");
+    clearTimeout(santaHideTimer);
+    santaHideTimer = setTimeout(function(){
+      santa.classList.remove("santa-peek");
+    }, 2200);
+  }
+  function addSnowfallBatch(){
+    if (!menuIsActive() || document.hidden) return;
+    // Add staggered flakes continuously; remove each batch after its fall completes.
+    const batch = document.createDocumentFragment();
+    for(let i=0;i<24;i++){
+      const flake = document.createElement("span");
+      flake.className = "christmas-flake";
+      flake.style.setProperty("--snow-left", (Math.random()*100).toFixed(2)+"%");
+      flake.style.setProperty("--snow-size", (2+Math.random()*4).toFixed(1)+"px");
+      flake.style.setProperty("--snow-duration", (4.5+Math.random()*3.5).toFixed(2)+"s");
+      flake.style.setProperty("--snow-delay", (Math.random()*1.4).toFixed(2)+"s");
+      flake.style.setProperty("--snow-drift", ((Math.random()*100)-50).toFixed(0)+"px");
+      flake.style.setProperty("--snow-opacity", (0.35+Math.random()*0.55).toFixed(2));
+      batch.appendChild(flake);
+    }
+    snow.appendChild(batch);
+    // Keep the DOM light by removing this batch after its longest animation.
+    const created = Array.from(snow.children).slice(-24);
+    setTimeout(function(){
+      created.forEach(function(flake){
+        if(flake.parentNode === snow) snow.removeChild(flake);
+      });
+    }, 9500);
+  }
+  function startContinuousSnow(){
+    if(snowTimer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    snow.replaceChildren();
+    addSnowfallBatch();
+    snowTimer = setInterval(addSnowfallBatch, 2600);
+  }
+  function stopContinuousSnow(){
+    if(snowTimer){ clearInterval(snowTimer); snowTimer = null; }
+    snow.replaceChildren();
+  }
+  function syncChristmasMenu(){
+    if(menuIsActive()){
+      santa.classList.add("santa-ready");
+      startContinuousSnow();
+      if(!santaTimer){
+        setTimeout(playSantaPeek, 900);
+        santaTimer = setInterval(playSantaPeek, 10000);
+      }
+    } else {
+      santa.classList.remove("santa-peek","santa-ready");
+      clearTimeout(santaHideTimer);
+      stopContinuousSnow();
+      if(santaTimer){ clearInterval(santaTimer); santaTimer = null; }
+    }
+  }
+  new MutationObserver(syncChristmasMenu).observe(app,{attributes:true,attributeFilter:["class"]});
+  new MutationObserver(syncChristmasMenu).observe(menu,{attributes:true,attributeFilter:["class"]});
+  document.addEventListener("visibilitychange",function(){
+    if(!document.hidden) syncChristmasMenu();
+  });
+  syncChristmasMenu();
+})();
+</script>
 
 </body>
 </html>
