@@ -1108,6 +1108,25 @@
       cursor: default;
     }
 
+
+    /* Dynamic Island-style transient success notifications */
+    #teamRerDynamicIsland {
+      position:fixed; z-index:100600; top:calc(env(safe-area-inset-top, 0px) + 12px); left:50%;
+      width:max-content; max-width:min( calc(100vw - 28px), 440px );
+      display:flex; align-items:center; gap:10px; padding:10px 16px 10px 11px;
+      border:1px solid rgba(255,255,255,.18); border-radius:999px;
+      background:linear-gradient(145deg,rgba(25,29,36,.97),rgba(5,8,13,.97));
+      color:#fff; box-shadow:0 12px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter:blur(18px) saturate(1.5); -webkit-backdrop-filter:blur(18px) saturate(1.5);
+      opacity:0; visibility:hidden; transform:translate(-50%,-18px) scale(.94);
+      transition:opacity .24s ease,transform .28s cubic-bezier(.2,.8,.2,1),visibility .24s;
+      pointer-events:none; font:600 12px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    }
+    #teamRerDynamicIsland.show { opacity:1; visibility:visible; transform:translate(-50%,0) scale(1); }
+    #teamRerDynamicIsland .island-check { width:23px;height:23px;flex:0 0 23px;display:grid;place-items:center;border-radius:50%;background:#1f9d62;color:#fff;font-size:14px;font-weight:900; }
+    #teamRerDynamicIsland .island-message { overflow-wrap:anywhere; }
+    @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland{transition:none}}
+
     /* Enhanced iOS Liquid Glass modal notifications for Credit Application */
     .credit-toast-backdrop {
       position:fixed; inset:0; z-index:100499;
@@ -2207,9 +2226,11 @@
             <div class="promo-tools">
               <select id="promoVehicleSelect" aria-label="Select vehicle for promotions"><option value="">Select vehicle model and variant...</option></select>
               <button id="addPromoBtn" class="promo-add hidden" type="button">＋ Add Promo</button>
+              <button id="batchPromoBtn" class="secondary hidden" type="button">Batch Edit Promotions</button>
             </div>
             <div id="promoOffersList"></div>
             <div id="promoFormHost"></div>
+            <div id="batchPromoHost"></div>
           </div>
           <div id="promoStockPanel" class="hidden">
             <div class="promo-tools">
@@ -2644,7 +2665,34 @@
       if (!document.hidden) checkIdleTimeout();
     });
 
+    let teamRerIslandTimer = null;
+    function showTeamRerDynamicIsland(message) {
+      let island = document.getElementById("teamRerDynamicIsland");
+      if (!island) {
+        island = document.createElement("div");
+        island.id = "teamRerDynamicIsland";
+        island.setAttribute("role", "status");
+        island.setAttribute("aria-live", "polite");
+        const check = document.createElement("span");
+        check.className = "island-check";
+        check.textContent = "✓";
+        const copy = document.createElement("span");
+        copy.className = "island-message";
+        island.append(check, copy);
+        document.body.appendChild(island);
+      }
+      island.querySelector(".island-message").textContent = String(message || "Update completed successfully.");
+      island.classList.add("show");
+      if (teamRerIslandTimer) clearTimeout(teamRerIslandTimer);
+      teamRerIslandTimer = setTimeout(() => island.classList.remove("show"), 3200);
+    }
+
     function setMessage(element, message, type = "") {
+      if (type === "success") {
+        if (element) { element.textContent = ""; element.classList.add("hidden"); element.classList.remove("success", "error"); }
+        showTeamRerDynamicIsland(message);
+        return;
+      }
       element.textContent = message;
       element.classList.remove("hidden", "success", "error");
       if (type) element.classList.add(type);
@@ -2844,13 +2892,23 @@
 
       if (action === "promoInventorySave") {
         const savedType = event.data.promoInventory && event.data.promoInventory.type;
+        const savedResult = event.data.promoInventory || {};
         const successMessage = savedType === "bankOrder"
-          ? "Partner bank order saved and applied throughout TEAM RER."
+          ? "Partner bank display order updated successfully."
           : savedType === "promotionBatch"
-            ? "Variant promotions saved successfully. Price List formulas have been refreshed."
-            : "Your update has been saved.";
+            ? `Batch promotion updated successfully for ${savedResult.count || 0} promotion record(s). Price List formulas have been refreshed.`
+            : savedType === "promotion"
+              ? "Promotion updated successfully."
+              : savedType === "bank"
+                ? "Partner bank details updated successfully."
+                : savedType === "inventory"
+                  ? "Vehicle availability updated successfully."
+                  : savedType === "inventoryOption"
+                    ? "Vehicle availability option updated successfully."
+                    : "Your update has been saved successfully.";
         setMessage($("promoModuleMessage"), successMessage, "success");
         $("promoFormHost").replaceChildren();
+        $("batchPromoHost").replaceChildren();
         $("stockFormHost").replaceChildren();
         $("stockOptionsHost").replaceChildren();
         $("bankFormHost").replaceChildren();
@@ -3792,6 +3850,7 @@
       refreshPriceListBankOptions();
       const admin = isTeamRerAdmin();
       $("addPromoBtn").classList.add("hidden");
+      $("batchPromoBtn").classList.toggle("hidden",!admin);
       $("addStockBtn").classList.toggle("hidden",!admin);
       $("manageStockOptionsBtn").classList.toggle("hidden",!admin);
       $("addBankBtn").classList.toggle("hidden",!admin);
@@ -4063,6 +4122,204 @@
       }
       host.appendChild(form); $("cancelVariantPromo").addEventListener("click",()=>host.replaceChildren());form.scrollIntoView({behavior:"smooth",block:"start"});
     }
+    function openBatchPromoEditor() {
+      if (!isTeamRerAdmin()) return;
+      const host = $("batchPromoHost");
+      host.replaceChildren();
+      const variants = [...(promoVehicleOptions || [])];
+      if (!variants.length) {
+        setMessage($("promoModuleMessage"), "No vehicle variants are available for batch editing.", "error");
+        return;
+      }
+      const banks = getOrderedPartnerBanks().filter(b => promoText(b.bankName));
+      const bankOptions = [
+        '<option value="ALL_BANKS">ALL BANKS</option>',
+        ...banks.map(b => `<option value="${promoEsc(b.bankName)}">${promoEsc(b.bankName)}${String(b.status || "Active").toLowerCase() === "active" ? "" : " (Inactive)"}</option>`)
+      ].join("");
+      const dpOptions = (promoInventoryData.downpaymentOptions || ["20","25","30","35","40","45","50"]).map(v => `<option value="${promoEsc(v)}">${promoEsc(v)}% DP Offer</option>`).join("");
+      const form = document.createElement("form");
+      form.className = "promo-form promo-hcr-frame";
+      form.id = "batchPromoEditor";
+      form.innerHTML = `
+        <div class="promo-hcr-top"><span>BATCH PROMOTION EDITOR</span><small>HYUNDAI CAINTA</small></div>
+        <h3>Update Multiple Vehicle Variants</h3>
+        <p class="promo-note">Select the variants to update, then choose only the promotion fields you want to change. Individual variant editing remains available and unchanged.</p>
+        <div class="field"><label for="batchVariantSearch">Find vehicle variants</label><input id="batchVariantSearch" type="search" placeholder="Search model or variant..."></div>
+        <div class="promo-form-actions"><button type="button" class="secondary" id="batchSelectVisible">Select Visible</button><button type="button" class="secondary" id="batchClearSelection">Clear Selection</button><span id="batchSelectedCount" class="promo-note">0 selected</span></div>
+        <div id="batchVariantList" class="batch-variant-list"></div>
+        <h4>Promotion target</h4>
+        <div class="promo-form-grid">
+          <div class="field"><label for="batchPromoBank">Partner Bank</label><select id="batchPromoBank">${bankOptions}</select></div>
+          <div class="field"><label for="batchPromoType">Offer Type</label><select id="batchPromoType">${dpOptions}<option value="CASH">CASH Discount</option><option value="BANK_PO">BANK P.O. Discount</option></select></div>
+        </div>
+        <p class="promo-note">The selected bank and offer type identify the promotion record to update. ALL BANKS follows your existing bank-inheritance rule.</p>
+        <h4>Fields to update</h4>
+        <div class="promo-form-grid">
+          <div class="field"><label><input type="checkbox" id="batchUseDpOffer"> Update Downpayment Offer</label><input id="batchDpOffer" type="text" inputmode="decimal" placeholder="e.g. 8,000 or ZERO DP" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseCashDiscount"> Update Cash Discount</label><input id="batchCashDiscount" type="text" inputmode="decimal" placeholder="e.g. 100,000" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseFuelVoucher"> Update Fuel Voucher</label><input id="batchFuelVoucher" type="text" maxlength="100" placeholder="e.g. ₱20,000 Fuel Voucher" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseFreebies"> Update Freebies / Inclusions</label><textarea id="batchFreebies" rows="4" placeholder="One inclusion per line" disabled></textarea><select id="batchFreebiesMode" disabled><option value="append">Add to existing freebies</option><option value="replace">Replace existing freebies</option></select></div>
+          <div class="field"><label><input type="checkbox" id="batchUseValidFrom"> Update Valid From</label><input id="batchValidFrom" type="date" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseValidUntil"> Update Valid Until</label><input id="batchValidUntil" type="date" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseDescription"> Update Description</label><textarea id="batchDescription" rows="3" placeholder="Promotion description" disabled></textarea></div>
+          <div class="field"><label><input type="checkbox" id="batchUseStatus"> Update Status</label><select id="batchStatus" disabled><option>Active</option><option>Inactive</option></select></div>
+        </div>
+        <div id="batchPromoPreview" class="promo-note">Select variants and fields to see the batch summary.</div>
+        <div class="promo-form-actions"><button type="submit" id="batchPromoSave">Preview & Save Batch</button><button type="button" class="secondary" id="batchPromoCancel">Cancel</button></div>
+        <div class="promo-hcr-bottom"><img src="https://cdn.simpleicons.org/hyundai/79513b" alt="Hyundai" class="promo-hyundai-logo"><strong>HYUNDAI</strong><small>TEAM RER • HYUNDAI CAINTA</small></div>`;
+      form.style.setProperty("background", "rgba(242,246,251,.98)", "important");
+      form.style.setProperty("color", "#173b56", "important");
+      form.querySelectorAll(".field label, h3, h4").forEach(el => {
+        el.style.setProperty("color", "#173f60", "important");
+        el.style.setProperty("opacity", "1", "important");
+      });
+      host.appendChild(form);
+
+      const list = form.querySelector("#batchVariantList");
+      const selectedKeys = new Set();
+      const keyOf = v => `${v.model}\u001f${v.variant}`;
+      const selectedCount = () => {
+        form.querySelector("#batchSelectedCount").textContent = `${selectedKeys.size} selected`;
+        updatePreview();
+      };
+      const renderVariants = () => {
+        const query = form.querySelector("#batchVariantSearch").value.trim().toLowerCase();
+        const shown = variants.filter(v => `${v.model} ${v.variant}`.toLowerCase().includes(query));
+        list.innerHTML = shown.map(v => {
+          const key = keyOf(v);
+          return `<label class="batch-variant-option"><input type="checkbox" data-variant-key="${promoEsc(key)}" ${selectedKeys.has(key) ? "checked" : ""}><span><strong>${promoEsc(v.model)}</strong><small>${promoEsc(v.variant)}</small></span></label>`;
+        }).join("") || '<div class="promo-empty">No matching variants.</div>';
+        list.querySelectorAll("input[data-variant-key]").forEach(input => input.addEventListener("change", () => {
+          if (input.checked) selectedKeys.add(input.dataset.variantKey); else selectedKeys.delete(input.dataset.variantKey);
+          selectedCount();
+        }));
+        selectedCount();
+      };
+      const fields = [
+        ["batchUseDpOffer", "batchDpOffer"], ["batchUseCashDiscount", "batchCashDiscount"],
+        ["batchUseFuelVoucher", "batchFuelVoucher"], ["batchUseFreebies", "batchFreebies"],
+        ["batchUseValidFrom", "batchValidFrom"], ["batchUseValidUntil", "batchValidUntil"],
+        ["batchUseDescription", "batchDescription"], ["batchUseStatus", "batchStatus"]
+      ];
+      fields.forEach(([checkId, inputId]) => {
+        const check = form.querySelector(`#${checkId}`), input = form.querySelector(`#${inputId}`);
+        check.addEventListener("change", () => {
+          input.disabled = !check.checked;
+          if (checkId === "batchUseFreebies") form.querySelector("#batchFreebiesMode").disabled = !check.checked;
+          updatePreview();
+        });
+        input.addEventListener("input", updatePreview);
+        input.addEventListener("change", updatePreview);
+      });
+      function updatePreview() {
+        const checked = fields.filter(([id]) => form.querySelector(`#${id}`).checked).map(([id]) => id.replace("batchUse", ""));
+        form.querySelector("#batchPromoPreview").textContent = `${selectedKeys.size} vehicle variant(s) selected · ${checked.length ? checked.join(", ") : "No fields selected"}. Unchecked fields will remain unchanged.`;
+      }
+      form.querySelector("#batchVariantSearch").addEventListener("input", renderVariants);
+      form.querySelector("#batchSelectVisible").addEventListener("click", () => {
+        const query = form.querySelector("#batchVariantSearch").value.trim().toLowerCase();
+        variants.filter(v => `${v.model} ${v.variant}`.toLowerCase().includes(query)).forEach(v => selectedKeys.add(keyOf(v)));
+        renderVariants();
+      });
+      form.querySelector("#batchClearSelection").addEventListener("click", () => { selectedKeys.clear(); renderVariants(); });
+      form.querySelector("#batchPromoCancel").addEventListener("click", () => host.replaceChildren());
+      renderVariants();
+
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
+        const selected = variants.filter(v => selectedKeys.has(keyOf(v)));
+        const activeFields = fields.filter(([id]) => form.querySelector(`#${id}`).checked);
+        if (!selected.length) { setMessage($("promoModuleMessage"), "Select at least one vehicle variant.", "error"); return; }
+        if (!activeFields.length) { setMessage($("promoModuleMessage"), "Select at least one promotion field to update.", "error"); return; }
+        const type = form.querySelector("#batchPromoType").value;
+        const bank = form.querySelector("#batchPromoBank").value;
+        if (form.querySelector("#batchUseDpOffer").checked && (type === "CASH" || type === "BANK_PO")) {
+          setMessage($("promoModuleMessage"), "Downpayment Offer can only be updated for a DP percentage offer type.", "error"); return;
+        }
+        if (form.querySelector("#batchUseCashDiscount").checked && type !== "CASH" && type !== "BANK_PO") {
+          setMessage($("promoModuleMessage"), "Cash Discount requires CASH or BANK P.O. as the offer type.", "error"); return;
+        }
+        if (form.querySelector("#batchUseFreebies").checked && !form.querySelector("#batchFreebies").value.trim()) {
+          setMessage($("promoModuleMessage"), "Enter at least one Freebies / Inclusions line.", "error"); return;
+        }
+        const useFreebies = form.querySelector("#batchUseFreebies").checked;
+        const useTargetFields = activeFields.some(([id]) => id !== "batchUseFreebies");
+        const batch = new Map();
+        const bankKey = bank === "ALL_BANKS" ? "ALL_BANKS" : bank;
+        const makeKey = (dp, bankName, id) => id ? `id:${id}` : `key:${dp}|${bankName}`;
+        selected.forEach(vehicle => {
+          const existing = (promoInventoryData.promotions || []).filter(p => p.model === vehicle.model && p.variant === vehicle.variant);
+          if (useFreebies) {
+            existing.forEach(old => {
+              const k = makeKey(old.applicableDownpayment, (old.applicableBanks || ["ALL_BANKS"])[0], old.id);
+              const copy = {...old, applicableBanks:[...(old.applicableBanks || ["ALL_BANKS"])]};
+              const incoming = form.querySelector("#batchFreebies").value.trim();
+              if (form.querySelector("#batchFreebiesMode").value === "replace") copy.freebies = incoming;
+              else {
+                const lines = String(copy.freebies || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+                incoming.split(/\r?\n/).map(x => x.trim()).filter(Boolean).forEach(line => {
+                  if (!lines.some(x => x.toLowerCase() === line.toLowerCase())) lines.push(line);
+                });
+                copy.freebies = lines.join("\n");
+              }
+              batch.set(k, copy);
+            });
+          }
+          if (useTargetFields || (useFreebies && !existing.length)) {
+            const old = existing.find(p => String(p.applicableDownpayment || "") === type && (p.applicableBanks || []).includes(bankKey));
+            const k = makeKey(type, bankKey, old?.id);
+            const target = batch.get(k) || (old ? {...old, applicableBanks:[...(old.applicableBanks || [bankKey])]} : {
+              id:"", model:vehicle.model, variant:vehicle.variant, applicableDownpayment:type,
+              applicableBanks:[bankKey], downpaymentOffer:"", cashDiscount:"", fuelVoucher:"",
+              freebies:"", validFrom:"", validUntil:"", description:"", status:"Active", tplIncluded:false
+            });
+            if (form.querySelector("#batchUseDpOffer").checked) target.downpaymentOffer = form.querySelector("#batchDpOffer").value.trim();
+            if (form.querySelector("#batchUseCashDiscount").checked) target.cashDiscount = form.querySelector("#batchCashDiscount").value.trim();
+            if (form.querySelector("#batchUseFuelVoucher").checked) target.fuelVoucher = form.querySelector("#batchFuelVoucher").value.trim();
+            if (useFreebies && !old) target.freebies = form.querySelector("#batchFreebies").value.trim();
+            if (form.querySelector("#batchUseValidFrom").checked) target.validFrom = form.querySelector("#batchValidFrom").value;
+            if (form.querySelector("#batchUseValidUntil").checked) target.validUntil = form.querySelector("#batchValidUntil").value;
+            if (form.querySelector("#batchUseDescription").checked) target.description = form.querySelector("#batchDescription").value.trim();
+            if (form.querySelector("#batchUseStatus").checked) target.status = form.querySelector("#batchStatus").value;
+            batch.set(k, target);
+          }
+        });
+        const records = [...batch.values()];
+        if (!records.length) { setMessage($("promoModuleMessage"), "No matching promotion records were found to update.", "error"); return; }
+        if (records.length > 200) { setMessage($("promoModuleMessage"), `This batch would update ${records.length} records. The current safe limit is 200 per save; narrow your selection.`, "error"); return; }
+        const selectedFieldNames = activeFields.map(([id]) => id.replace("batchUse", ""));
+        const variantPreview = selected.map(v => `${v.model} — ${v.variant}`).join("\n");
+        const summary = `BATCH UPDATE PREVIEW\n\nVehicles (${selected.length}):\n${variantPreview}\n\nTarget: ${bank === "ALL_BANKS" ? "ALL BANKS" : bank} · ${type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP"}\nFields: ${selectedFieldNames.join(", ")}\nRecords to save: ${records.length}\n\nOnly checked fields will be changed. Continue?`;
+        if (!window.confirm(summary)) return;
+        const save = form.querySelector("#batchPromoSave");
+        save.disabled = true; save.textContent = "Saving batch…";
+        const auditChanges = [];
+        if (form.querySelector("#batchUseDpOffer").checked) auditChanges.push("Downpayment Offer: " + form.querySelector("#batchDpOffer").value.trim());
+        if (form.querySelector("#batchUseCashDiscount").checked) auditChanges.push("Cash Discount: " + form.querySelector("#batchCashDiscount").value.trim());
+        if (form.querySelector("#batchUseFuelVoucher").checked) auditChanges.push("Fuel Voucher: " + form.querySelector("#batchFuelVoucher").value.trim());
+        if (form.querySelector("#batchUseFreebies").checked) auditChanges.push("Freebies / Inclusions (" + form.querySelector("#batchFreebiesMode").value + "): " + form.querySelector("#batchFreebies").value.trim().replace(/\r?\n/g, "; "));
+        if (form.querySelector("#batchUseValidFrom").checked) auditChanges.push("Valid From: " + form.querySelector("#batchValidFrom").value);
+        if (form.querySelector("#batchUseValidUntil").checked) auditChanges.push("Valid Until: " + form.querySelector("#batchValidUntil").value);
+        if (form.querySelector("#batchUseDescription").checked) auditChanges.push("Description: " + form.querySelector("#batchDescription").value.trim().replace(/\r?\n/g, "; "));
+        if (form.querySelector("#batchUseStatus").checked) auditChanges.push("Status: " + form.querySelector("#batchStatus").value);
+        const audit = {
+          kind: "batchPromotion",
+          targetBank: bank === "ALL_BANKS" ? "ALL BANKS" : bank,
+          offerType: type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP",
+          variants: selected.map(v => `${v.model} / ${v.variant}`),
+          changes: auditChanges
+        };
+        try {
+          await submitRequest("promoInventorySave", {payload: JSON.stringify({type:"promotionBatch", records, audit})});
+          host.replaceChildren();
+        } catch (error) {
+          save.disabled = false; save.textContent = "Preview & Save Batch";
+          setMessage($("promoModuleMessage"), error.message, "error");
+        }
+      });
+      form.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+
     function renderStockCards() {
       const query = $("stockSearch").value.trim().toLowerCase();
       const items = promoInventoryData.inventory.filter(v => [v.model,v.variant,v.color,v.modelYear,v.stockStatus,v.remarks].join(" ").toLowerCase().includes(query));
@@ -4334,6 +4591,7 @@
     $("stockSearch").addEventListener("input",renderStockCards);
     $("bankSearch").addEventListener("input",renderPartnerBankCards);
     $("addPromoBtn").addEventListener("click",()=>{});
+    $("batchPromoBtn").addEventListener("click",openBatchPromoEditor);
     $("addStockBtn").addEventListener("click",()=>openStockForm());
     $("manageStockOptionsBtn").addEventListener("click",openStockOptionsManager);
     $("addBankBtn").addEventListener("click",()=>openBankForm());
@@ -4583,7 +4841,11 @@
       document.body.classList.add("printing-quote");
       window.print();
     });
-    window.addEventListener("afterprint", () => document.body.classList.remove("printing-quote"));
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("printing-quote");
+      // The browser does not expose whether the user saved or cancelled the PDF.
+      showTeamRerDynamicIsland("Quotation print dialog closed. Check your PDF destination.");
+    });
 
     $("loginBtn").addEventListener("click", async () => {
       $("loginBtn").disabled = true;
@@ -5300,6 +5562,13 @@
 .audit-success{color:#20a56b!important;font-weight:700}
 .audit-failed{color:#e35b5b!important;font-weight:700}
 @media(max-width:560px){.audit-filters{grid-template-columns:1fr}.audit-table{min-width:680px}}
+
+    .batch-variant-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:310px;overflow:auto;padding:9px;border:1px solid #d6e3ed;border-radius:12px;background:rgba(255,255,255,.76)}
+    .batch-variant-option{display:flex;align-items:flex-start;gap:9px;padding:9px;border:1px solid #dce7ef;border-radius:9px;background:#fff;cursor:pointer;color:#173b56!important}
+    .batch-variant-option input{width:18px;min-width:18px;margin:2px 0 0;accent-color:#17639a}
+    .batch-variant-option span{display:grid;gap:2px}.batch-variant-option strong{font-size:12px;color:#173b56}.batch-variant-option small{font-size:11px;color:#526b80}
+    #batchPromoEditor .field label{display:flex;align-items:center;gap:8px}#batchPromoEditor .field label input[type=checkbox]{width:17px;min-width:17px;margin:0;accent-color:#17639a}
+    #batchPromoEditor input:disabled,#batchPromoEditor textarea:disabled,#batchPromoEditor select:disabled{opacity:.48;cursor:not-allowed}
 </style>
 
 </body>
