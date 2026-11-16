@@ -4725,5 +4725,77 @@
   }
 </style>
 
+
+
+<style id="team-rer-promo-variant-card-contrast-v22">
+  /* Promotions: make model/variant selector cards readable in either theme.
+     These cards intentionally use a light glass surface with dark typography. */
+  body #promoOffersPanel .promo-model-accordion {
+    color:#173b58 !important;
+    background:rgba(250,253,255,.97) !important;
+    border:1px solid rgba(125,157,181,.62) !important;
+    box-shadow:0 5px 16px rgba(12,43,68,.10) !important;
+  }
+  body #promoOffersPanel .promo-model-accordion > summary {
+    color:#123b5c !important;
+    background:linear-gradient(145deg,#f7fbff,#eaf2f8) !important;
+  }
+  body #promoOffersPanel .promo-model-accordion > summary small {
+    color:#526d83 !important;
+  }
+  body #promoOffersPanel .promo-model-accordion > summary::after {
+    color:#315f80 !important;
+  }
+  body #promoOffersPanel .promo-variant-list {
+    background:#fbfdff !important;
+  }
+  body #promoOffersPanel .promo-variant-row {
+    border-top:1px solid #d5e1eb !important;
+    background:transparent !important;
+  }
+  body #promoOffersPanel .promo-variant-info strong {
+    color:#173f60 !important;
+    font-weight:750 !important;
+  }
+  body #promoOffersPanel .promo-variant-info small {
+    color:#526d83 !important;
+    font-weight:550 !important;
+  }
+  body #promoOffersPanel .promo-variant-row button {
+    color:#ffffff !important;
+    background:linear-gradient(145deg,#17649d,#104a79) !important;
+    border:1px solid #0e4a77 !important;
+    box-shadow:0 2px 7px rgba(13,57,91,.18) !important;
+  }
+  body #promoOffersPanel .promo-variant-row button.secondary {
+    color:#174665 !important;
+    background:linear-gradient(145deg,#edf6fc,#dcebf5) !important;
+    border:1px solid #b7ccdc !important;
+  }
+  body #promoOffersPanel .promo-variant-row button:focus-visible,
+  body #promoOffersPanel .promo-model-accordion > summary:focus-visible {
+    outline:3px solid #58a9e6 !important;
+    outline-offset:2px !important;
+  }
+
+  /* Explicitly retain the same high-contrast glass treatment in dark mode;
+     the surrounding page may be dark, but card text stays dark only on light cards. */
+  html[data-rer-theme="dark"] body #promoOffersPanel .promo-model-accordion {
+    background:rgba(250,253,255,.98) !important;
+    border-color:rgba(147,179,203,.78) !important;
+  }
+  html[data-rer-theme="dark"] body #promoOffersPanel .promo-model-accordion > summary {
+    color:#123b5c !important;
+    background:linear-gradient(145deg,#f7fbff,#eaf2f8) !important;
+  }
+  html[data-rer-theme="dark"] body #promoOffersPanel .promo-model-accordion > summary small,
+  html[data-rer-theme="dark"] body #promoOffersPanel .promo-variant-info small {
+    color:#526d83 !important;
+  }
+  html[data-rer-theme="dark"] body #promoOffersPanel .promo-variant-info strong {
+    color:#173f60 !important;
+  }
+</style>
+
 </body>
 </html>
