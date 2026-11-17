@@ -2264,6 +2264,12 @@
               <div><p class="applications-dashboard-kicker">APPLICATIONS</p><h2>Credit Applications</h2></div>
               <span id="applicationsDashboardPeriodLabel" class="applications-dashboard-period">Today</span>
             </div>
+            <div id="applicationsDashboardConsultantWrap" class="applications-dashboard-consultant-wrap hidden">
+              <label for="applicationsDashboardConsultant">Sales Consultant</label>
+              <select id="applicationsDashboardConsultant" aria-label="Filter applications by sales consultant">
+                <option value="">All Sales Consultants</option>
+              </select>
+            </div>
             <div class="applications-dashboard-filters" role="group" aria-label="Application date filter">
               <button type="button" class="active" data-app-period="day" aria-pressed="true">Day</button>
               <button type="button" data-app-period="week" aria-pressed="false">Week</button>
@@ -2978,12 +2984,16 @@
         .map(value => value.toString(16).padStart(2, "0")).join("");
     }
 
+    let pendingRequestShowsLoading = true;
+
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
-      showLoading(loadingMessages[action] || "Preparing your document...");
-      setLoadingProgress(18, "Securing your session");
+      const showRequestLoading = extra.silent !== true;
+      pendingRequestShowsLoading = showRequestLoading;
+      if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
+      if (showRequestLoading) setLoadingProgress(18, "Securing your session");
       const token = await currentUser.getIdToken(true);
-      setLoadingProgress(36, "Preparing your request");
+      if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
       pendingAction = action;
@@ -2998,11 +3008,13 @@
       $("applicationIdField").value = extra.applicationId || "";
       $("vehicleField").value = extra.vehicle || "";
       $("payloadField").value = extra.payload || "";
-      setLoadingProgress(58, "Sending request securely");
-      $("loadingMessage").textContent = action === "promoInventorySave"
-        ? "Saving changes and synchronizing your data..."
-        : (loadingMessages[action] || "Processing your request...");
-      setLoadingProgress(85, "Finalizing your update...");
+      if (showRequestLoading) {
+        setLoadingProgress(58, "Sending request securely");
+        $("loadingMessage").textContent = action === "promoInventorySave"
+          ? "Saving changes and synchronizing your data..."
+          : (loadingMessages[action] || "Processing your request...");
+        setLoadingProgress(85, "Finalizing your update...");
+      }
       $("bridgeForm").submit();
     }
 
@@ -3014,18 +3026,31 @@
     }
 
     let applicationsDashboardPeriod = "day";
+    let applicationsDashboardConsultant = "";
 
     function loadApplicationsDashboard(period = applicationsDashboardPeriod) {
       applicationsDashboardPeriod = period;
+      const role = normalizedSessionRole();
+      const canFilterConsultant = role === "admin" || role === "super admin" || role === "superadmin";
+      $("applicationsDashboardConsultantWrap").classList.toggle("hidden", !canFilterConsultant);
+      if (!canFilterConsultant) applicationsDashboardConsultant = "";
       document.querySelectorAll("[data-app-period]").forEach(button => {
         const active = button.dataset.appPeriod === period;
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", active ? "true" : "false");
       });
-      const labels = {day:"Today",week:"This week",month:"This month",year:"This year"};
-      $("applicationsDashboardPeriodLabel").textContent = labels[period] || "Today";
-      $("applicationsDashboardNote").textContent = "Updating application totals...";
-      submitRequest("applicationsDashboardGet", {payload:JSON.stringify({period})})
+      // Keep the upper-right label as the current date, regardless of the selected filter.
+      const now = new Date();
+      const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(now);
+      const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(now);
+      const day = new Intl.DateTimeFormat("en-US", { day: "2-digit" }).format(now);
+      const year = new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(now);
+      $("applicationsDashboardPeriodLabel").textContent = `${weekday} | ${month}-${day}-${year}`;
+      $("applicationsDashboardNote").textContent = "Only applications with generated PDFs are included.";
+      submitRequest("applicationsDashboardGet", {
+        payload:JSON.stringify({period, consultant:applicationsDashboardConsultant}),
+        silent:true
+      })
         .catch(error => {
           $("applicationsDashboardCount").textContent = "—";
           $("applicationsDashboardNote").textContent = error.message || "Unable to load application totals.";
@@ -3055,7 +3080,8 @@
       if (!event.data || event.data.nonce !== pendingNonce) return;
 
       const action = pendingAction;
-      hideLoading();
+      if (pendingRequestShowsLoading) hideLoading();
+      pendingRequestShowsLoading = true;
       pendingNonce = null;
       pendingAction = null;
       $("tokenField").value = "";
@@ -3219,6 +3245,26 @@
 
       if (action === "applicationsDashboardGet") {
         const dashboard = event.data.applicationsDashboard || {};
+        const consultantSelect = $("applicationsDashboardConsultant");
+        const consultants = Array.isArray(dashboard.consultants) ? dashboard.consultants : [];
+        const selected = applicationsDashboardConsultant;
+        consultantSelect.replaceChildren();
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = "All Sales Consultants";
+        consultantSelect.appendChild(allOption);
+        consultants.forEach(name => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          consultantSelect.appendChild(option);
+        });
+        if (selected && consultants.includes(selected)) {
+          consultantSelect.value = selected;
+        } else {
+          applicationsDashboardConsultant = "";
+          consultantSelect.value = "";
+        }
         $("applicationsDashboardCount").textContent = Number(dashboard.count || 0).toLocaleString();
         $("applicationsDashboardNote").textContent = "Only applications with generated PDFs are included.";
         return;
@@ -3905,6 +3951,10 @@
 
     document.querySelectorAll("[data-app-period]").forEach(button => {
       button.addEventListener("click", () => loadApplicationsDashboard(button.dataset.appPeriod));
+    });
+    $("applicationsDashboardConsultant").addEventListener("change", event => {
+      applicationsDashboardConsultant = String(event.target.value || "");
+      loadApplicationsDashboard(applicationsDashboardPeriod);
     });
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
@@ -6685,9 +6735,30 @@
   .applications-dashboard-kicker { margin:0 0 2px; color:#66839b; font-size:9px; font-weight:800; letter-spacing:1.5px; }
   .applications-dashboard-head h2 { margin:0; color:#123e64; font-size:16px; font-weight:800; }
   .applications-dashboard-period { padding:5px 9px; border-radius:20px; background:rgba(0,59,112,.08); color:#315f83; font-size:10px; font-weight:700; white-space:nowrap; }
+  .applications-dashboard-consultant-wrap { display:flex; align-items:center; gap:9px; margin:11px 0 0; }
+  .applications-dashboard-consultant-wrap label { color:#315f83; font-size:10px; font-weight:800; white-space:nowrap; }
+  .applications-dashboard-consultant-wrap select {
+    flex:1; min-width:0; min-height:34px; padding:6px 30px 6px 10px;
+    border:1px solid #9bb2c6; border-radius:9px; background:#fff;
+    color:#173f60 !important; -webkit-text-fill-color:#173f60;
+    font-size:11px; font-weight:700; opacity:1;
+  }
   .applications-dashboard-filters { display:flex; gap:6px; margin:12px 0 11px; }
-  .applications-dashboard-filters button { flex:1; min-height:31px; padding:5px 8px; border:1px solid rgba(49,95,131,.18); border-radius:9px; background:rgba(255,255,255,.62); color:#42627d; font-size:11px; font-weight:700; }
-  .applications-dashboard-filters button.active { border-color:#164f7c; background:#164f7c; color:#fff; box-shadow:0 3px 8px rgba(22,79,124,.18); }
+  .applications-dashboard-filters button {
+    flex:1; min-height:31px; padding:5px 8px; border:1px solid #9bb2c6;
+    border-radius:9px; background:#ffffff; color:#173f60 !important;
+    -webkit-text-fill-color:#173f60; font-size:11px; font-weight:800;
+    opacity:1; text-shadow:none; box-shadow:0 1px 2px rgba(18,62,100,.06);
+  }
+  .applications-dashboard-filters button:hover,
+  .applications-dashboard-filters button:focus-visible {
+    border-color:#315f83; background:#edf5fb; color:#123e64 !important;
+    -webkit-text-fill-color:#123e64; outline:2px solid rgba(49,95,131,.18); outline-offset:1px;
+  }
+  .applications-dashboard-filters button.active {
+    border-color:#164f7c; background:#164f7c; color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff; box-shadow:0 3px 8px rgba(22,79,124,.18);
+  }
   .applications-dashboard-total { display:flex; align-items:baseline; gap:9px; }
   .applications-dashboard-total strong { color:#003b70; font-size:29px; line-height:1; font-weight:850; letter-spacing:-1px; }
   .applications-dashboard-total span { color:#42627d; font-size:12px; font-weight:700; }
