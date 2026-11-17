@@ -180,6 +180,9 @@
       border:1px solid #dce8f2; text-align:left;
     }
     .welcome-eyebrow { margin:0 0 5px; color:#64809a; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+    .welcome-eyebrow.role-user { color:#65a9df; }
+    .welcome-eyebrow.role-admin { color:#3c9b75; }
+    .welcome-eyebrow.role-super-admin { color:#b58a3c; }
     .dashboard-welcome .userline { margin:0; color:#123d63; font-size:18px; font-weight:700; line-height:1.35; }
     .welcome-note { margin:5px 0 0; color:#60758a; font-size:12px; }
     .dashboard-label { margin:0 0 10px; color:#244866; font-size:13px; font-weight:700; text-align:left; }
@@ -2251,7 +2254,7 @@
         <div id="teamRerChristmasSnow" aria-hidden="true"></div>
         <div id="appNav">
           <div class="dashboard-welcome">
-            <p class="welcome-eyebrow">TEAM RER • SALES WORKSPACE</p>
+            <p class="welcome-eyebrow" id="welcomeRoleLabel">TEAM RER</p>
             <p class="userline" id="userDetails"></p>
             <p class="welcome-note">Your Hyundai Cainta workspace is ready.</p>
           </div>
@@ -3103,6 +3106,23 @@
         startIdleMonitor();
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
+        const roleLabel = $("welcomeRoleLabel");
+        if (roleLabel) {
+          const role = normalizedSessionRole();
+          roleLabel.classList.remove("role-user", "role-admin", "role-super-admin");
+          if (role === "user") {
+            roleLabel.textContent = "Sales Consultant";
+            roleLabel.classList.add("role-user");
+          } else if (role === "admin") {
+            roleLabel.textContent = "Admin";
+            roleLabel.classList.add("role-admin");
+          } else if (role === "super admin" || role === "superadmin") {
+            roleLabel.textContent = "Super Admin";
+            roleLabel.classList.add("role-super-admin");
+          } else {
+            roleLabel.textContent = "TEAM RER";
+          }
+        }
         const firstName = String(authorizedUser.name || "").trim().split(/\\s+/)[0] || "there";
         const localHour = new Date().getHours();
         const greeting = localHour < 12 ? "Good morning" : localHour < 18 ? "Good afternoon" : "Good evening";
