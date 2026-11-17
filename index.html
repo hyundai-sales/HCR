@@ -2465,11 +2465,13 @@
           <p class="app-caption">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
-              <div class="credit-field full">
+              <div class="credit-field full" id="creditConsultantField">
                 <label for="creditConsultant">Sales Consultant</label>
                 <select id="creditConsultant" required>
                   <option value="">Loading Sales Consultants...</option>
                 </select>
+                <input id="creditConsultantDisplay" type="text" readonly
+                  aria-label="Signed-in Sales Consultant" class="hidden">
               </div>
               <div class="credit-field full credit-mode-field">
                 <label>Application Mode</label>
@@ -2500,7 +2502,7 @@
           <h2 class="section-title">Credit Application History</h2>
           <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
           <div class="credit-section">
-            <div class="credit-grid">
+            <div class="credit-grid" id="creditHistoryConsultantFilterWrap">
               <div class="credit-field full">
                 <label for="creditHistoryConsultantFilter">Sales Consultant</label>
                 <select id="creditHistoryConsultantFilter">
@@ -2932,6 +2934,41 @@
       });
     }
 
+    function syncCreditConsultantForRole() {
+      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
+      const isUser = role === "user";
+      const select = $("creditConsultant");
+      const display = $("creditConsultantDisplay");
+      const historyFilterWrap = $("creditHistoryConsultantFilterWrap");
+      const auditButton = $("auditTabBtn");
+      const auditPage = $("auditPage");
+      const signedInName = String((authorizedUser && authorizedUser.name) || "").trim();
+      const isAdminRole = role === "admin" || role === "superadmin";
+      if (auditButton) auditButton.classList.toggle("hidden", !isAdminRole);
+      if (!isAdminRole && auditPage) auditPage.classList.add("hidden");
+
+      if (select) {
+        if (isUser) {
+          select.replaceChildren();
+          const option = document.createElement("option");
+          option.value = signedInName;
+          option.textContent = signedInName;
+          select.appendChild(option);
+          select.value = signedInName;
+          select.disabled = true;
+          select.classList.add("hidden");
+        } else {
+          select.disabled = false;
+          select.classList.remove("hidden");
+        }
+      }
+      if (display) {
+        display.value = isUser ? signedInName : "";
+        display.classList.toggle("hidden", !isUser);
+      }
+      if (historyFilterWrap) historyFilterWrap.classList.toggle("hidden", isUser);
+    }
+
     async function loadAppData() {
       await submitRequest("appData");
     }
@@ -3011,6 +3048,7 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        syncCreditConsultantForRole();
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
         adminPinEntry = "";
@@ -3046,6 +3084,7 @@
           $("roleNote").textContent = "Your registered TEAM RER name will be used.";
         }
         fillSelect($("creditConsultant"), data.consultants || [], "Select Sales Consultant");
+        syncCreditConsultantForRole();
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
@@ -4086,15 +4125,18 @@
     }
     function populateCreditHistoryConsultantFilter(rows) {
       const select = $("creditHistoryConsultantFilter");
-      if (!select) return;
       const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      const canSeeAll = role === "superadmin" || role === "admin";
+      const isUser = role === "user";
+      const wrap = $("creditHistoryConsultantFilterWrap");
+      if (wrap) wrap.classList.toggle("hidden", isUser);
+      if (!select || isUser) return;
+
       const names = [...new Set((rows || []).map(row => String(row.salesConsultant || "").trim()).filter(Boolean))]
         .sort((a,b) => a.localeCompare(b));
       select.replaceChildren();
       const all = document.createElement("option");
       all.value = "";
-      all.textContent = canSeeAll ? "All Sales Consultants" : (names[0] || "No accessible consultant");
+      all.textContent = "All Sales Consultants";
       select.appendChild(all);
       names.forEach(name => {
         const option = document.createElement("option");
@@ -4102,10 +4144,14 @@
         option.textContent = name;
         select.appendChild(option);
       });
-      if (!canSeeAll && names.length === 1) select.value = names[0];
       select.disabled = false;
     }
     function renderFilteredCreditHistory() {
+      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
+      if (role === "user") {
+        renderCreditHistory(creditHistoryRows);
+        return;
+      }
       const selected = String($("creditHistoryConsultantFilter").value || "").trim().toLowerCase();
       const rows = selected
         ? creditHistoryRows.filter(row => String(row.salesConsultant || "").trim().toLowerCase() === selected)
@@ -4139,10 +4185,15 @@
       $("creditPage").classList.remove("hidden");
       buildCreditForm();
       const consultant=$("creditConsultant");
-      if(consultant && data.consultant) {
-        if(!Array.from(consultant.options).some(o=>o.value===data.consultant)){const o=document.createElement("option");o.value=data.consultant;o.textContent=data.consultant;consultant.appendChild(o);}
-        consultant.value=data.consultant;
+      const currentRole = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
+      const consultantValue = currentRole === "user"
+        ? String((authorizedUser && authorizedUser.name) || "").trim()
+        : String(data.consultant || "").trim();
+      if(consultant && consultantValue) {
+        if(!Array.from(consultant.options).some(o=>o.value===consultantValue)){const o=document.createElement("option");o.value=consultantValue;o.textContent=consultantValue;consultant.appendChild(o);}
+        consultant.value=consultantValue;
       }
+      syncCreditConsultantForRole();
       const model=document.querySelector('#creditFormFields [data-cell="E14:I14"]');
       if(model && data.vehicleModel) model.value=data.vehicleModel;
       const variant=document.querySelector('#creditFormFields [data-vehicle-variant="true"]');
