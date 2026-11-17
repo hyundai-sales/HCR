@@ -2735,7 +2735,26 @@
       return ["super admin","superadmin"].includes(normalizedSessionRole());
     }
     function showAccessDenied(message) {
-      window.alert(message || "Team RER Admin Access Only.");
+      // Use the TEAM RER in-app modal instead of the browser alert,
+      // which adds a distracting "hyundai-sales.github.io says" heading.
+      showTeamRerAlert(message || "Team RER Admin Access Only.", "Access Restricted");
+    }
+
+    function syncRoleRestrictedModules() {
+      const adminAccess = isAdminSession();
+      const superAdminAccess = isSuperAdminSession();
+
+      const auditButton = $("auditTabBtn");
+      const usersButton = $("userManagementTabBtn");
+      const edgeUsersButton = $("edgeUserManagementBtn");
+
+      if (auditButton) auditButton.classList.toggle("hidden", !adminAccess);
+      if (usersButton) usersButton.classList.toggle("hidden", !superAdminAccess);
+      if (edgeUsersButton) edgeUsersButton.classList.toggle("hidden", !superAdminAccess);
+
+      // Close restricted pages if the active session does not have permission.
+      if (!adminAccess && $("auditPage")) $("auditPage").classList.add("hidden");
+      if (!superAdminAccess && $("userManagementPage")) $("userManagementPage").classList.add("hidden");
     }
 
     function recordUserActivity() {
@@ -3053,9 +3072,7 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
-        const superAdminAccess = isSuperAdminSession();
-        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
-        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
+        syncRoleRestrictedModules();
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
         adminPinEntry = "";
@@ -3083,11 +3100,10 @@
       if (action === "appData") {
         const data = event.data.appData;
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
-        $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
+        // Module visibility is based on the verified role returned at sign-in.
+        // Activity Logs: Admin + Super Admin. User Management: Super Admin only.
+        syncRoleRestrictedModules();
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
-        const superAdminAccess = isSuperAdminSession() || data.isSuperAdmin === true;
-        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
-        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
@@ -5360,37 +5376,55 @@
       $("saveUserBtn").textContent = record ? "Save Changes" : "Add User";
       const fields = $("userEditorFields");
       fields.replaceChildren();
-      userManagementData.headers.forEach(header => {
-        const normalized = String(header).trim().toLowerCase();
+      // The app editor intentionally exposes only the four account fields.
+      // The spreadsheet may contain additional columns; they remain untouched.
+      const editorFields = [
+        { key: "name", label: "Name" },
+        { key: "email address", label: "Email Address" },
+        { key: "role", label: "Role" },
+        { key: "active", label: "Status" }
+      ];
+      editorFields.forEach((field, fieldIndex) => {
+        const headerIndex = userManagementData.headers.findIndex(
+          header => String(header).trim().toLowerCase() === field.key
+        );
+        if (headerIndex < 0) return;
+        const header = userManagementData.headers[headerIndex];
         const value = values[header] ?? "";
         const wrap = document.createElement("div");
-        wrap.className = "user-editor-field" + (normalized.includes("address") || normalized.includes("email") ? " user-field-wide" : "");
+        wrap.className = "user-editor-field" +
+          (field.key === "email address" ? " user-field-wide" : "");
         const label = document.createElement("label");
-        label.textContent = header;
-        label.htmlFor = "userField_" + userManagementData.headers.indexOf(header);
+        label.textContent = field.label;
+        label.htmlFor = "userField_" + fieldIndex;
         let input;
-        if (normalized === "role") {
+        if (field.key === "role") {
           input = document.createElement("select");
           (userManagementData.roles || ["Super Admin","Admin","User"]).forEach(role => {
-            const option = document.createElement("option"); option.value = role; option.textContent = role; input.appendChild(option);
+            const option = document.createElement("option");
+            option.value = role;
+            option.textContent = role;
+            input.appendChild(option);
           });
           input.value = String(value || "User");
-        } else if (normalized === "active") {
+        } else if (field.key === "active") {
           input = document.createElement("select");
           [["true","Active"],["false","Inactive"]].forEach(([v,t]) => {
-            const option = document.createElement("option"); option.value = v; option.textContent = t; input.appendChild(option);
+            const option = document.createElement("option");
+            option.value = v;
+            option.textContent = t;
+            input.appendChild(option);
           });
           input.value = ["true","yes","1","active"].includes(String(value).toLowerCase()) ? "true" : "false";
         } else {
           input = document.createElement("input");
-          input.type = normalized.includes("date") ? "date" : "text";
+          input.type = field.key === "email address" ? "email" : "text";
           input.value = String(value ?? "");
-          if (normalized === "email address") input.type = "email";
         }
-        input.id = "userField_" + userManagementData.headers.indexOf(header);
+        input.id = "userField_" + fieldIndex;
         input.dataset.userHeader = header;
-        input.required = ["name","email address","role","active"].includes(normalized);
-        if (record && normalized === "email address") input.autocomplete = "off";
+        input.required = true;
+        if (record && field.key === "email address") input.autocomplete = "off";
         wrap.append(label,input);
         fields.appendChild(wrap);
       });
