@@ -2269,6 +2269,7 @@
               <select id="applicationsDashboardConsultant" aria-label="Filter applications by sales consultant">
                 <option value="">All Sales Consultants</option>
               </select>
+              <span id="applicationsDashboardConsultantUser" class="applications-dashboard-consultant-user hidden"></span>
             </div>
             <div class="applications-dashboard-filters" role="group" aria-label="Application date filter">
               <button type="button" class="active" data-app-period="day" aria-pressed="true">Day</button>
@@ -3033,7 +3034,14 @@
       applicationsDashboardPeriod = period;
       const role = normalizedSessionRole();
       const canFilterConsultant = role === "admin" || role === "super admin" || role === "superadmin";
-      $("applicationsDashboardConsultantWrap").classList.toggle("hidden", !canFilterConsultant);
+      const isUser = role === "user";
+      $("applicationsDashboardConsultantWrap").classList.toggle("hidden", !(canFilterConsultant || isUser));
+      $("applicationsDashboardConsultant").classList.toggle("hidden", !canFilterConsultant);
+      $("applicationsDashboardConsultantUser").classList.toggle("hidden", !isUser);
+      if (isUser) {
+        $("applicationsDashboardConsultantUser").textContent =
+          String((authorizedUser && authorizedUser.name) || "").trim() || "Your Sales Consultant account";
+      }
       if (!canFilterConsultant) applicationsDashboardConsultant = "";
       document.querySelectorAll("[data-app-period]").forEach(button => {
         const active = button.dataset.appPeriod === period;
@@ -6747,10 +6755,20 @@
   .applications-dashboard-consultant-wrap { display:flex; align-items:center; gap:9px; margin:11px 0 0; }
   .applications-dashboard-consultant-wrap label { color:#315f83; font-size:10px; font-weight:800; white-space:nowrap; }
   .applications-dashboard-consultant-wrap select {
-    flex:1; min-width:0; min-height:34px; padding:6px 30px 6px 10px;
-    border:1px solid #9bb2c6; border-radius:9px; background:#fff;
-    color:#173f60 !important; -webkit-text-fill-color:#173f60;
-    font-size:11px; font-weight:700; opacity:1;
+    flex:1; min-width:0; min-height:38px; padding:7px 32px 7px 12px;
+    border:1px solid #7899b5; border-radius:9px; background:#fff;
+    color:#123b5b !important; -webkit-text-fill-color:#123b5b;
+    font-size:13px; line-height:1.35; font-weight:700; opacity:1;
+    text-shadow:none; appearance:auto;
+  }
+  .applications-dashboard-consultant-wrap select option {
+    color:#123b5b !important; background:#fff; font-size:14px; font-weight:600;
+  }
+  .applications-dashboard-consultant-user {
+    display:block; flex:1; min-width:0; padding:9px 12px;
+    border:1px solid #7899b5; border-radius:9px; background:#f4f8fc;
+    color:#123b5b !important; font-size:13px; line-height:1.35;
+    font-weight:800; overflow-wrap:anywhere;
   }
   .applications-dashboard-filters { display:flex; gap:6px; margin:12px 0 11px; }
   .applications-dashboard-filters button {
