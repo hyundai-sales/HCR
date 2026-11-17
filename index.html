@@ -147,7 +147,14 @@
     .section-title { margin:22px 0 4px; color:#003b70; font-size:16px; text-align:left; }
     .app-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:14px 0 18px; }
     .app-nav button { min-height:58px; padding:12px 8px; font-size:14px; }
-    .credit-section { margin:18px 0 8px; padding:14px; border:1px solid #d8e1eb; border-radius:10px; text-align:left; }
+    .credit-history-list { margin-top:14px; display:grid; gap:10px; }
+    .credit-history-card { padding:13px; border:1px solid #d8e1eb; border-radius:10px; background:#fff; text-align:left; }
+    .credit-history-card strong { display:block; color:#123d63; font-size:14px; }
+    .credit-history-meta { margin:5px 0 10px; color:#52677c; font-size:12px; line-height:1.55; overflow-wrap:anywhere; }
+    .credit-history-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .credit-history-actions button { width:auto; min-width:105px; min-height:38px; padding:8px 12px; font-size:12px; }
+    .credit-history-actions .secondary { margin-top:0; }
+        .credit-section { margin:18px 0 8px; padding:14px; border:1px solid #d8e1eb; border-radius:10px; text-align:left; }
     .credit-section h3 { margin:0 0 12px; color:#003b70; font-size:15px; }
     .credit-field[hidden] { display:none !important; }
     .credit-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -2197,6 +2204,7 @@
             <button class="edge-item" type="button" data-edge-target="pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 12h8M8 16h8"/></svg><span>Price List</span></button>
             <button class="edge-item" type="button" data-edge-target="quote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14 5 8h14l2 6v5H3zM5 14h14M7 18h.01M17 18h.01M7 8l1-3h8l1 3"/></svg><span>Vehicle Quotation</span></button>
             <button class="edge-item" type="button" data-edge-target="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>Credit Application</span></button>
+            <button class="edge-item" type="button" data-edge-target="history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Credit Application History</span></button>
             <button class="edge-item" type="button" data-edge-target="promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path d="m4 7 8 5 8-5M12 12v9"/></svg><span>Promos and Vehicle Info</span></button>
           </nav>
         </aside>
@@ -2259,6 +2267,10 @@
             <button id="creditTabBtn" type="button">
               <span class="nav-icon nav-icon-credit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4.5h10a2 2 0 0 1 2 2v13H5v-13a2 2 0 0 1 2-2Z"/><path d="M9 4.5v-1h6v1M8.5 9h7M8.5 12.5h7M8.5 16h4"/><path d="m15.5 16.5 1.2 1.2 2.3-2.5"/></svg></span>
               <span class="nav-copy"><span class="nav-title">Credit Application</span><span class="nav-description">Complete financing applications</span></span>
+            </button>
+            <button id="creditHistoryTabBtn" type="button">
+              <span class="nav-icon" aria-hidden="true">▤</span>
+              <span class="nav-copy"><span class="nav-title">Credit Application History</span><span class="nav-description">Find, review and update saved applications</span></span>
             </button>
             <button id="promoTabBtn" type="button">
               <span class="nav-icon nav-icon-promo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21M8 5.2l8 4.6"/></svg></span>
@@ -2465,6 +2477,22 @@
           <button id="generateCreditBtn" type="button">Generate Application PDF</button>
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
         </section>
+        <section id="creditHistoryPage" class="hidden">
+          <button id="backToMenuFromHistory" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Credit Application History</h2>
+          <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
+          <div class="credit-section">
+            <div class="credit-grid">
+              <div class="credit-field full">
+                <label for="creditHistorySearch">Search borrower, application ID, vehicle or consultant</label>
+                <input id="creditHistorySearch" type="search" placeholder="Type to search...">
+              </div>
+            </div>
+            <button id="refreshCreditHistoryBtn" type="button">Refresh Applications</button>
+            <div id="creditHistoryMessage" class="message hidden" aria-live="polite"></div>
+            <div id="creditHistoryList" class="credit-history-list"></div>
+          </div>
+        </section>
 
       </section>
     </div>
@@ -2482,6 +2510,7 @@
     <input type="hidden" name="bank" id="bankField">
     <input type="hidden" name="consultant" id="consultantRequestField">
     <input type="hidden" name="applicationData" id="applicationDataField">
+    <input type="hidden" name="applicationId" id="applicationIdField">
     <input type="hidden" name="vehicle" id="vehicleField">
     <input type="hidden" name="payload" id="payloadField">
   </form>
@@ -2641,7 +2670,7 @@
     }
 
     function isAdminSession() {
-      return String(authorizedUser && authorizedUser.role || "").trim().toLowerCase() === "admin";
+      return ["admin","super admin","superadmin"].includes(String(authorizedUser && authorizedUser.role || "").trim().toLowerCase().replace(/[_-]+/g," "));
     }
 
     function recordUserActivity() {
@@ -2845,6 +2874,7 @@
       $("bankField").value = extra.bank || "OTHER BANKS";
       $("consultantRequestField").value = extra.consultant || "";
       $("applicationDataField").value = extra.applicationData ? JSON.stringify(extra.applicationData) : "";
+      $("applicationIdField").value = extra.applicationId || "";
       $("vehicleField").value = extra.vehicle || "";
       $("payloadField").value = extra.payload || "";
       setLoadingProgress(58, "Sending request securely");
@@ -2898,7 +2928,10 @@
           showLoginError(error);
         }
         else {
-          if (action === "auditLogsGet") {
+          if (["creditHistoryList","creditHistoryGet","creditHistoryPdf","creditHistorySave"].includes(action)) {
+            setMessage($("creditHistoryMessage"), error, "error");
+            return;
+          } else if (action === "auditLogsGet") {
             setMessage($("auditMessage"), error, "error");
             $("auditSummary").textContent = "Unable to load activity logs.";
           } else if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
@@ -3006,6 +3039,31 @@
         return;
       }
 
+      if (action === "creditHistoryList") {
+        renderCreditHistory((event.data.creditHistory || {}).rows || []);
+        setMessage($("creditHistoryMessage"), "Application history loaded.", "success");
+        return;
+      }
+      if (action === "creditHistoryGet") {
+        applyCreditHistoryRecord(event.data.creditHistoryRecord || {});
+        return;
+      }
+      if (action === "creditHistoryPdf") {
+        const pdfData=event.data.creditHistoryPdf || {};
+        if(!pdfData.pdfBase64) throw new Error("Saved PDF data was not returned.");
+        const bytes=Uint8Array.from(atob(pdfData.pdfBase64),c=>c.charCodeAt(0));
+        const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+        const link=document.createElement("a"); link.href=url; link.download=pdfData.fileName || "Hyundai-Credit-Application.pdf";
+        document.body.appendChild(link); link.click(); link.remove();
+        setMessage($("creditHistoryMessage"),"Saved PDF download started.", "success");
+        return;
+      }
+      if (action === "creditHistorySave") {
+        setMessage($("creditHistoryMessage"),"Application changes saved.","success");
+        loadCreditHistory();
+        return;
+      }
+
       if (action === "auditLogsGet") {
         renderAuditLogs(event.data.auditLogs || {});
         return;
@@ -3050,6 +3108,7 @@
 
       if (action === "creditApplication") {
         const result = event.data;
+        if (result.applicationId) currentCreditApplicationId = result.applicationId;
         if (!result.pdfBase64) {
           throw new Error("The PDF was generated, but the download data was not received. Please try again.");
         }
@@ -3634,7 +3693,7 @@
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); clearLastAppView(); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); buildCreditForm();
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -3881,6 +3940,80 @@
       toast.appendChild(actions);
     }
 
+
+    let currentCreditApplicationId = "";
+    let creditHistorySearchTimer = null;
+    function openCreditHistory() {
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden");
+      $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden");
+      $("auditPage").classList.add("hidden"); $("creditPage").classList.add("hidden");
+      $("creditHistoryPage").classList.remove("hidden");
+      loadCreditHistory();
+    }
+    $("creditHistoryTabBtn").addEventListener("click",()=>runPageTransition("Opening Application History...",openCreditHistory));
+    $("backToMenuFromHistory").addEventListener("click",()=>{
+      $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.remove("hidden");
+    });
+    $("refreshCreditHistoryBtn").addEventListener("click",()=>loadCreditHistory());
+    $("creditHistorySearch").addEventListener("input",()=>{
+      clearTimeout(creditHistorySearchTimer);
+      creditHistorySearchTimer=setTimeout(()=>loadCreditHistory(),250);
+    });
+    function loadCreditHistory() {
+      setMessage($("creditHistoryMessage"),"Loading saved applications...");
+      submitRequest("creditHistoryList",{search:$("creditHistorySearch").value || ""}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error"));
+    }
+    function renderCreditHistory(rows) {
+      const host=$("creditHistoryList"); host.replaceChildren();
+      if(!rows || !rows.length){host.textContent="No saved applications found.";return;}
+      rows.forEach(record=>{
+        const card=document.createElement("article"); card.className="credit-history-card";
+        const title=document.createElement("strong"); title.textContent=(record.borrowerName || "Unnamed borrower")+" • "+record.applicationId;
+        const meta=document.createElement("div"); meta.className="credit-history-meta";
+        meta.textContent=[record.vehicleModel,record.vehicleVariant,"Sales Consultant: "+record.salesConsultant,"Created by: "+record.ownerName,"Updated: "+record.updatedAt,"Revisions: "+record.revisionCount].filter(Boolean).join(" | ");
+        const actions=document.createElement("div"); actions.className="credit-history-actions";
+        const review=document.createElement("button"); review.type="button"; review.textContent="Review / Edit";
+        review.addEventListener("click",()=>submitRequest("creditHistoryGet",{applicationId:record.applicationId}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error")));
+        const pdf=document.createElement("button"); pdf.type="button"; pdf.className="secondary"; pdf.textContent="Download PDF";
+        pdf.addEventListener("click",()=>submitRequest("creditHistoryPdf",{applicationId:record.applicationId}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error")));
+        actions.append(review,pdf); card.append(title,meta,actions); host.appendChild(card);
+      });
+    }
+    function applyCreditHistoryRecord(record) {
+      const data=record.data || {};
+      currentCreditApplicationId=record.applicationId || "";
+      $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.add("hidden");
+      $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden");
+      $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden");
+      $("creditPage").classList.remove("hidden");
+      buildCreditForm();
+      const consultant=$("creditConsultant");
+      if(consultant && data.consultant) {
+        if(!Array.from(consultant.options).some(o=>o.value===data.consultant)){const o=document.createElement("option");o.value=data.consultant;o.textContent=data.consultant;consultant.appendChild(o);}
+        consultant.value=data.consultant;
+      }
+      const model=document.querySelector('#creditFormFields [data-cell="E14:I14"]');
+      if(model && data.vehicleModel) model.value=data.vehicleModel;
+      const variant=document.querySelector('#creditFormFields [data-vehicle-variant="true"]');
+      if(variant && data.vehicleVariant) {
+        if(!Array.from(variant.options).some(o=>o.value===data.vehicleVariant)){const o=document.createElement("option");o.value=data.vehicleVariant;o.textContent=data.vehicleVariant;variant.appendChild(o);}
+        variant.value=data.vehicleVariant;
+      }
+      Object.entries(data.values || {}).forEach(([cell,value])=>{
+        if(cell === "E14:I14") return; // Vehicle Model is restored from the separately saved model field.
+        const field=Array.from(document.querySelectorAll("#creditFormFields [data-cell]")).find(el=>el.dataset.cell===cell);
+        if(field) field.value=value == null ? "" : String(value);
+      });
+      creditChoiceGroups.forEach((group,index)=>{
+        const selected=group.options.find(([cell])=>data.checkboxes && data.checkboxes[cell]===true);
+        if(selected){const radio=document.querySelector('input[name="credit_choice_'+index+'"][value="'+CSS.escape(selected[0])+'"]');if(radio)radio.checked=true;}
+      });
+      if(data.spouseNa===true && $("credit_spouse_na")) $("credit_spouse_na").checked=true;
+      const revisionSummary=(record.revisions || []).map(r=>"v"+r.revision+" • "+r.savedAt+" • "+r.changeType).join(" | ");
+      setMessage($("creditMessage"),"Application "+currentCreditApplicationId+" loaded. Review the details, make edits, then generate the updated PDF."+(revisionSummary ? " Revision history: "+revisionSummary : ""),"success");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
       const missingItems = [];
@@ -3966,7 +4099,7 @@
       hideCreditToast();
 
       $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
-      try { await submitRequest("creditApplication",{applicationData:data}); }
+      try { await submitRequest("creditApplication",{applicationData:data,applicationId:currentCreditApplicationId}); }
       catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
     });
 
@@ -3975,7 +4108,7 @@
     let promoInventoryData = { promotions: [], inventory: [], partnerBanks: [], inventoryOptions: [], srpEditor: [], stockStatuses: ["Available","Incoming","Reserved","Sold Out"], downpaymentOptions: ["20","25","30","35","40","45","50"] };
     let promoActiveView = "promos";
     let promoVehicleOptions = [];
-    const isTeamRerAdmin = () => String(authorizedUser?.role || "").trim().toLowerCase() === "admin";
+    const isTeamRerAdmin = () => ["admin","super admin","superadmin"].includes(String(authorizedUser?.role || "").trim().toLowerCase().replace(/[_-]+/g," "));
     const promoText = value => String(value ?? "").trim();
     const promoEsc = value => escapeHtml(value);
     const promoDate = value => {
@@ -5146,7 +5279,7 @@
 
       const downpayment = "20";
       const bank = "BDO";
-      const isAdmin = authorizedUser && authorizedUser.role.toLowerCase() === "admin";
+      const isAdmin = authorizedUser && ["admin","super admin","superadmin"].includes(String(authorizedUser.role || "").toLowerCase().replace(/[_-]+/g," "));
       const consultant = isAdmin ? $("consultant").value : "";
 
       if (isAdmin && !consultant) {
@@ -5261,8 +5394,8 @@
       const panel = document.getElementById("teamRerEdgePanel");
       if (!edge || !toggle || !panel) return;
       const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", promo:"promoPage" };
-      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", promo:"promoTabBtn" };
-      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", promo:"backToMenuFromPromo" };
+      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn" };
+      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo" };
       let activeModule = "";
       const closePanel = () => { edge.classList.remove("is-open"); toggle.setAttribute("aria-expanded","false"); toggle.setAttribute("aria-label","Open quick navigation"); };
       const openPanel = () => { edge.classList.add("is-open"); toggle.setAttribute("aria-expanded","true"); toggle.setAttribute("aria-label","Close quick navigation"); };
@@ -5303,12 +5436,12 @@
         } else switchNow();
       });
       document.addEventListener("click",event => {
-        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#promoTabBtn");
+        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn");
         if (clickedId) {
           const key = Object.keys(moduleButtons).find(k => moduleButtons[k] === clickedId.id);
           if (key) showEdge(key);
         }
-        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromPromo");
+        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo");
         if (back && !(back.id === "backToMenuFromCredit" && typeof creditFormHasEntries === "function" && creditFormHasEntries())) hideEdge();
       },true);
       document.addEventListener("click",event => {
@@ -5348,12 +5481,67 @@
     })();
   </script>
   <script>
-    // TEAM RER PWA: scoped to the GitHub Pages /HCR/ app path.
+    // TEAM RER app updates: a waiting release is applied only after the user
+    // selects the single available action, Update Now.
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(error => {
-          console.warn('TEAM RER app installation support could not be initialized:', error);
+      window.addEventListener('load', async () => {
+        let updateRegistration;
+        let reloadAfterUpdate = false;
+        let updatePromptShown = false;
+
+        const showAppUpdatePrompt = () => {
+          if (updatePromptShown || !navigator.serviceWorker.controller) return;
+          updatePromptShown = true;
+          const overlay = document.createElement('div');
+          overlay.id = 'teamRerUpdatePrompt';
+          overlay.className = 'team-rer-update-overlay';
+          overlay.setAttribute('role', 'alertdialog');
+          overlay.setAttribute('aria-modal', 'true');
+          overlay.setAttribute('aria-labelledby', 'teamRerUpdateTitle');
+          overlay.setAttribute('aria-describedby', 'teamRerUpdateMessage');
+          overlay.innerHTML = `
+            <div class="team-rer-update-card">
+              <div class="team-rer-update-mark" aria-hidden="true">↻</div>
+              <h2 id="teamRerUpdateTitle">New Update Available</h2>
+              <p id="teamRerUpdateMessage">We’ve made improvements to TEAM RER. Update now to continue using the latest version.</p>
+              <button type="button" id="teamRerUpdateNowBtn">Update Now</button>
+            </div>`;
+          document.body.appendChild(overlay);
+          const updateButton = overlay.querySelector('#teamRerUpdateNowBtn');
+          updateButton.addEventListener('click', () => {
+            updateButton.disabled = true;
+            updateButton.textContent = 'Updating…';
+            reloadAfterUpdate = true;
+            const waitingWorker = updateRegistration && updateRegistration.waiting;
+            if (waitingWorker) waitingWorker.postMessage({ type: 'TEAM_RER_SKIP_WAITING' });
+            else if (updateRegistration) updateRegistration.update().catch(() => {});
+          });
+          updateButton.focus();
+        };
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloadAfterUpdate) window.location.reload();
         });
+
+        try {
+          updateRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+          if (updateRegistration.waiting && navigator.serviceWorker.controller) {
+            showAppUpdatePrompt();
+          }
+          updateRegistration.addEventListener('updatefound', () => {
+            const installingWorker = updateRegistration.installing;
+            if (!installingWorker) return;
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showAppUpdatePrompt();
+              }
+            });
+          });
+          // Check for a newly published release whenever the app is opened.
+          updateRegistration.update().catch(() => {});
+        } catch (error) {
+          console.warn('TEAM RER app update support could not be initialized:', error);
+        }
       }, { once: true });
     }
   </script>
@@ -5873,6 +6061,16 @@
   opacity:1 !important;
 }
 
+
+
+/* TEAM RER — mandatory single-action app update prompt */
+.team-rer-update-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(5,18,32,.68);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.team-rer-update-card{width:min(100%,390px);padding:30px 24px 24px;border:1px solid rgba(255,255,255,.72);border-radius:25px;background:linear-gradient(155deg,#fff 0%,#edf5fc 100%);box-shadow:0 24px 80px rgba(0,0,0,.34);text-align:center;color:#17324b;font-family:inherit}
+.team-rer-update-mark{width:58px;height:58px;margin:0 auto 15px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(145deg,#0a5a91,#003b70);color:#fff;font-size:34px;font-weight:700;box-shadow:0 8px 20px rgba(0,59,112,.22)}
+.team-rer-update-card h2{margin:0 0 10px;color:#123b5d;font-size:21px;font-weight:850;letter-spacing:-.35px}
+.team-rer-update-card p{margin:0 auto 22px;max-width:300px;color:#496176;font-size:14px;line-height:1.55}
+.team-rer-update-card button{width:100%;min-height:49px;border:0;border-radius:13px;background:linear-gradient(180deg,#0875b8,#004c82);color:#fff;font-size:15px;font-weight:800;line-height:1;font-family:inherit;box-shadow:0 6px 16px rgba(0,76,130,.24);cursor:pointer}
+.team-rer-update-card button:disabled{opacity:.78;cursor:wait}
 </style>
 
 </body>
