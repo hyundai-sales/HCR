@@ -180,9 +180,9 @@
       border:1px solid #dce8f2; text-align:left;
     }
     .welcome-eyebrow { margin:0 0 5px; color:#64809a; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
-    .welcome-eyebrow.role-user { color:#65a9df; }
-    .welcome-eyebrow.role-admin { color:#3c9b75; }
-    .welcome-eyebrow.role-super-admin { color:#b58a3c; }
+    #appSection .welcome-eyebrow.role-user { color:#65a9df !important; }
+    #appSection .welcome-eyebrow.role-admin { color:#3c9b75 !important; }
+    #appSection .welcome-eyebrow.role-super-admin { color:#b58a3c !important; }
     .dashboard-welcome .userline { margin:0; color:#123d63; font-size:18px; font-weight:700; line-height:1.35; }
     .welcome-note { margin:5px 0 0; color:#60758a; font-size:12px; }
     .dashboard-label { margin:0 0 10px; color:#244866; font-size:13px; font-weight:700; text-align:left; }
@@ -2254,7 +2254,7 @@
         <div id="teamRerChristmasSnow" aria-hidden="true"></div>
         <div id="appNav">
           <div class="dashboard-welcome">
-            <p class="welcome-eyebrow" id="welcomeRoleLabel">TEAM RER</p>
+            <p class="welcome-eyebrow" id="welcomeRoleLabel"></p>
             <p class="userline" id="userDetails"></p>
             <p class="welcome-note">Your Hyundai Cainta workspace is ready.</p>
           </div>
@@ -3121,7 +3121,7 @@
             roleLabel.textContent = "Super Admin";
             roleLabel.classList.add("role-super-admin");
           } else {
-            roleLabel.textContent = "TEAM RER";
+            roleLabel.textContent = "";
           }
         }
         const firstName = String(authorizedUser.name || "").trim().split(/\\s+/)[0] || "there";
@@ -5432,37 +5432,56 @@
       $("saveUserBtn").textContent = record ? "Save Changes" : "Add User";
       const fields = $("userEditorFields");
       fields.replaceChildren();
-      userManagementData.headers.forEach(header => {
-        const normalized = String(header).trim().toLowerCase();
+      // Show only the four account fields in the app editor.
+      // Additional columns in the Users sheet remain stored and are preserved
+      // by the backend when an existing user is edited.
+      const editorFields = [
+        { key: "name", label: "Name" },
+        { key: "email address", label: "Email Address" },
+        { key: "role", label: "Role" },
+        { key: "active", label: "Status" }
+      ];
+      editorFields.forEach((field, fieldIndex) => {
+        const headerIndex = userManagementData.headers.findIndex(
+          header => String(header).trim().toLowerCase() === field.key
+        );
+        if (headerIndex < 0) return;
+        const header = userManagementData.headers[headerIndex];
         const value = values[header] ?? "";
         const wrap = document.createElement("div");
-        wrap.className = "user-editor-field" + (normalized.includes("address") || normalized.includes("email") ? " user-field-wide" : "");
+        wrap.className = "user-editor-field" +
+          (field.key === "email address" ? " user-field-wide" : "");
         const label = document.createElement("label");
-        label.textContent = header;
-        label.htmlFor = "userField_" + userManagementData.headers.indexOf(header);
+        label.textContent = field.label;
+        label.htmlFor = "userField_" + fieldIndex;
         let input;
-        if (normalized === "role") {
+        if (field.key === "role") {
           input = document.createElement("select");
           (userManagementData.roles || ["Super Admin","Admin","User"]).forEach(role => {
-            const option = document.createElement("option"); option.value = role; option.textContent = role; input.appendChild(option);
+            const option = document.createElement("option");
+            option.value = role;
+            option.textContent = role;
+            input.appendChild(option);
           });
           input.value = String(value || "User");
-        } else if (normalized === "active") {
+        } else if (field.key === "active") {
           input = document.createElement("select");
           [["true","Active"],["false","Inactive"]].forEach(([v,t]) => {
-            const option = document.createElement("option"); option.value = v; option.textContent = t; input.appendChild(option);
+            const option = document.createElement("option");
+            option.value = v;
+            option.textContent = t;
+            input.appendChild(option);
           });
           input.value = ["true","yes","1","active"].includes(String(value).toLowerCase()) ? "true" : "false";
         } else {
           input = document.createElement("input");
-          input.type = normalized.includes("date") ? "date" : "text";
+          input.type = field.key === "email address" ? "email" : "text";
           input.value = String(value ?? "");
-          if (normalized === "email address") input.type = "email";
         }
-        input.id = "userField_" + userManagementData.headers.indexOf(header);
+        input.id = "userField_" + fieldIndex;
         input.dataset.userHeader = header;
-        input.required = ["name","email address","role","active"].includes(normalized);
-        if (record && normalized === "email address") input.autocomplete = "off";
+        input.required = true;
+        if (record && field.key === "email address") input.autocomplete = "off";
         wrap.append(label,input);
         fields.appendChild(wrap);
       });
