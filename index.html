@@ -2471,6 +2471,20 @@
                   <option value="">Loading Sales Consultants...</option>
                 </select>
               </div>
+              <div class="credit-field full credit-mode-field">
+                <label for="creditApplicationMode">Application Mode</label>
+                <select id="creditApplicationMode">
+                  <option value="new">New</option>
+                  <option value="edit">Edit</option>
+                </select>
+                <div id="creditPreviousApplicationWrap" class="hidden">
+                  <label for="creditPreviousApplication">Previous Applications</label>
+                  <select id="creditPreviousApplication">
+                    <option value="">Select a previous application</option>
+                  </select>
+                  <p class="credit-mode-hint">Only applications you are authorized to access are shown.</p>
+                </div>
+              </div>
             </div>
           </div>
           <div id="creditFormFields"></div>
@@ -2495,6 +2509,10 @@
         </section>
 
       </section>
+    </div>
+    <div class="page-jump-controls" aria-label="Page navigation">
+      <button id="scrollPageTop" type="button" aria-label="Scroll to top"><span aria-hidden="true">↑</span><small>Top</small></button>
+      <button id="scrollPageBottom" type="button" aria-label="Scroll to bottom"><span aria-hidden="true">↓</span><small>Bottom</small></button>
     </div>
     <div class="footer">TEAM RER • Hyundai Cainta</div>
   </main>
@@ -2616,6 +2634,8 @@
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
     let promoInventoryLoaded = false;
+    let creditModeHistoryRows = [];
+    let creditModeHistoryLoaded = false;
     const LAST_APP_VIEW_KEY = "TEAM_RER_LAST_APP_VIEW_V1";
 
     function saveLastAppView(view) {
@@ -3040,7 +3060,14 @@
       }
 
       if (action === "creditHistoryList") {
-        renderCreditHistory((event.data.creditHistory || {}).rows || []);
+        const historyRows = (event.data.creditHistory || {}).rows || [];
+        renderCreditHistory(historyRows);
+        creditModeHistoryRows = historyRows;
+        creditModeHistoryLoaded = true;
+        if ($("creditApplicationMode") && $("creditApplicationMode").value === "edit") {
+          fillPreviousApplicationDropdown();
+          setMessage($("creditMessage"), "Select a previous application to edit.", "success");
+        }
         setMessage($("creditHistoryMessage"), "Application history loaded.", "success");
         return;
       }
@@ -3954,6 +3981,80 @@
     $("backToMenuFromHistory").addEventListener("click",()=>{
       $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.remove("hidden");
     });
+
+    function resetCreditApplicationForNew() {
+      currentCreditApplicationId = "";
+      buildCreditForm();
+      document.querySelectorAll("#creditFormFields [data-cell]").forEach(field => {
+        field.value = "";
+      });
+      document.querySelectorAll('#creditFormFields input[type="radio"]').forEach(field => field.checked = false);
+      if ($("credit_spouse_na")) {
+        $("credit_spouse_na").checked = false;
+        applySpouseNaState();
+      }
+      const variant = document.querySelector('#creditFormFields [data-vehicle-variant="true"]');
+      if (variant) variant.value = "";
+      const color = document.querySelector('#creditFormFields [data-cell="E17"]');
+      if (color) {
+        color.value = "";
+        if (typeof updateCreditColorDropdown === "function") updateCreditColorDropdown();
+      }
+      if ($("creditPreviousApplication")) $("creditPreviousApplication").value = "";
+      $("generateCreditBtn").textContent = "Generate Application PDF";
+      setMessage($("creditMessage"), "New application selected. Complete the form to generate a new PDF.", "success");
+    }
+
+    function fillPreviousApplicationDropdown() {
+      const select = $("creditPreviousApplication");
+      if (!select) return;
+      const consultant = String($("creditConsultant").value || "").trim().toLowerCase();
+      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase();
+      const isUser = role === "user";
+      const rows = (creditModeHistoryRows || []).filter(row => {
+        if (!consultant) return true;
+        return String(row.salesConsultant || "").trim().toLowerCase() === consultant;
+      });
+      select.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = rows.length ? "Select a previous application" : "No accessible applications found";
+      select.appendChild(placeholder);
+      rows.forEach(row => {
+        const option = document.createElement("option");
+        option.value = row.applicationId;
+        option.textContent = [row.borrowerName || "Unnamed borrower", row.vehicleModel, row.vehicleVariant, row.applicationId].filter(Boolean).join(" • ");
+        select.appendChild(option);
+      });
+    }
+
+    function loadCreditApplicationsForEdit() {
+      setMessage($("creditMessage"), "Loading accessible previous applications...");
+      submitRequest("creditHistoryList", {search:""})
+        .catch(error => setMessage($("creditMessage"), error.message, "error"));
+    }
+
+    $("creditApplicationMode").addEventListener("change", () => {
+      const editing = $("creditApplicationMode").value === "edit";
+      $("creditPreviousApplicationWrap").classList.toggle("hidden", !editing);
+      if (editing) {
+        if (creditModeHistoryLoaded) fillPreviousApplicationDropdown();
+        else loadCreditApplicationsForEdit();
+      } else {
+        resetCreditApplicationForNew();
+      }
+    });
+    $("creditConsultant").addEventListener("change", () => {
+      if ($("creditApplicationMode").value === "edit") fillPreviousApplicationDropdown();
+    });
+    $("creditPreviousApplication").addEventListener("change", () => {
+      const id = $("creditPreviousApplication").value;
+      if (id) submitRequest("creditHistoryGet", {applicationId:id})
+        .catch(error => setMessage($("creditMessage"), error.message, "error"));
+    });
+    $("scrollPageTop").addEventListener("click", () => window.scrollTo({top:0,behavior:"smooth"}));
+    $("scrollPageBottom").addEventListener("click", () => window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"}));
+
     $("refreshCreditHistoryBtn").addEventListener("click",()=>loadCreditHistory());
     $("creditHistorySearch").addEventListener("input",()=>{
       clearTimeout(creditHistorySearchTimer);
@@ -3982,6 +4083,8 @@
     function applyCreditHistoryRecord(record) {
       const data=record.data || {};
       currentCreditApplicationId=record.applicationId || "";
+      if ($("creditApplicationMode")) $("creditApplicationMode").value = "edit";
+      if ($("creditPreviousApplicationWrap")) $("creditPreviousApplicationWrap").classList.remove("hidden");
       $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.add("hidden");
       $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden");
       $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden");
@@ -4022,6 +4125,12 @@
       // are explicitly written as N/A by collectCreditApplication().
       document.querySelectorAll("#creditFormFields [data-cell]").forEach(field => {
         if (field.disabled || field.closest("[hidden]")) return;
+
+        // These sections are optional: users may leave every field blank.
+        // If entered, their values are still collected and included in the PDF.
+        const repeatGroup = field.closest("[data-repeat-group]")?.dataset.repeatGroup || "";
+        if (["income", "income-amount", "banks"].includes(repeatGroup)) return;
+
         if (!String(field.value || "").trim()) {
           const wrapper = field.closest(".credit-field");
           const label = wrapper?.querySelector("label")?.textContent?.trim() || field.dataset.cell;
@@ -6071,6 +6180,31 @@
 .team-rer-update-card p{margin:0 auto 22px;max-width:300px;color:#496176;font-size:14px;line-height:1.55}
 .team-rer-update-card button{width:100%;min-height:49px;border:0;border-radius:13px;background:linear-gradient(180deg,#0875b8,#004c82);color:#fff;font-size:15px;font-weight:800;line-height:1;font-family:inherit;box-shadow:0 6px 16px rgba(0,76,130,.24);cursor:pointer}
 .team-rer-update-card button:disabled{opacity:.78;cursor:wait}
+
+    /* Credit Application New/Edit selector */
+    .credit-mode-field { margin-top: 12px; }
+    .credit-mode-hint { margin: 7px 2px 0; color: var(--muted, #aab8c8); font-size: .82rem; }
+    #creditPreviousApplicationWrap { margin-top: 14px; }
+    #creditPreviousApplication { width: 100%; }
+    .page-jump-controls {
+      position: fixed; right: 9px; top: 50%; transform: translateY(-50%);
+      z-index: 999; display: flex; flex-direction: column; gap: 7px;
+      padding: 7px; border: 1px solid rgba(190,210,230,.42);
+      border-radius: 18px; background: rgba(12,31,51,.88);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28); backdrop-filter: blur(10px);
+    }
+    .page-jump-controls button {
+      min-width: 48px; min-height: 53px; padding: 5px 6px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1px; border: 0; border-radius: 12px; color: #eaf4ff;
+      background: transparent; cursor: pointer;
+    }
+    .page-jump-controls button:active { background: rgba(255,255,255,.15); }
+    .page-jump-controls button span { font-size: 1.55rem; line-height: 1; }
+    .page-jump-controls button small { font-size: .68rem; letter-spacing: .04em; }
+    @media (min-width: 900px) {
+      .page-jump-controls { right: max(14px, calc((100vw - 760px) / 2 - 66px)); }
+    }
 </style>
 
 </body>
