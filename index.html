@@ -3011,6 +3011,14 @@
     }
 
     let pendingRequestShowsLoading = true;
+    let pendingRequestTimeout = null;
+
+    function clearPendingRequestTimeout() {
+      if (pendingRequestTimeout !== null) {
+        window.clearTimeout(pendingRequestTimeout);
+        pendingRequestTimeout = null;
+      }
+    }
 
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
@@ -3041,6 +3049,24 @@
           : (loadingMessages[action] || "Processing your request...");
         setLoadingProgress(85, "Finalizing your update...");
       }
+      clearPendingRequestTimeout();
+      pendingRequestTimeout = window.setTimeout(() => {
+        if (pendingNonce !== nonce) return;
+        pendingNonce = null;
+        pendingAction = null;
+        pendingRequestTimeout = null;
+        $("tokenField").value = "";
+        $("nonceField").value = "";
+        if (showRequestLoading) hideLoading();
+        const message = "Google Apps Script did not return a response within 45 seconds. Please try again. If this continues, contact your TEAM RER administrator.";
+        if (action === "authorize") {
+          authorizationInProgress = false;
+          showLoginError(message);
+        } else {
+          showTeamRerDynamicIsland(message);
+          setMessage($("resultMessage"), message, "error");
+        }
+      }, 45000);
       $("bridgeForm").submit();
     }
 
@@ -3105,9 +3131,13 @@
     }
 
     window.addEventListener("message", event => {
-      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
-      if (!event.data || event.data.nonce !== pendingNonce) return;
+      // Accept replies only from the hidden Apps Script bridge iframe. Google may
+      // serve HtmlService responses from different script.google* origins, so
+      // the iframe WindowProxy plus the one-time nonce is the reliable check.
+      if (event.source !== $("bridgeFrame").contentWindow) return;
+      if (!event.data || typeof event.data !== "object" || event.data.nonce !== pendingNonce) return;
 
+      clearPendingRequestTimeout();
       const action = pendingAction;
       if (pendingRequestShowsLoading) hideLoading();
       pendingRequestShowsLoading = true;
@@ -3193,7 +3223,8 @@
         syncCreditConsultantForRole();
         const superAdminAccess = isSuperAdminSession();
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
-        $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
+        const orgAddButton = $("orgAddBtn");
+        if (orgAddButton) orgAddButton.classList.toggle("hidden", !isAdminSession());
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
@@ -5988,6 +6019,7 @@
         $("adminLockScreen").classList.add("hidden");
         $("adminLockScreen").setAttribute("aria-hidden", "true");
         $("adminManualLock").classList.add("hidden");
+        clearPendingRequestTimeout();
         pendingNonce = null;
         pendingAction = null;
         $("appSection").classList.add("hidden");
