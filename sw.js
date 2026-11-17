@@ -3,7 +3,7 @@
    Change this marker whenever the app experience OR its connected services
    are updated, then publish this file with that release.
    This worker does not cache HTML, authenticated data, or application details. */
-const APP_RELEASE = '2026-11-18-team-rer-release-07';
+const APP_RELEASE = '2026-11-18-team-rer-release-08';
 const CACHE_NAME = 'team-rer-static-v6';
 const APP_SCOPE = new URL('./', self.location).pathname;
 const STATIC_FILES = [
