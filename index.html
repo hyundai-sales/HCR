@@ -5726,7 +5726,17 @@
       const select=$("orgParent");select.replaceChildren();const top=document.createElement("option");top.value="";top.textContent="Top level";select.appendChild(top);
       orgChartRecords.filter(x=>x.id!==r?.id).forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=`${x.name} — ${x.position}`;select.appendChild(o);});select.value=r?.parentId||"";
       $("orgImagePreview").replaceChildren();if(r?.image){const im=document.createElement("img");im.src=r.image;im.alt="Current profile image";$("orgImagePreview").appendChild(im);}else $("orgImagePreview").textContent="No image selected";
-      $("orgDeleteBtn").classList.toggle("hidden",!r);$("orgChartEditor").classList.remove("hidden");
+      $("orgDeleteBtn").classList.toggle("hidden",!r);
+      const editor = $("orgChartEditor");
+      editor.classList.remove("hidden");
+      // Scroll the newly opened editor into view, then focus the first field.
+      requestAnimationFrame(() => {
+        editor.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => {
+          const nameField = $("orgName");
+          if (nameField) nameField.focus({ preventScroll: true });
+        }, 450);
+      });
     }
     $("orgChartTabBtn").addEventListener("click",()=>runPageTransition("Opening Organizational Chart...",()=>{
       $("appNav").classList.add("hidden");["pdfPage","quotePage","creditPage","creditHistoryPage","promoPage","auditPage","userManagementPage"].forEach(id=>$(id).classList.add("hidden"));
@@ -7029,5 +7039,9 @@
   }
 </style>
 
-</body>
+
+<style id="team-rer-org-editor-scroll-position">
+  body #orgChartEditor { scroll-margin-top: 22px !important; }
+</style>
+\n</body>
 </html>
