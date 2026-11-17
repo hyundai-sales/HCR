@@ -6933,7 +6933,38 @@
   .applications-dashboard-note { margin:8px 0 0; color:#71869a; font-size:10px; }
   @media(max-width:480px) { #appSection .applications-dashboard { padding:13px 13px 11px; margin-bottom:15px; } .applications-dashboard-filters { gap:5px; } }
 
-  .org-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px}.org-head .section-title{margin-bottom:4px}.org-tree{overflow-x:auto;padding:18px 4px 28px;text-align:center}.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;padding:0 10px}.org-children{display:flex;justify-content:center;align-items:flex-start;gap:18px;position:relative;padding-top:28px;margin-top:8px}.org-children:before{content:"";position:absolute;top:0;left:50%;height:14px;border-left:2px solid #9bb4c9}.org-children>.org-branch:before{content:"";position:absolute;top:0;height:14px;border-left:2px solid #9bb4c9}.org-person{width:190px;max-width:190px;min-height:175px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 12px;border:1px solid #c8d8e6;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(24,65,99,.09);color:#173f60}.org-avatar{width:66px;height:66px;object-fit:cover;border-radius:50%;border:3px solid #e3edf5}.org-avatar-empty{display:grid;place-items:center;background:#eaf2f8;color:#1a527e;font-size:24px;font-weight:800}.org-person strong{font-size:14px;line-height:1.25;overflow-wrap:anywhere}.org-person>span{font-size:12px;color:#57738a;line-height:1.3}.org-edit-btn{margin-top:3px;padding:5px 13px;border:1px solid #9bb4c9;border-radius:8px;background:#f2f7fb;color:#174c75;font-size:11px;font-weight:700}.org-editor{max-width:520px;margin:18px auto;padding:18px;border:1px solid #c8d8e6;border-radius:14px;background:#f8fbfd}.org-editor form{display:grid;gap:8px}.org-editor label{font-size:12px;font-weight:750;color:#244e6c}.org-editor input,.org-editor select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #a9bfd1;border-radius:8px;background:#fff;color:#173f60}.org-image-preview{min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed #b5c8d8;border-radius:10px;color:#71869a;font-size:12px}.org-image-preview img{width:82px;height:82px;object-fit:cover;border-radius:50%}.org-editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.org-editor-actions button{flex:1;min-width:110px}.org-editor-actions .hidden{display:none!important}@media(max-width:600px){.org-children{gap:8px}.org-person{width:150px;max-width:150px;padding:11px 8px}.org-avatar{width:56px;height:56px}}
+  .org-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px}
+.org-head .section-title{margin-bottom:4px}
+/* Keep the complete reporting structure inside the screen instead of making
+   sibling cards run off the right and left edges on phones. */
+.org-tree{width:100%;max-width:100%;overflow-x:hidden;box-sizing:border-box;padding:18px 4px 28px;text-align:center}
+.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:0 4px}
+.org-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),190px));justify-content:center;align-items:start;gap:24px 12px;position:relative;padding:28px 0 0;margin-top:8px;width:100%;max-width:100%;box-sizing:border-box}
+.org-children:before{content:"";position:absolute;top:0;left:50%;height:14px;border-left:2px solid #9bb4c9}
+.org-children>.org-branch:before{content:"";position:absolute;top:0;height:14px;border-left:2px solid #9bb4c9}
+.org-person{width:100%;max-width:190px;min-width:0;min-height:175px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 12px;border:1px solid #c8d8e6;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(24,65,99,.09);color:#173f60}
+.org-avatar{width:66px;height:66px;object-fit:cover;border-radius:50%;border:3px solid #e3edf5}
+.org-avatar-empty{display:grid;place-items:center;background:#eaf2f8;color:#1a527e;font-size:24px;font-weight:800}
+.org-person strong{font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+.org-person>span{font-size:12px;color:#57738a;line-height:1.3}
+.org-edit-btn{margin-top:3px;padding:5px 13px;border:1px solid #9bb4c9;border-radius:8px;background:#f2f7fb;color:#174c75;font-size:11px;font-weight:700}
+.org-editor{max-width:520px;margin:18px auto;padding:18px;border:1px solid #c8d8e6;border-radius:14px;background:#f8fbfd}
+.org-editor form{display:grid;gap:8px}
+.org-editor label{font-size:12px;font-weight:750;color:#244e6c}
+.org-editor input,.org-editor select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #a9bfd1;border-radius:8px;background:#fff;color:#173f60}
+.org-image-preview{min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed #b5c8d8;border-radius:10px;color:#71869a;font-size:12px}
+.org-image-preview img{width:82px;height:82px;object-fit:cover;border-radius:50%}
+.org-editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.org-editor-actions button{flex:1;min-width:110px}
+.org-editor-actions .hidden{display:none!important}
+@media(max-width:600px){
+  .org-tree{padding-left:2px;padding-right:2px}
+  .org-children{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),170px));gap:22px 8px}
+  .org-person{max-width:170px;padding:11px 8px}
+  .org-avatar{width:56px;height:56px}
+  .org-person strong{font-size:13px}
+  .org-person>span{font-size:11px}
+}
 </style>
 
 <style id="team-rer-org-editor-readable-final">
