@@ -2206,6 +2206,7 @@
             <button class="edge-item" type="button" data-edge-target="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>Credit Application</span></button>
             <button class="edge-item" type="button" data-edge-target="history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Credit Application History</span></button>
             <button class="edge-item" type="button" data-edge-target="promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path d="m4 7 8 5 8-5M12 12v9"/></svg><span>Promos and Vehicle Info</span></button>
+            <button class="edge-item hidden" id="edgeUserManagementBtn" type="button" data-edge-target="users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 8h5M18.5 5.5v5"/></svg><span>User Management</span></button>
           </nav>
         </aside>
 
@@ -2280,6 +2281,10 @@
               <span class="nav-icon" aria-hidden="true">◷</span>
               <span class="nav-copy"><span class="nav-title">Activity Logs</span><span class="nav-description">Review user actions and system changes</span></span>
             </button>
+            <button id="userManagementTabBtn" type="button" class="hidden">
+              <span class="nav-icon" aria-hidden="true">♙</span>
+              <span class="nav-copy"><span class="nav-title">User Management</span><span class="nav-description">Manage TEAM RER accounts and access roles</span></span>
+            </button>
           </nav>
           <div class="main-menu-account-actions">
             <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
@@ -2305,6 +2310,28 @@
           <div id="auditTableHost" class="audit-table-wrap"></div>
           <div id="auditPagination" class="audit-pagination hidden" aria-label="Activity log pages"></div>
           <div id="auditMessage" class="message hidden" aria-live="polite"></div>
+        </section>
+
+        <section id="userManagementPage" class="hidden">
+          <button id="backToMenuFromUsers" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">User Management</h2>
+          <p class="app-caption">Super Admin only. Fields are loaded directly from the headers in the Users tab of the connected Google Sheet.</p>
+          <div class="user-management-toolbar">
+            <p id="userManagementSummary" class="promo-note">Loading registered users...</p>
+            <button id="addUserBtn" type="button">＋ Add User</button>
+          </div>
+          <div id="userManagementTableHost" class="user-management-table-wrap"></div>
+          <div id="userManagementMessage" class="message hidden" aria-live="polite"></div>
+          <div id="userEditorWrap" class="user-editor-wrap hidden">
+            <h3 id="userEditorTitle">Add User</h3>
+            <form id="userEditorForm">
+              <div id="userEditorFields" class="user-editor-fields"></div>
+              <div class="user-editor-actions">
+                <button id="saveUserBtn" type="submit">Save User</button>
+                <button id="cancelUserEditBtn" class="secondary" type="button">Cancel</button>
+              </div>
+            </form>
+          </div>
         </section>
 
         <section id="promoPage" class="hidden">
@@ -2465,13 +2492,11 @@
           <p class="app-caption">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
-              <div class="credit-field full" id="creditConsultantField">
+              <div class="credit-field full">
                 <label for="creditConsultant">Sales Consultant</label>
                 <select id="creditConsultant" required>
                   <option value="">Loading Sales Consultants...</option>
                 </select>
-                <input id="creditConsultantDisplay" type="text" readonly
-                  aria-label="Signed-in Sales Consultant" class="hidden">
               </div>
               <div class="credit-field full credit-mode-field">
                 <label>Application Mode</label>
@@ -2502,7 +2527,7 @@
           <h2 class="section-title">Credit Application History</h2>
           <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
           <div class="credit-section">
-            <div class="credit-grid" id="creditHistoryConsultantFilterWrap">
+            <div class="credit-grid">
               <div class="credit-field full">
                 <label for="creditHistoryConsultantFilter">Sales Consultant</label>
                 <select id="creditHistoryConsultantFilter">
@@ -2587,7 +2612,9 @@
       creditApplication: "Preparing your application PDF...",
       promoInventoryGet: "Loading promotions and vehicle information...",
       srpEditorSave: "Updating vehicle pricing...",
-      promoInventorySave: "Saving your update..."
+      promoInventorySave: "Saving your update...",
+      userManagementGet: "Loading registered users...",
+      userManagementSave: "Saving user account changes..."
     };
 
     let loadingHideTimer = null;
@@ -2697,8 +2724,18 @@
       }
     }
 
+    function normalizedSessionRole() {
+      return String(authorizedUser && authorizedUser.role || "")
+        .trim().toLowerCase().replace(/[_-]+/g," ").replace(/\\s+/g," ");
+    }
     function isAdminSession() {
-      return ["admin","super admin","superadmin"].includes(String(authorizedUser && authorizedUser.role || "").trim().toLowerCase().replace(/[_-]+/g," "));
+      return ["admin","super admin","superadmin"].includes(normalizedSessionRole());
+    }
+    function isSuperAdminSession() {
+      return ["super admin","superadmin"].includes(normalizedSessionRole());
+    }
+    function showAccessDenied(message) {
+      window.alert(message || "Team RER Admin Access Only.");
     }
 
     function recordUserActivity() {
@@ -2934,41 +2971,6 @@
       });
     }
 
-    function syncCreditConsultantForRole() {
-      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      const isUser = role === "user";
-      const select = $("creditConsultant");
-      const display = $("creditConsultantDisplay");
-      const historyFilterWrap = $("creditHistoryConsultantFilterWrap");
-      const auditButton = $("auditTabBtn");
-      const auditPage = $("auditPage");
-      const signedInName = String((authorizedUser && authorizedUser.name) || "").trim();
-      const isAdminRole = role === "admin" || role === "superadmin";
-      if (auditButton) auditButton.classList.toggle("hidden", !isAdminRole);
-      if (!isAdminRole && auditPage) auditPage.classList.add("hidden");
-
-      if (select) {
-        if (isUser) {
-          select.replaceChildren();
-          const option = document.createElement("option");
-          option.value = signedInName;
-          option.textContent = signedInName;
-          select.appendChild(option);
-          select.value = signedInName;
-          select.disabled = true;
-          select.classList.add("hidden");
-        } else {
-          select.disabled = false;
-          select.classList.remove("hidden");
-        }
-      }
-      if (display) {
-        display.value = isUser ? signedInName : "";
-        display.classList.toggle("hidden", !isUser);
-      }
-      if (historyFilterWrap) historyFilterWrap.classList.toggle("hidden", isUser);
-    }
-
     async function loadAppData() {
       await submitRequest("appData");
     }
@@ -2997,6 +2999,9 @@
           } else if (action === "auditLogsGet") {
             setMessage($("auditMessage"), error, "error");
             $("auditSummary").textContent = "Unable to load activity logs.";
+          } else if (action === "userManagementGet" || action === "userManagementSave") {
+            setMessage($("userManagementMessage"), error, "error");
+            $("userManagementSummary").textContent = "Unable to load user records.";
           } else if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
             setMessage($("promoModuleMessage"), error, "error");
             if (action === "srpEditorSave") renderSrpEditorCards();
@@ -3048,7 +3053,9 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
-        syncCreditConsultantForRole();
+        const superAdminAccess = isSuperAdminSession();
+        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
         adminPinEntry = "";
@@ -3067,6 +3074,8 @@
         $("quotePage").classList.add("hidden");
         $("creditPage").classList.add("hidden");
         $("promoPage").classList.add("hidden");
+        $("auditPage").classList.add("hidden");
+        $("userManagementPage").classList.add("hidden");
         loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
         return;
       }
@@ -3075,6 +3084,10 @@
         const data = event.data.appData;
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
         $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
+        $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
+        const superAdminAccess = isSuperAdminSession() || data.isSuperAdmin === true;
+        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
@@ -3084,7 +3097,6 @@
           $("roleNote").textContent = "Your registered TEAM RER name will be used.";
         }
         fillSelect($("creditConsultant"), data.consultants || [], "Select Sales Consultant");
-        syncCreditConsultantForRole();
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
@@ -3101,6 +3113,21 @@
           setPromoView(["promos","stock","banks","srp"].includes(lastView.tab) ? lastView.tab : "promos");
           submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         }
+        return;
+      }
+
+      if (action === "userManagementGet") {
+        userManagementData = event.data.userManagement || { headers: [], rows: [], roles: ["Super Admin","Admin","User"] };
+        renderUserManagementTable();
+        $("userManagementSummary").textContent = `${userManagementData.rows.length} registered user(s) • Headers loaded from Users tab`;
+        setMessage($("userManagementMessage"), "User records loaded.", "success");
+        return;
+      }
+      if (action === "userManagementSave") {
+        const result = event.data.userManagementSave || {};
+        $("userEditorWrap").classList.add("hidden");
+        setMessage($("userManagementMessage"), result.message || "User record saved.", "success");
+        submitRequest("userManagementGet").catch(error => setMessage($("userManagementMessage"), error.message, "error"));
         return;
       }
 
@@ -4125,18 +4152,15 @@
     }
     function populateCreditHistoryConsultantFilter(rows) {
       const select = $("creditHistoryConsultantFilter");
+      if (!select) return;
       const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      const isUser = role === "user";
-      const wrap = $("creditHistoryConsultantFilterWrap");
-      if (wrap) wrap.classList.toggle("hidden", isUser);
-      if (!select || isUser) return;
-
+      const canSeeAll = role === "superadmin" || role === "admin";
       const names = [...new Set((rows || []).map(row => String(row.salesConsultant || "").trim()).filter(Boolean))]
         .sort((a,b) => a.localeCompare(b));
       select.replaceChildren();
       const all = document.createElement("option");
       all.value = "";
-      all.textContent = "All Sales Consultants";
+      all.textContent = canSeeAll ? "All Sales Consultants" : (names[0] || "No accessible consultant");
       select.appendChild(all);
       names.forEach(name => {
         const option = document.createElement("option");
@@ -4144,14 +4168,10 @@
         option.textContent = name;
         select.appendChild(option);
       });
+      if (!canSeeAll && names.length === 1) select.value = names[0];
       select.disabled = false;
     }
     function renderFilteredCreditHistory() {
-      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      if (role === "user") {
-        renderCreditHistory(creditHistoryRows);
-        return;
-      }
       const selected = String($("creditHistoryConsultantFilter").value || "").trim().toLowerCase();
       const rows = selected
         ? creditHistoryRows.filter(row => String(row.salesConsultant || "").trim().toLowerCase() === selected)
@@ -4185,15 +4205,10 @@
       $("creditPage").classList.remove("hidden");
       buildCreditForm();
       const consultant=$("creditConsultant");
-      const currentRole = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      const consultantValue = currentRole === "user"
-        ? String((authorizedUser && authorizedUser.name) || "").trim()
-        : String(data.consultant || "").trim();
-      if(consultant && consultantValue) {
-        if(!Array.from(consultant.options).some(o=>o.value===consultantValue)){const o=document.createElement("option");o.value=consultantValue;o.textContent=consultantValue;consultant.appendChild(o);}
-        consultant.value=consultantValue;
+      if(consultant && data.consultant) {
+        if(!Array.from(consultant.options).some(o=>o.value===data.consultant)){const o=document.createElement("option");o.value=data.consultant;o.textContent=data.consultant;consultant.appendChild(o);}
+        consultant.value=data.consultant;
       }
-      syncCreditConsultantForRole();
       const model=document.querySelector('#creditFormFields [data-cell="E14:I14"]');
       if(model && data.vehicleModel) model.value=data.vehicleModel;
       const variant=document.querySelector('#creditFormFields [data-vehicle-variant="true"]');
@@ -4325,6 +4340,10 @@
       return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"});
     };
     function setPromoView(view) {
+      if (view === "srp" && !isAdminSession()) {
+        showAccessDenied("Team RER Admin Access Only.");
+        return;
+      }
       promoActiveView = view;
       saveLastAppView({page:"promos",tab:view});
       const panels = {promos:"promoOffersPanel",stock:"promoStockPanel",banks:"promoBanksPanel",srp:"promoSrpPanel"};
@@ -5304,8 +5323,123 @@
       link.click();
       URL.revokeObjectURL(url);
     }
+
+    let userManagementData = { headers: [], rows: [], roles: ["Super Admin","Admin","User"] };
+    let editingUserRowNumber = 0;
+    const userHeaderIndex = header => userManagementData.headers.findIndex(h => String(h).trim().toLowerCase() === String(header).trim().toLowerCase());
+    const userHeaderValue = (values, header) => {
+      const key = userManagementData.headers[userHeaderIndex(header)];
+      return key ? (values[key] ?? "") : "";
+    };
+    function renderUserManagementTable() {
+      const host = $("userManagementTableHost");
+      if (!host) return;
+      const headers = userManagementData.headers || [];
+      const nameHeader = headers[userHeaderIndex("name")];
+      const emailHeader = headers[userHeaderIndex("email address")];
+      const roleHeader = headers[userHeaderIndex("role")];
+      const activeHeader = headers[userHeaderIndex("active")];
+      const columns = [nameHeader,emailHeader,roleHeader,activeHeader].filter(Boolean);
+      if (!headers.length) { host.textContent = "No Users tab headers were returned."; return; }
+      const head = columns.map(h => `<th>${escapeHtml(h)}</th>`).join("");
+      const rows = (userManagementData.rows || []).map(record => {
+        const cells = columns.map(h => `<td>${escapeHtml(record.values[h] ?? "")}</td>`).join("");
+        return `<tr>${cells}<td><button type="button" class="secondary user-edit-btn" data-row-number="${Number(record.rowNumber)}">Edit</button></td></tr>`;
+      }).join("");
+      host.innerHTML = `<table class="user-management-table"><thead><tr>${head}<th>Action</th></tr></thead><tbody>${rows || `<tr><td colspan="${columns.length+1}">No registered users found.</td></tr>`}</tbody></table>`;
+      host.querySelectorAll(".user-edit-btn").forEach(button => button.addEventListener("click", () => {
+        const row = userManagementData.rows.find(item => Number(item.rowNumber) === Number(button.dataset.rowNumber));
+        if (row) openUserEditor(row);
+      }));
+    }
+    function openUserEditor(record = null) {
+      if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
+      editingUserRowNumber = record ? Number(record.rowNumber) : 0;
+      const values = record ? record.values : {};
+      $("userEditorTitle").textContent = record ? "Edit User" : "Add User";
+      $("saveUserBtn").textContent = record ? "Save Changes" : "Add User";
+      const fields = $("userEditorFields");
+      fields.replaceChildren();
+      userManagementData.headers.forEach(header => {
+        const normalized = String(header).trim().toLowerCase();
+        const value = values[header] ?? "";
+        const wrap = document.createElement("div");
+        wrap.className = "user-editor-field" + (normalized.includes("address") || normalized.includes("email") ? " user-field-wide" : "");
+        const label = document.createElement("label");
+        label.textContent = header;
+        label.htmlFor = "userField_" + userManagementData.headers.indexOf(header);
+        let input;
+        if (normalized === "role") {
+          input = document.createElement("select");
+          (userManagementData.roles || ["Super Admin","Admin","User"]).forEach(role => {
+            const option = document.createElement("option"); option.value = role; option.textContent = role; input.appendChild(option);
+          });
+          input.value = String(value || "User");
+        } else if (normalized === "active") {
+          input = document.createElement("select");
+          [["true","Active"],["false","Inactive"]].forEach(([v,t]) => {
+            const option = document.createElement("option"); option.value = v; option.textContent = t; input.appendChild(option);
+          });
+          input.value = ["true","yes","1","active"].includes(String(value).toLowerCase()) ? "true" : "false";
+        } else {
+          input = document.createElement("input");
+          input.type = normalized.includes("date") ? "date" : "text";
+          input.value = String(value ?? "");
+          if (normalized === "email address") input.type = "email";
+        }
+        input.id = "userField_" + userManagementData.headers.indexOf(header);
+        input.dataset.userHeader = header;
+        input.required = ["name","email address","role","active"].includes(normalized);
+        if (record && normalized === "email address") input.autocomplete = "off";
+        wrap.append(label,input);
+        fields.appendChild(wrap);
+      });
+      $("userEditorWrap").classList.remove("hidden");
+      $("userEditorWrap").scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+    $("addUserBtn").addEventListener("click", () => openUserEditor());
+    $("cancelUserEditBtn").addEventListener("click", () => {
+      $("userEditorWrap").classList.add("hidden");
+      editingUserRowNumber = 0;
+    });
+    $("userEditorForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
+      const values = {};
+      $("userEditorFields").querySelectorAll("[data-user-header]").forEach(input => {
+        values[input.dataset.userHeader] = input.value;
+      });
+      $("saveUserBtn").disabled = true;
+      try {
+        await submitRequest("userManagementSave", { payload: JSON.stringify({
+          mode: editingUserRowNumber ? "edit" : "add",
+          rowNumber: editingUserRowNumber,
+          values: values
+        }) });
+      } catch (error) {
+        setMessage($("userManagementMessage"), error.message, "error");
+      } finally {
+        $("saveUserBtn").disabled = false;
+      }
+    });
+    $("userManagementTabBtn").addEventListener("click", () => {
+      if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
+      runPageTransition("Opening User Management...", () => {
+        $("appNav").classList.add("hidden");
+        ["pdfPage","quotePage","creditPage","promoPage","auditPage"].forEach(id => $(id).classList.add("hidden"));
+        $("userManagementPage").classList.remove("hidden");
+        $("userEditorWrap").classList.add("hidden");
+        clearLastAppView();
+        submitRequest("userManagementGet").catch(error => setMessage($("userManagementMessage"), error.message, "error"));
+      });
+    });
+    $("backToMenuFromUsers").addEventListener("click", () => runPageTransition("Returning to Main Menu...", () => {
+      $("userManagementPage").classList.add("hidden");
+      $("appNav").classList.remove("hidden");
+    }));
+
     $("auditTabBtn").addEventListener("click", () => {
-      if (!isAdminSession()) return;
+      if (!isAdminSession()) { showAccessDenied("Team RER Admin Access Only."); return; }
       runPageTransition("Opening Activity Logs...", () => {
         $("appNav").classList.add("hidden");
         ["pdfPage","quotePage","creditPage","promoPage"].forEach(id => $(id).classList.add("hidden"));
@@ -5601,9 +5735,9 @@
       const toggle = document.getElementById("teamRerEdgeToggle");
       const panel = document.getElementById("teamRerEdgePanel");
       if (!edge || !toggle || !panel) return;
-      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", promo:"promoPage" };
-      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn" };
-      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo" };
+      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", promo:"promoPage", users:"userManagementPage" };
+      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", users:"userManagementTabBtn" };
+      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", users:"backToMenuFromUsers" };
       let activeModule = "";
       const closePanel = () => { edge.classList.remove("is-open"); toggle.setAttribute("aria-expanded","false"); toggle.setAttribute("aria-label","Open quick navigation"); };
       const openPanel = () => { edge.classList.add("is-open"); toggle.setAttribute("aria-expanded","true"); toggle.setAttribute("aria-label","Close quick navigation"); };
@@ -5636,6 +5770,8 @@
         if (!button) return;
         const target = button.dataset.edgeTarget;
         if (target === "home") { goHome(); return; }
+        if (target === "users" && !isSuperAdminSession()) { closePanel(); showAccessDenied("Team RER Super Admin Access Only."); return; }
+        if (target === "audit" && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
         if (!moduleButtons[target] || target === activeModule) { closePanel(); return; }
         const switchNow = () => goToModule(target);
         if (activeModule === "credit" && typeof creditFormHasEntries === "function" && creditFormHasEntries()) {
@@ -5644,12 +5780,12 @@
         } else switchNow();
       });
       document.addEventListener("click",event => {
-        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn");
+        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn,#userManagementTabBtn");
         if (clickedId) {
           const key = Object.keys(moduleButtons).find(k => moduleButtons[k] === clickedId.id);
           if (key) showEdge(key);
         }
-        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo");
+        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromUsers");
         if (back && !(back.id === "backToMenuFromCredit" && typeof creditFormHasEntries === "function" && creditFormHasEntries())) hideEdge();
       },true);
       document.addEventListener("click",event => {
@@ -6323,9 +6459,28 @@
     .page-jump-controls button span { font-size:1.12rem; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.35); }
     .page-jump-controls button small { font-size:.56rem; line-height:1.15; letter-spacing:.02em; }
 
-    /* Keep Quick Menu on the same lower-right zone without occupying the center of the screen. */
+    .user-management-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; }
+    .user-management-table-wrap { overflow:auto; border:1px solid rgba(255,255,255,.12); border-radius:14px; }
+    .user-management-table { width:100%; min-width:640px; border-collapse:collapse; font-size:12px; }
+    .user-management-table th,.user-management-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; }
+    .user-management-table th { position:sticky; top:0; background:rgba(15,37,59,.96); color:#d9ecff; }
+    .user-management-table td { color:var(--text,#eef5fb); }
+    .user-management-table tr:last-child td { border-bottom:0; }
+    .user-editor-wrap { margin-top:16px; padding:16px; border:1px solid rgba(255,255,255,.15); border-radius:16px; background:rgba(255,255,255,.045); }
+    .user-editor-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .user-editor-field { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .user-editor-field label { font-size:11px; font-weight:750; color:#c9dced; }
+    .user-editor-field input,.user-editor-field select { width:100%; min-width:0; }
+    .user-editor-field.user-field-wide { grid-column:1/-1; }
+    .user-editor-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+    .user-management-toolbar .promo-note { margin:0; }
+    @media(max-width:560px) { .user-editor-fields { grid-template-columns:1fr; } .user-editor-field.user-field-wide { grid-column:auto; } }
+
+    /* Align Quick Menu with the bottom edge of the floating Lock control.
+       Visibility remains module-only; the Main Menu never displays this control. */
     #teamRerEdgeNav .edge-toggle {
-      top:69% !important; right:0 !important; transform:translateY(-50%) !important;
+      top:auto !important; bottom:max(12px, env(safe-area-inset-bottom)) !important;
+      right:0 !important; transform:none !important;
       width:27px !important; min-height:78px !important; padding:8px 4px !important;
       gap:5px !important; border-radius:13px 0 0 13px !important;
       background:linear-gradient(145deg,rgba(255,255,255,.64),rgba(185,216,239,.34)) !important;
@@ -6335,13 +6490,19 @@
     }
     #teamRerEdgeNav .edge-toggle svg { width:15px !important; height:15px !important; }
     #teamRerEdgeNav .edge-toggle span { font-size:8px !important; letter-spacing:.45px !important; }
-    #teamRerEdgeNav .edge-panel { top:69% !important; transform:translate(18px,-50%) scale(.97); }
-    #teamRerEdgeNav.is-open .edge-panel { transform:translate(0,-50%) scale(1); }
+    #teamRerEdgeNav .edge-panel {
+      top:auto !important; bottom:max(12px, env(safe-area-inset-bottom)) !important;
+      transform:translate(18px,0) scale(.97);
+    }
+    #teamRerEdgeNav.is-open .edge-panel { transform:translate(0,0) scale(1); }
     @media(max-width:560px) {
       .page-jump-controls { right:34px; top:69%; width:36px; padding:3px; }
       .page-jump-controls button { min-height:37px; }
       #teamRerEdgeNav .edge-toggle { width:25px !important; min-height:74px !important; }
-      #teamRerEdgeNav .edge-panel { right:29px !important; top:69% !important; max-height:65dvh; }
+      #teamRerEdgeNav .edge-panel {
+        right:29px !important; top:auto !important;
+        bottom:max(12px, env(safe-area-inset-bottom)) !important; max-height:65dvh;
+      }
     }
     @media(prefers-reduced-motion:reduce) { .page-jump-controls button { transition:none; } }
 </style>
