@@ -2498,8 +2498,10 @@
           <div class="credit-section">
             <div class="credit-grid">
               <div class="credit-field full">
-                <label for="creditHistorySearch">Search borrower, application ID, vehicle or consultant</label>
-                <input id="creditHistorySearch" type="search" placeholder="Type to search...">
+                <label for="creditHistoryConsultantFilter">Sales Consultant</label>
+                <select id="creditHistoryConsultantFilter">
+                  <option value="">Loading Sales Consultants...</option>
+                </select>
               </div>
             </div>
             <button id="refreshCreditHistoryBtn" type="button">Refresh Applications</button>
@@ -3061,7 +3063,9 @@
 
       if (action === "creditHistoryList") {
         const historyRows = (event.data.creditHistory || {}).rows || [];
-        renderCreditHistory(historyRows);
+        creditHistoryRows = historyRows;
+        populateCreditHistoryConsultantFilter(historyRows);
+        renderFilteredCreditHistory();
         creditModeHistoryRows = historyRows;
         creditModeHistoryLoaded = true;
         if ($("creditApplicationMode") && $("creditApplicationMode").value === "edit") {
@@ -3969,7 +3973,7 @@
 
 
     let currentCreditApplicationId = "";
-    let creditHistorySearchTimer = null;
+    let creditHistoryRows = [];
     function openCreditHistory() {
       $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden");
       $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden");
@@ -4056,13 +4060,38 @@
     $("scrollPageBottom").addEventListener("click", () => window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"}));
 
     $("refreshCreditHistoryBtn").addEventListener("click",()=>loadCreditHistory());
-    $("creditHistorySearch").addEventListener("input",()=>{
-      clearTimeout(creditHistorySearchTimer);
-      creditHistorySearchTimer=setTimeout(()=>loadCreditHistory(),250);
-    });
+    $("creditHistoryConsultantFilter").addEventListener("change", renderFilteredCreditHistory);
     function loadCreditHistory() {
       setMessage($("creditHistoryMessage"),"Loading saved applications...");
-      submitRequest("creditHistoryList",{search:$("creditHistorySearch").value || ""}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error"));
+      submitRequest("creditHistoryList",{search:""}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error"));
+    }
+    function populateCreditHistoryConsultantFilter(rows) {
+      const select = $("creditHistoryConsultantFilter");
+      if (!select) return;
+      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
+      const canSeeAll = role === "superadmin" || role === "admin";
+      const names = [...new Set((rows || []).map(row => String(row.salesConsultant || "").trim()).filter(Boolean))]
+        .sort((a,b) => a.localeCompare(b));
+      select.replaceChildren();
+      const all = document.createElement("option");
+      all.value = "";
+      all.textContent = canSeeAll ? "All Sales Consultants" : (names[0] || "No accessible consultant");
+      select.appendChild(all);
+      names.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+      if (!canSeeAll && names.length === 1) select.value = names[0];
+      select.disabled = false;
+    }
+    function renderFilteredCreditHistory() {
+      const selected = String($("creditHistoryConsultantFilter").value || "").trim().toLowerCase();
+      const rows = selected
+        ? creditHistoryRows.filter(row => String(row.salesConsultant || "").trim().toLowerCase() === selected)
+        : creditHistoryRows;
+      renderCreditHistory(rows);
     }
     function renderCreditHistory(rows) {
       const host=$("creditHistoryList"); host.replaceChildren();
