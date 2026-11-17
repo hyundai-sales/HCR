@@ -4196,6 +4196,8 @@
           <div class="field"><label><input type="checkbox" id="batchApplyDp"> Downpayment Offer Type</label><select id="batchPromoType" disabled>${dpOptions}</select><input id="batchDpOffer" type="text" inputmode="decimal" placeholder="Downpayment offer (e.g. 8,000 or ZERO DP)" disabled></div>
           <div class="field"><label><input type="checkbox" id="batchApplyCash"> Cash</label><input id="batchCashDiscount" type="text" inputmode="decimal" placeholder="Cash discount amount" disabled></div>
           <div class="field"><label><input type="checkbox" id="batchApplyBankPo"> Bank P.O.</label><input id="batchBankPoDiscount" type="text" inputmode="decimal" placeholder="Bank P.O. discount amount" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchApplyFreebies"> Freebies / Inclusions</label><textarea id="batchFreebies" rows="3" placeholder="Enter freebies or inclusions" disabled></textarea></div>
+          <div class="field"><label><input type="checkbox" id="batchApplyValidity"> Validity Dates</label><div class="promo-form-grid"><div class="field"><label for="batchValidFrom">Valid From</label><input id="batchValidFrom" type="date" disabled></div><div class="field"><label for="batchValidUntil">Valid Until</label><input id="batchValidUntil" type="date" disabled></div></div></div>
         </div>
         <h4>Select vehicle variants</h4>
         <div class="field"><label for="batchVariantSearch">Find vehicle variants</label><input id="batchVariantSearch" type="search" placeholder="Search model or variant..."></div>
@@ -4219,7 +4221,9 @@
         ["batchApplyBanks", "batchPromoBank"],
         ["batchApplyDp", "batchPromoType"],
         ["batchApplyCash", "batchCashDiscount"],
-        ["batchApplyBankPo", "batchBankPoDiscount"]
+        ["batchApplyBankPo", "batchBankPoDiscount"],
+        ["batchApplyFreebies", "batchFreebies"],
+        ["batchApplyValidity", "batchValidFrom"]
       ];
       checks.forEach(([checkId, inputId]) => {
         const check = form.querySelector(`#${checkId}`);
@@ -4227,6 +4231,7 @@
         check.addEventListener("change", () => {
           input.disabled = !check.checked;
           if (checkId === "batchApplyDp") form.querySelector("#batchDpOffer").disabled = !check.checked;
+          if (checkId === "batchApplyValidity") form.querySelector("#batchValidUntil").disabled = !check.checked;
           updatePreview();
         });
         input.addEventListener("change", updatePreview);
@@ -4240,7 +4245,9 @@
           batchApplyBanks: "Partner Banks",
           batchApplyDp: "Downpayment Offer Type",
           batchApplyCash: "Cash",
-          batchApplyBankPo: "Bank P.O."
+          batchApplyBankPo: "Bank P.O.",
+          batchApplyFreebies: "Freebies / Inclusions",
+          batchApplyValidity: "Validity Dates"
         }[id]));
         form.querySelector("#batchPromoPreview").textContent = `${targets.length ? targets.join(" · ") : "No update category selected"} · ${selectedKeys.size} vehicle variant(s) selected. Unselected categories will remain unchanged.`;
       }
@@ -4276,8 +4283,10 @@
         const applyDp = form.querySelector("#batchApplyDp").checked;
         const applyCash = form.querySelector("#batchApplyCash").checked;
         const applyBankPo = form.querySelector("#batchApplyBankPo").checked;
-        if (!applyDp && !applyCash && !applyBankPo) {
-          setMessage($("promoModuleMessage"), "Select at least one offer type: Downpayment, Cash, or Bank P.O.", "error"); return;
+        const applyFreebies = form.querySelector("#batchApplyFreebies").checked;
+        const applyValidity = form.querySelector("#batchApplyValidity").checked;
+        if (!applyDp && !applyCash && !applyBankPo && !applyFreebies && !applyValidity && !applyBanks) {
+          setMessage($("promoModuleMessage"), "Select at least one category to update.", "error"); return;
         }
         if (!selected.length) { setMessage($("promoModuleMessage"), "Select at least one vehicle variant.", "error"); return; }
         if (applyDp && !form.querySelector("#batchDpOffer").value.trim()) {
@@ -4288,6 +4297,11 @@
         }
         if (applyBankPo && !form.querySelector("#batchBankPoDiscount").value.trim()) {
           setMessage($("promoModuleMessage"), "Enter the Bank P.O. discount amount.", "error"); return;
+        }
+        const validFromValue = form.querySelector("#batchValidFrom").value;
+        const validUntilValue = form.querySelector("#batchValidUntil").value;
+        if (applyValidity && validFromValue && validUntilValue && validFromValue > validUntilValue) {
+          setMessage($("promoModuleMessage"), "Valid From cannot be later than Valid Until.", "error"); return;
         }
         const chosenBank = form.querySelector("#batchPromoBank").value;
         const chosenDp = form.querySelector("#batchPromoType").value;
@@ -4308,6 +4322,11 @@
           if (applyDp && dp !== "CASH" && dp !== "BANK_PO") target.downpaymentOffer = form.querySelector("#batchDpOffer").value.trim();
           if (applyCash && dp === "CASH") target.cashDiscount = form.querySelector("#batchCashDiscount").value.trim();
           if (applyBankPo && dp === "BANK_PO") target.cashDiscount = form.querySelector("#batchBankPoDiscount").value.trim();
+          if (applyFreebies) target.freebies = form.querySelector("#batchFreebies").value.trim();
+          if (applyValidity) {
+            target.validFrom = validFromValue;
+            target.validUntil = validUntilValue;
+          }
           if (applyBanks) target.applicableBanks = [chosenBank];
           batch.set(k, target);
         };
@@ -4332,11 +4351,19 @@
             const matches = existing.filter(p => String(p.applicableDownpayment || "").toUpperCase() === "BANK_PO");
             banksFor(matches).forEach(bank => upsert(vehicle, "BANK_PO", bank, matches.find(p => (p.applicableBanks || ["ALL_BANKS"]).includes(bank))));
           }
+          if (applyFreebies || applyValidity || applyBanks) {
+            existing.forEach(old => {
+              const oldBank = (old.applicableBanks || ["ALL_BANKS"])[0] || "ALL_BANKS";
+              if (!applyBanks || oldBank === chosenBank || chosenBank === "ALL_BANKS") {
+                upsert(vehicle, String(old.applicableDownpayment || ""), applyBanks ? chosenBank : oldBank, old);
+              }
+            });
+          }
         });
         const records = [...batch.values()];
         if (!records.length) { setMessage($("promoModuleMessage"), "No matching promotion records were found to update.", "error"); return; }
         if (records.length > 200) { setMessage($("promoModuleMessage"), `This batch would update ${records.length} records. The current safe limit is 200 per save; narrow your selection.`, "error"); return; }
-        const targetNames = [applyBanks ? `Partner Banks: ${chosenBank}` : "Existing partner bank coverage", applyDp ? `Downpayment: ${chosenDp === "ALL_DP" ? "ALL DOWNPAYMENTS" : chosenDp + "%"}` : "", applyCash ? "Cash discount" : "", applyBankPo ? "Bank P.O. discount" : ""].filter(Boolean);
+        const targetNames = [applyBanks ? `Partner Banks: ${chosenBank}` : "", applyDp ? `Downpayment: ${chosenDp === "ALL_DP" ? "ALL DOWNPAYMENTS" : chosenDp + "%"}` : "", applyCash ? "Cash discount" : "", applyBankPo ? "Bank P.O. discount" : "", applyFreebies ? "Freebies / Inclusions" : "", applyValidity ? `Validity Dates: ${validFromValue || "No start date"} to ${validUntilValue || "No end date"}` : ""].filter(Boolean);
         const summary = `BATCH EDIT PREVIEW\n\nVehicles (${selected.length}):\n${selected.map(v => `${v.model} — ${v.variant}`).join("\n")}\n\nUpdates:\n${targetNames.join("\n")}\n\nRecords to save: ${records.length}\n\nOnly the selected categories will be changed. Continue?`;
         if (!window.confirm(summary)) return;
         const save = form.querySelector("#batchPromoSave");
@@ -4349,7 +4376,9 @@
           changes: [
             ...(applyDp ? ["Downpayment Offer: " + form.querySelector("#batchDpOffer").value.trim()] : []),
             ...(applyCash ? ["Cash Discount: " + form.querySelector("#batchCashDiscount").value.trim()] : []),
-            ...(applyBankPo ? ["Bank P.O. Discount: " + form.querySelector("#batchBankPoDiscount").value.trim()] : [])
+            ...(applyBankPo ? ["Bank P.O. Discount: " + form.querySelector("#batchBankPoDiscount").value.trim()] : []),
+            ...(applyFreebies ? ["Freebies / Inclusions: " + form.querySelector("#batchFreebies").value.trim()] : []),
+            ...(applyValidity ? ["Validity Dates: " + (validFromValue || "No start date") + " to " + (validUntilValue || "No end date")] : [])
           ]
         };
         try {
