@@ -2277,7 +2277,8 @@
               <button type="button" data-app-period="year" aria-pressed="false">Year</button>
             </div>
             <div class="applications-dashboard-total"><strong id="applicationsDashboardCount">—</strong><span>Applications submitted</span></div>
-            <p id="applicationsDashboardNote" class="applications-dashboard-note">Loading application totals...</p>
+            <p id="applicationsDashboardDateRange" class="applications-dashboard-date-range">Date range: loading...</p>
+            <p id="applicationsDashboardNote" class="applications-dashboard-note">Only applications with generated PDFs are included.</p>
           </section>
           <p class="dashboard-label">Choose a module to get started</p>
           <nav class="app-nav" aria-label="Sales tools">
@@ -3039,13 +3040,9 @@
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", active ? "true" : "false");
       });
-      // Keep the upper-right label as the current date, regardless of the selected filter.
-      const now = new Date();
-      const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(now);
-      const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(now);
-      const day = new Intl.DateTimeFormat("en-US", { day: "2-digit" }).format(now);
-      const year = new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(now);
-      $("applicationsDashboardPeriodLabel").textContent = `${weekday} | ${month}-${day}-${year}`;
+      const periodNames = {day:"Today", week:"This Week", month:"This Month", year:"This Year"};
+      $("applicationsDashboardPeriodLabel").textContent = periodNames[period] || "Today";
+      $("applicationsDashboardDateRange").textContent = "Date range: updating...";
       $("applicationsDashboardNote").textContent = "Only applications with generated PDFs are included.";
       submitRequest("applicationsDashboardGet", {
         payload:JSON.stringify({period, consultant:applicationsDashboardConsultant}),
@@ -3266,6 +3263,17 @@
           consultantSelect.value = "";
         }
         $("applicationsDashboardCount").textContent = Number(dashboard.count || 0).toLocaleString();
+        const dateOptions = {month:"short", day:"numeric", year:"numeric", timeZone:"UTC"};
+        const startDate = dashboard.startDate ? new Date(dashboard.startDate + "T12:00:00Z") : null;
+        const endDate = dashboard.endDate ? new Date(dashboard.endDate + "T12:00:00Z") : null;
+        const fmt = d => new Intl.DateTimeFormat("en-US", dateOptions).format(d);
+        let rangeText = "";
+        if (startDate && endDate) {
+          rangeText = dashboard.startDate === dashboard.endDate
+            ? fmt(startDate)
+            : `${fmt(startDate)} – ${fmt(endDate)}`;
+        }
+        $("applicationsDashboardDateRange").textContent = rangeText ? `Date range: ${rangeText}` : "Date range unavailable";
         $("applicationsDashboardNote").textContent = "Only applications with generated PDFs are included.";
         return;
       }
@@ -6735,6 +6743,7 @@
   .applications-dashboard-kicker { margin:0 0 2px; color:#66839b; font-size:9px; font-weight:800; letter-spacing:1.5px; }
   .applications-dashboard-head h2 { margin:0; color:#123e64; font-size:16px; font-weight:800; }
   .applications-dashboard-period { padding:5px 9px; border-radius:20px; background:rgba(0,59,112,.08); color:#315f83; font-size:10px; font-weight:700; white-space:nowrap; }
+  .applications-dashboard-date-range { margin:5px 0 2px; color:#234e70; font-size:11px; font-weight:800; text-align:center; }
   .applications-dashboard-consultant-wrap { display:flex; align-items:center; gap:9px; margin:11px 0 0; }
   .applications-dashboard-consultant-wrap label { color:#315f83; font-size:10px; font-weight:800; white-space:nowrap; }
   .applications-dashboard-consultant-wrap select {
