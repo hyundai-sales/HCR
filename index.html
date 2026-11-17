@@ -2210,6 +2210,7 @@
             <button class="edge-item" type="button" data-edge-target="history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Credit Application History</span></button>
             <button class="edge-item" type="button" data-edge-target="promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path d="m4 7 8 5 8-5M12 12v9"/></svg><span>Promos and Vehicle Info</span></button>
             <button class="edge-item hidden" id="edgeActivityLogsBtn" type="button" data-edge-target="audit"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Activity Logs</span></button>
+            <button class="edge-item" type="button" data-edge-target="org"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M5 16.5v-3h14v3M5 13.5h14"/></svg><span>Organizational Chart</span></button>
             <button class="edge-item hidden" id="edgeUserManagementBtn" type="button" data-edge-target="users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 8h5M18.5 5.5v5"/></svg><span>User Management</span></button>
           </nav>
         </aside>
@@ -2307,6 +2308,10 @@
               <span class="nav-icon" aria-hidden="true">◷</span>
               <span class="nav-copy"><span class="nav-title">Activity Logs</span><span class="nav-description">Review user actions and system changes</span></span>
             </button>
+            <button id="orgChartTabBtn" type="button">
+              <span class="nav-icon" aria-hidden="true">♧</span>
+              <span class="nav-copy"><span class="nav-title">Organizational Chart</span><span class="nav-description">View TEAM RER roles and reporting structure</span></span>
+            </button>
             <button id="userManagementTabBtn" type="button" class="hidden">
               <span class="nav-icon" aria-hidden="true">♙</span>
               <span class="nav-copy"><span class="nav-title">User Management</span><span class="nav-description">Manage TEAM RER accounts and access roles</span></span>
@@ -2358,6 +2363,25 @@
               </div>
             </form>
           </div>
+        </section>
+
+        <section id="orgChartPage" class="hidden">
+          <button id="backToMenuFromOrg" class="secondary" type="button">Back to Menu</button>
+          <div class="org-head"><div><h2 class="section-title">Organizational Chart</h2><p class="app-caption">TEAM RER reporting structure and team positions.</p></div><button id="orgAddBtn" type="button" class="hidden">＋ Add Position</button></div>
+          <p id="orgChartSummary" class="promo-note">Loading organizational chart...</p>
+          <div id="orgChartTree" class="org-tree" aria-live="polite"></div>
+          <div id="orgChartEditor" class="org-editor hidden">
+            <h3 id="orgEditorTitle">Add Position</h3>
+            <form id="orgEditorForm">
+              <input id="orgRecordId" type="hidden">
+              <label for="orgName">Name</label><input id="orgName" maxlength="100" required placeholder="Full name">
+              <label for="orgPosition">Position</label><input id="orgPosition" maxlength="100" required placeholder="Position / title">
+              <label for="orgParent">Reports To</label><select id="orgParent"><option value="">Top level</option></select>
+              <label for="orgImage">Profile image</label><input id="orgImage" type="file" accept="image/*"><div class="org-image-preview" id="orgImagePreview">No image selected</div>
+              <div class="org-editor-actions"><button type="submit" id="orgSaveBtn">Save Position</button><button type="button" class="secondary" id="orgCancelBtn">Cancel</button><button type="button" class="secondary hidden" id="orgDeleteBtn">Delete</button></div>
+            </form>
+          </div>
+          <div id="orgChartMessage" class="message hidden" aria-live="polite"></div>
         </section>
 
         <section id="promoPage" class="hidden">
@@ -3113,6 +3137,8 @@
           } else if (action === "userManagementGet" || action === "userManagementSave") {
             setMessage($("userManagementMessage"), error, "error");
             $("userManagementSummary").textContent = "Unable to load user records.";
+          } else if (["orgChartGet","orgChartSave","orgChartDelete"].includes(action)) {
+            setMessage($("orgChartMessage"), error, "error");
           } else if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
             setMessage($("promoModuleMessage"), error, "error");
             if (action === "srpEditorSave") renderSrpEditorCards();
@@ -3167,6 +3193,7 @@
         syncCreditConsultantForRole();
         const superAdminAccess = isSuperAdminSession();
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
@@ -3217,6 +3244,7 @@
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
         const superAdminAccess = isSuperAdminSession() || data.isSuperAdmin === true;
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
@@ -3286,6 +3314,8 @@
         return;
       }
 
+      if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
+      if (action === "orgChartSave" || action === "orgChartDelete") { $("orgChartEditor").classList.add("hidden");setMessage($("orgChartMessage"),action==="orgChartSave"?"Position saved.":"Position deleted.","success");loadOrgChart();return; }
       if (action === "userManagementGet") {
         userManagementData = event.data.userManagement || { headers: [], rows: [], roles: ["Super Admin","Admin","User"] };
         renderUserManagementTable();
@@ -5631,6 +5661,49 @@
         $("saveUserBtn").disabled = false;
       }
     });
+    let orgChartRecords = [];
+    let orgImageData = "";
+    function loadOrgChart() { submitRequest("orgChartGet").catch(error => setMessage($("orgChartMessage"), error.message, "error")); }
+    function renderOrgChart() {
+      const host = $("orgChartTree"); host.replaceChildren();
+      const map = new Map(orgChartRecords.map(r => [r.id, {...r, children:[]} ]));
+      const roots=[];
+      map.forEach(r => { const parent=map.get(r.parentId); if(parent && parent.id!==r.id) parent.children.push(r); else roots.push(r); });
+      const admin = isAdminSession();
+      const makeNode = (r, depth=0, seen=new Set()) => {
+        if(seen.has(r.id)) return; const next=new Set(seen); next.add(r.id);
+        const card=document.createElement("article"); card.className="org-person";
+        if(r.image){const img=document.createElement("img");img.className="org-avatar";img.src=r.image;img.alt="";card.appendChild(img);} else {const avatar=document.createElement("div");avatar.className="org-avatar org-avatar-empty";avatar.textContent=(r.name||"?").trim().charAt(0).toUpperCase();card.appendChild(avatar);}
+        const name=document.createElement("strong");name.textContent=r.name;card.appendChild(name);
+        const pos=document.createElement("span");pos.textContent=r.position;card.appendChild(pos);
+        if(admin){const edit=document.createElement("button");edit.type="button";edit.className="org-edit-btn";edit.textContent="Edit";edit.addEventListener("click",()=>editOrgRecord(r));card.appendChild(edit);}
+        const wrap=document.createElement("div");wrap.className="org-branch";wrap.appendChild(card);
+        if(r.children.length){const kids=document.createElement("div");kids.className="org-children";r.children.sort((a,b)=>a.sortOrder-b.sortOrder).forEach(c=>kids.appendChild(makeNode(c,depth+1,next)));wrap.appendChild(kids);}
+        return wrap;
+      };
+      roots.sort((a,b)=>a.sortOrder-b.sortOrder).forEach(r=>host.appendChild(makeNode(r)));
+      $("orgChartSummary").textContent=orgChartRecords.length?`${orgChartRecords.length} position(s) in the organizational chart.`:"No positions have been added yet.";
+      if(!roots.length && orgChartRecords.length) $("orgChartSummary").textContent += " Check reporting relationships for circular or missing parent links.";
+    }
+    function editOrgRecord(r=null) {
+      $("orgEditorTitle").textContent=r?"Edit Position":"Add Position"; $("orgRecordId").value=r?.id||"";
+      $("orgName").value=r?.name||""; $("orgPosition").value=r?.position||""; orgImageData="";
+      const select=$("orgParent");select.replaceChildren();const top=document.createElement("option");top.value="";top.textContent="Top level";select.appendChild(top);
+      orgChartRecords.filter(x=>x.id!==r?.id).forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=`${x.name} — ${x.position}`;select.appendChild(o);});select.value=r?.parentId||"";
+      $("orgImagePreview").replaceChildren();if(r?.image){const im=document.createElement("img");im.src=r.image;im.alt="Current profile image";$("orgImagePreview").appendChild(im);}else $("orgImagePreview").textContent="No image selected";
+      $("orgDeleteBtn").classList.toggle("hidden",!r);$("orgChartEditor").classList.remove("hidden");
+    }
+    $("orgChartTabBtn").addEventListener("click",()=>runPageTransition("Opening Organizational Chart...",()=>{
+      $("appNav").classList.add("hidden");["pdfPage","quotePage","creditPage","creditHistoryPage","promoPage","auditPage","userManagementPage"].forEach(id=>$(id).classList.add("hidden"));
+      $("orgChartPage").classList.remove("hidden");$("orgAddBtn").classList.toggle("hidden",!isAdminSession());loadOrgChart();
+    }));
+    $("backToMenuFromOrg").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{$("orgChartPage").classList.add("hidden");$("appNav").classList.remove("hidden");}));
+    $("orgAddBtn").addEventListener("click",()=>editOrgRecord());
+    $("orgCancelBtn").addEventListener("click",()=>$("orgChartEditor").classList.add("hidden"));
+    $("orgImage").addEventListener("change",async e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")){setMessage($("orgChartMessage"),"Please select an image file.","error");return;}const img=new Image();const url=URL.createObjectURL(f);img.onload=()=>{const max=600,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);orgImageData=c.toDataURL("image/jpeg",.72);const preview=$("orgImagePreview");preview.replaceChildren();const p=document.createElement("img");p.src=orgImageData;p.alt="Image preview";preview.appendChild(p);URL.revokeObjectURL(url);};img.onerror=()=>{URL.revokeObjectURL(url);setMessage($("orgChartMessage"),"Unable to read that image.","error");};img.src=url;});
+    $("orgEditorForm").addEventListener("submit",e=>{e.preventDefault();const payload={id:$("orgRecordId").value,name:$("orgName").value.trim(),position:$("orgPosition").value.trim(),parentId:$("orgParent").value,imageData:orgImageData};submitRequest("orgChartSave",{payload:JSON.stringify(payload)}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
+    $("orgDeleteBtn").addEventListener("click",()=>{if(!confirm("Delete this position? Any direct reports will become top-level positions."))return;submitRequest("orgChartDelete",{payload:JSON.stringify({id:$("orgRecordId").value})}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
+
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
       runPageTransition("Opening User Management...", () => {
@@ -5666,6 +5739,7 @@
 
     $("promoTabBtn").addEventListener("click",()=>runPageTransition("Opening Promos and Vehicle Info...",()=>{
       $("appNav").classList.add("hidden");
+      $("orgChartPage").classList.add("hidden");
       ["pdfPage","quotePage","creditPage","auditPage"].forEach(id=>$(id).classList.add("hidden"));
       $("auditPage").classList.add("hidden");
       $("promoPage").classList.remove("hidden");
@@ -5945,9 +6019,9 @@
       const toggle = document.getElementById("teamRerEdgeToggle");
       const panel = document.getElementById("teamRerEdgePanel");
       if (!edge || !toggle || !panel) return;
-      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", history:"creditHistoryPage", promo:"promoPage", audit:"auditPage", users:"userManagementPage" };
-      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", audit:"auditTabBtn", users:"userManagementTabBtn" };
-      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers" };
+      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", history:"creditHistoryPage", promo:"promoPage", audit:"auditPage", users:"userManagementPage", org:"orgChartPage" };
+      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", audit:"auditTabBtn", users:"userManagementTabBtn", org:"orgChartTabBtn" };
+      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers", org:"backToMenuFromOrg" };
       let activeModule = "";
       const closePanel = () => { edge.classList.remove("is-open"); toggle.setAttribute("aria-expanded","false"); toggle.setAttribute("aria-label","Open quick navigation"); };
       const openPanel = () => { edge.classList.add("is-open"); toggle.setAttribute("aria-expanded","true"); toggle.setAttribute("aria-label","Close quick navigation"); };
@@ -5981,7 +6055,7 @@
         const target = button.dataset.edgeTarget;
         if (target === "home") { goHome(); return; }
         if (target === "users" && !isSuperAdminSession()) { closePanel(); showAccessDenied("Team RER Super Admin Access Only."); return; }
-        if (target === "audit" && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
+        if ((target === "audit" || target === "org") && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
         if (!moduleButtons[target] || target === activeModule) { closePanel(); return; }
         const switchNow = () => goToModule(target);
         if (activeModule === "credit" && typeof creditFormHasEntries === "function" && creditFormHasEntries()) {
@@ -5990,12 +6064,12 @@
         } else switchNow();
       });
       document.addEventListener("click",event => {
-        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn,#auditTabBtn,#userManagementTabBtn");
+        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn,#auditTabBtn,#userManagementTabBtn,#orgChartTabBtn");
         if (clickedId) {
           const key = Object.keys(moduleButtons).find(k => moduleButtons[k] === clickedId.id);
           if (key) showEdge(key);
         }
-        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers");
+        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers,#backToMenuFromOrg");
         if (back && !(back.id === "backToMenuFromCredit" && typeof creditFormHasEntries === "function" && creditFormHasEntries())) hideEdge();
       },true);
       document.addEventListener("click",event => {
@@ -6791,6 +6865,8 @@
   .applications-dashboard-total span { color:#42627d; font-size:12px; font-weight:700; }
   .applications-dashboard-note { margin:8px 0 0; color:#71869a; font-size:10px; }
   @media(max-width:480px) { #appSection .applications-dashboard { padding:13px 13px 11px; margin-bottom:15px; } .applications-dashboard-filters { gap:5px; } }
+
+  .org-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px}.org-head .section-title{margin-bottom:4px}.org-tree{overflow-x:auto;padding:18px 4px 28px;text-align:center}.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;padding:0 10px}.org-children{display:flex;justify-content:center;align-items:flex-start;gap:18px;position:relative;padding-top:28px;margin-top:8px}.org-children:before{content:"";position:absolute;top:0;left:50%;height:14px;border-left:2px solid #9bb4c9}.org-children>.org-branch:before{content:"";position:absolute;top:0;height:14px;border-left:2px solid #9bb4c9}.org-person{width:190px;max-width:190px;min-height:175px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 12px;border:1px solid #c8d8e6;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(24,65,99,.09);color:#173f60}.org-avatar{width:66px;height:66px;object-fit:cover;border-radius:50%;border:3px solid #e3edf5}.org-avatar-empty{display:grid;place-items:center;background:#eaf2f8;color:#1a527e;font-size:24px;font-weight:800}.org-person strong{font-size:14px;line-height:1.25;overflow-wrap:anywhere}.org-person>span{font-size:12px;color:#57738a;line-height:1.3}.org-edit-btn{margin-top:3px;padding:5px 13px;border:1px solid #9bb4c9;border-radius:8px;background:#f2f7fb;color:#174c75;font-size:11px;font-weight:700}.org-editor{max-width:520px;margin:18px auto;padding:18px;border:1px solid #c8d8e6;border-radius:14px;background:#f8fbfd}.org-editor form{display:grid;gap:8px}.org-editor label{font-size:12px;font-weight:750;color:#244e6c}.org-editor input,.org-editor select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #a9bfd1;border-radius:8px;background:#fff;color:#173f60}.org-image-preview{min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed #b5c8d8;border-radius:10px;color:#71869a;font-size:12px}.org-image-preview img{width:82px;height:82px;object-fit:cover;border-radius:50%}.org-editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.org-editor-actions button{flex:1;min-width:110px}.org-editor-actions .hidden{display:none!important}@media(max-width:600px){.org-children{gap:8px}.org-person{width:150px;max-width:150px;padding:11px 8px}.org-avatar{width:56px;height:56px}}
 </style>
 </body>
 </html>
