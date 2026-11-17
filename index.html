@@ -2259,6 +2259,20 @@
             <p class="userline" id="userDetails"></p>
             <p class="welcome-note">Your Hyundai Cainta workspace is ready.</p>
           </div>
+          <section id="applicationsDashboard" class="applications-dashboard" aria-label="Credit applications dashboard">
+            <div class="applications-dashboard-head">
+              <div><p class="applications-dashboard-kicker">APPLICATIONS</p><h2>Credit Applications</h2></div>
+              <span id="applicationsDashboardPeriodLabel" class="applications-dashboard-period">Today</span>
+            </div>
+            <div class="applications-dashboard-filters" role="group" aria-label="Application date filter">
+              <button type="button" class="active" data-app-period="day" aria-pressed="true">Day</button>
+              <button type="button" data-app-period="week" aria-pressed="false">Week</button>
+              <button type="button" data-app-period="month" aria-pressed="false">Month</button>
+              <button type="button" data-app-period="year" aria-pressed="false">Year</button>
+            </div>
+            <div class="applications-dashboard-total"><strong id="applicationsDashboardCount">—</strong><span>Applications submitted</span></div>
+            <p id="applicationsDashboardNote" class="applications-dashboard-note">Loading application totals...</p>
+          </section>
           <p class="dashboard-label">Choose a module to get started</p>
           <nav class="app-nav" aria-label="Sales tools">
             <button id="pdfTabBtn" type="button">
@@ -2999,6 +3013,25 @@
       $("loginBtn").disabled = false;
     }
 
+    let applicationsDashboardPeriod = "day";
+
+    function loadApplicationsDashboard(period = applicationsDashboardPeriod) {
+      applicationsDashboardPeriod = period;
+      document.querySelectorAll("[data-app-period]").forEach(button => {
+        const active = button.dataset.appPeriod === period;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      const labels = {day:"Today",week:"This week",month:"This month",year:"This year"};
+      $("applicationsDashboardPeriodLabel").textContent = labels[period] || "Today";
+      $("applicationsDashboardNote").textContent = "Updating application totals...";
+      submitRequest("applicationsDashboardGet", {payload:JSON.stringify({period})})
+        .catch(error => {
+          $("applicationsDashboardCount").textContent = "—";
+          $("applicationsDashboardNote").textContent = error.message || "Unable to load application totals.";
+        });
+    }
+
     function fillSelect(select, items, placeholder) {
       select.replaceChildren();
       const first = document.createElement("option");
@@ -3035,6 +3068,11 @@
           showLoginError(error);
         }
         else {
+          if (action === "applicationsDashboardGet") {
+            $("applicationsDashboardCount").textContent = "—";
+            $("applicationsDashboardNote").textContent = error;
+            return;
+          }
           if (["creditHistoryList","creditHistoryGet","creditHistoryPdf","creditHistorySave"].includes(action)) {
             setMessage($("creditHistoryMessage"), error, "error");
             return;
@@ -3168,6 +3206,7 @@
         }
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         const lastView = readLastAppView();
+        if (!(lastView && lastView.page === "promos")) loadApplicationsDashboard(applicationsDashboardPeriod);
         if (lastView && lastView.page === "promos") {
           $("appNav").classList.add("hidden");
           ["pdfPage","quotePage","creditPage"].forEach(id => $(id).classList.add("hidden"));
@@ -3175,6 +3214,13 @@
           setPromoView(["promos","stock","banks","srp"].includes(lastView.tab) ? lastView.tab : "promos");
           submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
         }
+        return;
+      }
+
+      if (action === "applicationsDashboardGet") {
+        const dashboard = event.data.applicationsDashboard || {};
+        $("applicationsDashboardCount").textContent = Number(dashboard.count || 0).toLocaleString();
+        $("applicationsDashboardNote").textContent = "Only applications with generated PDFs are included.";
         return;
       }
 
@@ -3856,6 +3902,10 @@
         : String($("creditConsultant")?.value || "").trim();
       return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa,consultant};
     }
+
+    document.querySelectorAll("[data-app-period]").forEach(button => {
+      button.addEventListener("click", () => loadApplicationsDashboard(button.dataset.appPeriod));
+    });
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
       $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); syncCreditConsultantForRole(); buildCreditForm();
@@ -5562,6 +5612,7 @@
       $("auditPage").classList.add("hidden");
       clearLastAppView();
       $("appNav").classList.remove("hidden");
+      loadApplicationsDashboard(applicationsDashboardPeriod);
     }));
 
     $("pdfTabBtn").addEventListener("click", () => runPageTransition("Opening Price List...",() => {
@@ -6623,5 +6674,25 @@
   })();
 </script>
 
+
+<style>
+  #appSection .applications-dashboard {
+    margin: 0 0 18px; padding: 15px 16px 13px; border: 1px solid rgba(255,255,255,.88);
+    border-radius: 18px; background: linear-gradient(135deg,rgba(255,255,255,.88),rgba(231,242,251,.72));
+    box-shadow: 0 8px 22px rgba(28,70,106,.07); color:#173f60;
+  }
+  .applications-dashboard-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .applications-dashboard-kicker { margin:0 0 2px; color:#66839b; font-size:9px; font-weight:800; letter-spacing:1.5px; }
+  .applications-dashboard-head h2 { margin:0; color:#123e64; font-size:16px; font-weight:800; }
+  .applications-dashboard-period { padding:5px 9px; border-radius:20px; background:rgba(0,59,112,.08); color:#315f83; font-size:10px; font-weight:700; white-space:nowrap; }
+  .applications-dashboard-filters { display:flex; gap:6px; margin:12px 0 11px; }
+  .applications-dashboard-filters button { flex:1; min-height:31px; padding:5px 8px; border:1px solid rgba(49,95,131,.18); border-radius:9px; background:rgba(255,255,255,.62); color:#42627d; font-size:11px; font-weight:700; }
+  .applications-dashboard-filters button.active { border-color:#164f7c; background:#164f7c; color:#fff; box-shadow:0 3px 8px rgba(22,79,124,.18); }
+  .applications-dashboard-total { display:flex; align-items:baseline; gap:9px; }
+  .applications-dashboard-total strong { color:#003b70; font-size:29px; line-height:1; font-weight:850; letter-spacing:-1px; }
+  .applications-dashboard-total span { color:#42627d; font-size:12px; font-weight:700; }
+  .applications-dashboard-note { margin:8px 0 0; color:#71869a; font-size:10px; }
+  @media(max-width:480px) { #appSection .applications-dashboard { padding:13px 13px 11px; margin-bottom:15px; } .applications-dashboard-filters { gap:5px; } }
+</style>
 </body>
 </html>
