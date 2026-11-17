@@ -2775,7 +2775,8 @@
     }
 
     function showAccessDenied(message) {
-      window.alert(message || "Team RER Admin Access Only.");
+      // Keep access-denied feedback inside TEAM RER; never use native browser alert().
+      showTeamRerAlert(message || "Team RER Admin Access Only.", "Access Restricted");
     }
 
     function recordUserActivity() {
