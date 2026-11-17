@@ -160,6 +160,12 @@
     .credit-choice input { width:auto; min-height:0; }
     @media(max-width:420px){ .credit-grid{grid-template-columns:1fr;} .credit-field.full{grid-column:auto;} }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
+
+    .main-menu-account-actions { display:flex; justify-content:flex-end; align-items:center; margin-top:12px; }
+    #appSection #appNav #logoutBtn { display:block; width:auto; min-width:104px; margin:0; }
+    .promo-variant-batch-action { display:flex; justify-content:flex-start; margin:12px 0 4px; }
+    .promo-variant-batch-action #batchPromoBtn { display:inline-flex; width:auto; min-width:190px; min-height:40px; padding:9px 16px; }
+
     /* TEAM RER dashboard home */
     .cover-container { border-radius:13px; margin-bottom:15px; background:#e8f0f7; }
     .cover-photo { height:116px; }
@@ -188,7 +194,7 @@
     .nav-title { display:block; color:#123d63; font-size:13px; font-weight:700; line-height:1.3; }
     .nav-description { display:block; margin-top:5px; color:#718397; font-size:10px; font-weight:400; line-height:1.4; }
     .app-nav button.active { background:#f2f7fb; color:#003b70; border:1px solid #9db8d1; }
-    #logoutBtn { width:auto; min-height:36px; margin:10px 0 0 auto; padding:8px 15px; font-size:12px; }
+    #logoutBtn { width:auto; min-height:36px; padding:8px 15px; font-size:12px; }
     @media(max-width:560px) {
       .wrap { margin:10px auto; }
       .card { padding:15px; border-radius:15px; }
@@ -1413,7 +1419,7 @@
 
       #appSection #logoutBtn {
         min-height: 42px;
-        margin-top: 7px;
+        margin-top: 0;
         padding: 9px 19px;
         border: 1px solid rgba(255,255,255,.92);
         border-radius: 15px;
@@ -2203,6 +2209,9 @@
               <span class="nav-copy"><span class="nav-title">Activity Logs</span><span class="nav-description">Review user actions and system changes</span></span>
             </button>
           </nav>
+          <div class="main-menu-account-actions">
+            <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
+          </div>
         </div>
 
         <section id="auditPage" class="hidden">
@@ -2240,7 +2249,7 @@
             <div class="promo-tools">
               <select id="promoVehicleSelect" aria-label="Select vehicle for promotions"><option value="">Select vehicle model and variant...</option></select>
               <button id="addPromoBtn" class="promo-add hidden" type="button">＋ Add Promo</button>
-              <button id="batchPromoBtn" class="secondary hidden" type="button">Batch Edit Promotions</button>
+              <button id="batchPromoBtn" class="secondary hidden" type="button" style="display:none">Batch Edit Promotions</button>
             </div>
             <div id="promoOffersList"></div>
             <div id="promoFormHost"></div>
@@ -2396,7 +2405,6 @@
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
         </section>
 
-        <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
       </section>
     </div>
     <div class="footer">TEAM RER • Hyundai Cainta</div>
@@ -4012,12 +4020,24 @@
       const selectedIndex = select && select.value !== "" ? Number(select.value) : -1;
       const selected = Number.isInteger(selectedIndex) && selectedIndex >= 0 ? promoVehicleOptions[selectedIndex] : null;
       if (!selected) {
+        const batchButton = $("batchPromoBtn");
+        const tools = document.querySelector("#promoOffersPanel .promo-tools");
+        if (batchButton && tools) { batchButton.classList.add("hidden"); batchButton.style.display = "none"; tools.appendChild(batchButton); }
         host.innerHTML = '<div class="promo-empty">Choose a vehicle above to view or edit its promotions.</div>';
         return;
       }
 
       const records = promoInventoryData.promotions.filter(p => p.model === selected.model && p.variant === selected.variant);
       const active = records.filter(p => String(p.status || "Active").toLowerCase() === "active").length;
+      const batchButton = $("batchPromoBtn");
+      if (batchButton && isTeamRerAdmin()) {
+        const batchAction = document.createElement("div");
+        batchAction.className = "promo-variant-batch-action";
+        batchButton.classList.remove("hidden");
+        batchButton.style.display = "";
+        batchAction.appendChild(batchButton);
+        host.appendChild(batchAction);
+      }
       const row = document.createElement("div");
       row.className = "promo-variant-row";
       const info = document.createElement("div");
@@ -4192,13 +4212,17 @@
         <h4>Promotion target</h4>
         <div class="promo-form-grid">
           <div class="field"><label for="batchPromoBank">Partner Bank</label><select id="batchPromoBank">${bankOptions}</select></div>
-          <div class="field"><label for="batchPromoType">Offer Type</label><select id="batchPromoType">${dpOptions}<option value="CASH">CASH Discount</option><option value="BANK_PO">BANK P.O. Discount</option></select></div>
+          <div class="field"><label for="batchPromoType">Downpayment Offer Type</label><select id="batchPromoType">${dpOptions}</select></div>
         </div>
-        <p class="promo-note">The selected bank and offer type identify the promotion record to update. ALL BANKS follows your existing bank-inheritance rule.</p>
-        <h4>Fields to update</h4>
+        <p class="promo-note">Choose the DP offer type here. Cash Discount and Bank PO Discount can be selected separately below. ALL BANKS follows your existing bank-inheritance rule.</p>
+        <h4>Transaction discounts</h4>
+        <div class="promo-form-grid">
+          <div class="field"><label><input type="checkbox" id="batchUseCashDiscount"> Update Cash Discount</label><input id="batchCashDiscount" type="text" inputmode="decimal" placeholder="e.g. 100,000" disabled></div>
+          <div class="field"><label><input type="checkbox" id="batchUseBankPoDiscount"> Update Bank PO Discount</label><input id="batchBankPoDiscount" type="text" inputmode="decimal" placeholder="e.g. 100,000" disabled></div>
+        </div>
+        <h4>Other promotion fields</h4>
         <div class="promo-form-grid">
           <div class="field"><label><input type="checkbox" id="batchUseDpOffer"> Update Downpayment Offer</label><input id="batchDpOffer" type="text" inputmode="decimal" placeholder="e.g. 8,000 or ZERO DP" disabled></div>
-          <div class="field"><label><input type="checkbox" id="batchUseCashDiscount"> Update Cash Discount</label><input id="batchCashDiscount" type="text" inputmode="decimal" placeholder="e.g. 100,000" disabled></div>
           <div class="field"><label><input type="checkbox" id="batchUseFuelVoucher"> Update Fuel Voucher</label><input id="batchFuelVoucher" type="text" maxlength="100" placeholder="e.g. ₱20,000 Fuel Voucher" disabled></div>
           <div class="field"><label><input type="checkbox" id="batchUseFreebies"> Update Freebies / Inclusions</label><textarea id="batchFreebies" rows="4" placeholder="One inclusion per line" disabled></textarea><select id="batchFreebiesMode" disabled><option value="append">Add to existing freebies</option><option value="replace">Replace existing freebies</option></select></div>
           <div class="field"><label><input type="checkbox" id="batchUseValidFrom"> Update Valid From</label><input id="batchValidFrom" type="date" disabled></div>
@@ -4238,12 +4262,16 @@
         selectedCount();
       };
       const fields = [
-        ["batchUseDpOffer", "batchDpOffer"], ["batchUseCashDiscount", "batchCashDiscount"],
+        ["batchUseDpOffer", "batchDpOffer"],
         ["batchUseFuelVoucher", "batchFuelVoucher"], ["batchUseFreebies", "batchFreebies"],
         ["batchUseValidFrom", "batchValidFrom"], ["batchUseValidUntil", "batchValidUntil"],
         ["batchUseDescription", "batchDescription"], ["batchUseStatus", "batchStatus"]
       ];
-      fields.forEach(([checkId, inputId]) => {
+      const discountFields = [
+        ["batchUseCashDiscount", "batchCashDiscount", "CASH"],
+        ["batchUseBankPoDiscount", "batchBankPoDiscount", "BANK_PO"]
+      ];
+      [...fields, ...discountFields.map(([checkId,inputId]) => [checkId,inputId])].forEach(([checkId, inputId]) => {
         const check = form.querySelector(`#${checkId}`), input = form.querySelector(`#${inputId}`);
         check.addEventListener("change", () => {
           input.disabled = !check.checked;
@@ -4254,7 +4282,7 @@
         input.addEventListener("change", updatePreview);
       });
       function updatePreview() {
-        const checked = fields.filter(([id]) => form.querySelector(`#${id}`).checked).map(([id]) => id.replace("batchUse", ""));
+        const checked = [...fields, ...discountFields.map(([id]) => [id])].filter(([id]) => form.querySelector(`#${id}`).checked).map(([id]) => ({batchUseCashDiscount:"Cash Discount",batchUseBankPoDiscount:"Bank PO Discount"}[id] || id.replace("batchUse", "")));
         form.querySelector("#batchPromoPreview").textContent = `${selectedKeys.size} vehicle variant(s) selected · ${checked.length ? checked.join(", ") : "No fields selected"}. Unchecked fields will remain unchanged.`;
       }
       form.querySelector("#batchVariantSearch").addEventListener("input", renderVariants);
@@ -4271,21 +4299,21 @@
         e.preventDefault();
         const selected = variants.filter(v => selectedKeys.has(keyOf(v)));
         const activeFields = fields.filter(([id]) => form.querySelector(`#${id}`).checked);
+        const selectedDiscountFields = discountFields.filter(([id]) => form.querySelector(`#${id}`).checked);
         if (!selected.length) { setMessage($("promoModuleMessage"), "Select at least one vehicle variant.", "error"); return; }
-        if (!activeFields.length) { setMessage($("promoModuleMessage"), "Select at least one promotion field to update.", "error"); return; }
+        if (!activeFields.length && !selectedDiscountFields.length) { setMessage($("promoModuleMessage"), "Select at least one promotion field to update.", "error"); return; }
         const type = form.querySelector("#batchPromoType").value;
         const bank = form.querySelector("#batchPromoBank").value;
-        if (form.querySelector("#batchUseDpOffer").checked && (type === "CASH" || type === "BANK_PO")) {
-          setMessage($("promoModuleMessage"), "Downpayment Offer can only be updated for a DP percentage offer type.", "error"); return;
-        }
-        if (form.querySelector("#batchUseCashDiscount").checked && type !== "CASH" && type !== "BANK_PO") {
-          setMessage($("promoModuleMessage"), "Cash Discount requires CASH or BANK P.O. as the offer type.", "error"); return;
-        }
         if (form.querySelector("#batchUseFreebies").checked && !form.querySelector("#batchFreebies").value.trim()) {
           setMessage($("promoModuleMessage"), "Enter at least one Freebies / Inclusions line.", "error"); return;
         }
+        for (const [checkId,inputId,label] of discountFields) {
+          if (form.querySelector(`#${checkId}`).checked && !form.querySelector(`#${inputId}`).value.trim()) {
+            setMessage($("promoModuleMessage"), `Enter the ${label === "CASH" ? "Cash" : "Bank PO"} Discount amount.`, "error"); return;
+          }
+        }
         const useFreebies = form.querySelector("#batchUseFreebies").checked;
-        const useTargetFields = activeFields.some(([id]) => id !== "batchUseFreebies");
+        const useDpFields = activeFields.some(([id]) => id !== "batchUseFreebies");
         const batch = new Map();
         const bankKey = bank === "ALL_BANKS" ? "ALL_BANKS" : bank;
         const targetTypes = type === "ALL_DP" ? configuredDpOptions : [type];
@@ -4295,7 +4323,7 @@
           if (useFreebies) {
             const freebiesTargets = type === "ALL_DP"
               ? existing.filter(p => configuredDpOptions.includes(String(p.applicableDownpayment || "")))
-              : existing;
+              : existing.filter(p => targetTypes.includes(String(p.applicableDownpayment || "")));
             freebiesTargets.forEach(old => {
               const k = makeKey(old.applicableDownpayment, (old.applicableBanks || ["ALL_BANKS"])[0], old.id);
               const copy = {...old, applicableBanks:[...(old.applicableBanks || ["ALL_BANKS"])]};
@@ -4311,7 +4339,8 @@
               batch.set(k, copy);
             });
           }
-          if (useTargetFields || (useFreebies && targetTypes.some(dp => !existing.some(p => String(p.applicableDownpayment || "") === dp && (p.applicableBanks || []).includes(bankKey))))) {
+          const needsDpRecords = useDpFields || (useFreebies && targetTypes.some(dp => !existing.some(p => String(p.applicableDownpayment || "") === dp && (p.applicableBanks || []).includes(bankKey))));
+          if (needsDpRecords) {
             targetTypes.forEach(targetType => {
               const old = existing.find(p => String(p.applicableDownpayment || "") === targetType && (p.applicableBanks || []).includes(bankKey));
               const k = makeKey(targetType, bankKey, old?.id);
@@ -4321,7 +4350,6 @@
                 freebies:"", validFrom:"", validUntil:"", description:"", status:"Active", tplIncluded:false
               });
               if (form.querySelector("#batchUseDpOffer").checked) target.downpaymentOffer = form.querySelector("#batchDpOffer").value.trim();
-              if (form.querySelector("#batchUseCashDiscount").checked) target.cashDiscount = form.querySelector("#batchCashDiscount").value.trim();
               if (form.querySelector("#batchUseFuelVoucher").checked) target.fuelVoucher = form.querySelector("#batchFuelVoucher").value.trim();
               if (useFreebies && !old) target.freebies = form.querySelector("#batchFreebies").value.trim();
               if (form.querySelector("#batchUseValidFrom").checked) target.validFrom = form.querySelector("#batchValidFrom").value;
@@ -4331,19 +4359,32 @@
               batch.set(k, target);
             });
           }
+          selectedDiscountFields.forEach(([checkId,inputId,discountType]) => {
+            const old = existing.find(p => String(p.applicableDownpayment || "").toUpperCase() === discountType && (p.applicableBanks || ["ALL_BANKS"]).includes(bankKey));
+            const k = makeKey(discountType, bankKey, old?.id);
+            const target = batch.get(k) || (old ? {...old, applicableBanks:[...(old.applicableBanks || [bankKey])]} : {
+              id:"", model:vehicle.model, variant:vehicle.variant, applicableDownpayment:discountType,
+              applicableBanks:[bankKey], downpaymentOffer:"", cashDiscount:"", fuelVoucher:"",
+              freebies:"", validFrom:"", validUntil:"", description:"", status:"Active", tplIncluded:false
+            });
+            target.cashDiscount = form.querySelector(`#${inputId}`).value.trim();
+            batch.set(k,target);
+          });
         });
         const records = [...batch.values()];
         if (!records.length) { setMessage($("promoModuleMessage"), "No matching promotion records were found to update.", "error"); return; }
         if (records.length > 200) { setMessage($("promoModuleMessage"), `This batch would update ${records.length} records. The current safe limit is 200 per save; narrow your selection.`, "error"); return; }
         const selectedFieldNames = activeFields.map(([id]) => id.replace("batchUse", ""));
+        selectedDiscountFields.forEach(([id,inputId,type]) => selectedFieldNames.push(type === "CASH" ? "Cash Discount" : "Bank PO Discount"));
         const variantPreview = selected.map(v => `${v.model} — ${v.variant}`).join("\n");
-        const summary = `BATCH UPDATE PREVIEW\n\nVehicles (${selected.length}):\n${variantPreview}\n\nTarget: ${bank === "ALL_BANKS" ? "ALL BANKS" : bank} · ${type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP"}\nFields: ${selectedFieldNames.join(", ")}\nRecords to save: ${records.length}\n\nOnly checked fields will be changed. Continue?`;
+        const summary = `BATCH UPDATE PREVIEW\n\nVehicles (${selected.length}):\n${variantPreview}\n\nDP Target: ${bank === "ALL_BANKS" ? "ALL BANKS" : bank} · ${type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type + "% DP"}\nTransaction discounts: ${selectedDiscountFields.map(x => x[2] === "CASH" ? "CASH" : "BANK PO").join(", ") || "None"}\nFields: ${selectedFieldNames.join(", ")}\nRecords to save: ${records.length}\n\nOnly checked fields will be changed. Continue?`;
         if (!window.confirm(summary)) return;
         const save = form.querySelector("#batchPromoSave");
         save.disabled = true; save.textContent = "Saving batch…";
         const auditChanges = [];
         if (form.querySelector("#batchUseDpOffer").checked) auditChanges.push("Downpayment Offer: " + form.querySelector("#batchDpOffer").value.trim());
         if (form.querySelector("#batchUseCashDiscount").checked) auditChanges.push("Cash Discount: " + form.querySelector("#batchCashDiscount").value.trim());
+        if (form.querySelector("#batchUseBankPoDiscount").checked) auditChanges.push("Bank PO Discount: " + form.querySelector("#batchBankPoDiscount").value.trim());
         if (form.querySelector("#batchUseFuelVoucher").checked) auditChanges.push("Fuel Voucher: " + form.querySelector("#batchFuelVoucher").value.trim());
         if (form.querySelector("#batchUseFreebies").checked) auditChanges.push("Freebies / Inclusions (" + form.querySelector("#batchFreebiesMode").value + "): " + form.querySelector("#batchFreebies").value.trim().replace(/\r?\n/g, "; "));
         if (form.querySelector("#batchUseValidFrom").checked) auditChanges.push("Valid From: " + form.querySelector("#batchValidFrom").value);
@@ -4353,7 +4394,7 @@
         const audit = {
           kind: "batchPromotion",
           targetBank: bank === "ALL_BANKS" ? "ALL BANKS" : bank,
-          offerType: type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP",
+          offerType: type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type + "% DP",
           variants: selected.map(v => `${v.model} / ${v.variant}`),
           changes: auditChanges
         };
