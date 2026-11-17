@@ -1510,7 +1510,7 @@
     .promo-card-actions{display:flex;gap:8px;margin-top:12px}
     .promo-card-actions button{min-height:36px;padding:8px 12px;font-size:12px}
     .promo-card-actions .secondary{margin:0}
-    .promo-empty{padding:28px 16px;text-align:center;border:1px dashed #c5d5e2;border-radius:16px;color:#71869a;font-size:13px;background:rgba(246,250,253,.7)}
+    .promo-empty{padding:28px 16px;text-align:center;border:1px solid #b9d2e6;border-radius:16px;color:#173b5b !important;font-size:14px;font-weight:700;line-height:1.5;background:#eaf3fb !important}
     .promo-model-group{margin:10px 0}.promo-model-accordion{border:1px solid rgba(164,190,211,.7);border-radius:15px;background:rgba(255,255,255,.78);overflow:hidden}.promo-model-accordion>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;font-weight:700;color:#123d63;cursor:pointer}.promo-model-accordion>summary::-webkit-details-marker{display:none}.promo-model-accordion>summary:after{content:"＋";color:#52718c}.promo-model-accordion[open]>summary:after{content:"−"}.promo-model-accordion>summary small{margin-left:auto;color:#71869a;font-size:11px;font-weight:500}.promo-variant-list{padding:0 12px 10px}.promo-variant-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 4px;border-top:1px solid #e3edf4}.promo-variant-info{display:flex;flex-direction:column;gap:4px;min-width:0}.promo-variant-info strong{font-size:13px;color:#234865}.promo-variant-info small{font-size:10px;color:#71869a}.promo-variant-row button{width:auto;min-width:72px;min-height:34px;margin:0;padding:7px 12px;font-size:11px}.promo-editor-vehicle{padding:10px 12px;border-radius:10px;background:#eaf2f8;color:#234865;font-size:12px}.promo-form h4{margin:16px 0 8px;color:#234865;font-size:13px}.promo-matrix-wrap{width:100%;overflow-x:auto;border:1px solid #d6e3ed;border-radius:11px;background:white}.promo-matrix{border-collapse:collapse;min-width:100%;font-size:11px}.promo-matrix th,.promo-matrix td{padding:7px;border-bottom:1px solid #e7eef4;border-right:1px solid #e7eef4;text-align:center;white-space:nowrap}.promo-matrix thead th{background:#eaf2f8;color:#234865;position:sticky;top:0}.promo-matrix tbody th{background:#f5f8fb;color:#234865}.promo-matrix-input{width:100px;min-height:36px;padding:7px;font-size:12px;text-align:right} .promo-matrix .promo-cashpo-row .promo-cash-input{display:block;width:100%;max-width:none;min-width:100%;box-sizing:border-box;text-align:left}
 
     .promo-form{margin:14px 0;padding:16px;border:1px solid rgba(164,190,211,.65);border-radius:17px;background:rgba(244,249,253,.92);text-align:left}
@@ -2147,7 +2147,7 @@
       <p id="loadingMessage" class="loading-message">Preparing your document...</p>
       <div class="loading-progress-meta"><span id="loadingProgressLabel">Preparing request</span><strong id="loadingProgressPercent">8%</strong></div>
       <div class="loading-track" role="progressbar" aria-label="Estimated request progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8" id="loadingProgressTrack"><div id="loadingProgressFill" class="loading-progress-fill"></div></div>
-      <p class="loading-progress-note">Progress estimate · Waiting time depends on the server and Google Sheets.</p>
+      <p class="loading-progress-note">Progress estimate · Please wait while we complete your request.</p>
     </div>
   </div>
 
@@ -2462,7 +2462,7 @@
       generate: "Generating your PDF...",
       creditApplication: "Preparing your application PDF...",
       promoInventoryGet: "Loading promotions and vehicle information...",
-      srpEditorSave: "Updating SRP in the master sheet...",
+      srpEditorSave: "Updating vehicle pricing...",
       promoInventorySave: "Saving your update..."
     };
 
@@ -2760,7 +2760,7 @@
       $("loadingMessage").textContent = action === "promoInventorySave"
         ? "Saving changes and synchronizing your data..."
         : (loadingMessages[action] || "Processing your request...");
-      setLoadingProgress(85, "Waiting for Google Sheets / server response");
+      setLoadingProgress(85, "Finalizing your update...");
       $("bridgeForm").submit();
     }
 
@@ -5196,10 +5196,10 @@
     border-color:rgba(131,202,255,.68) !important;
     box-shadow:0 3px 12px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.22) !important;
   }
+  html[data-rer-theme="dark"] body .promo-empty { color:#173b5b !important; background:#eaf3fb !important; border-color:#b9d2e6 !important; }
   html[data-rer-theme="dark"] body .promo-note,
   html[data-rer-theme="dark"] body .promo-sort-hint,
   html[data-rer-theme="dark"] body .bank-sort-hint,
-  html[data-rer-theme="dark"] body .promo-empty,
   html[data-rer-theme="dark"] body .promo-form .field > small,
   html[data-rer-theme="dark"] body .field > small,
   html[data-rer-theme="dark"] body .credit-field small,
