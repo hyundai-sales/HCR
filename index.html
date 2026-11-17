@@ -3719,6 +3719,44 @@
       return toast;
     }
 
+    // Reusable in-app alert: avoids the browser's native "website says" header.
+    function showTeamRerAlert(message, title) {
+      const toast = ensureCreditToast();
+      toast.className = "credit-toast error show";
+      $("creditToastBackdrop")?.classList.add("show");
+      toast.replaceChildren();
+
+      const head = document.createElement("div");
+      head.className = "credit-toast-head";
+      const icon = document.createElement("span");
+      icon.className = "credit-toast-icon";
+      icon.textContent = "!";
+      const heading = document.createElement("h3");
+      heading.className = "credit-toast-title";
+      heading.textContent = title || "Please check your selection";
+      head.append(icon, heading);
+      toast.appendChild(head);
+
+      const copy = document.createElement("p");
+      copy.className = "credit-toast-copy";
+      copy.style.fontSize = "14px";
+      copy.style.lineHeight = "1.55";
+      copy.textContent = message;
+      toast.appendChild(copy);
+
+      const actions = document.createElement("div");
+      actions.className = "credit-toast-actions";
+      const ok = document.createElement("button");
+      ok.type = "button";
+      ok.className = "credit-toast-close";
+      ok.style.width = "100%";
+      ok.textContent = "OK";
+      ok.addEventListener("click", hideCreditToast);
+      actions.appendChild(ok);
+      toast.appendChild(actions);
+      ok.focus({ preventScroll:true });
+    }
+
     function hideCreditToast() {
       const toast = $("creditToast");
       const backdrop = $("creditToastBackdrop");
@@ -4973,10 +5011,10 @@
     }
     $("openQuotePreviewBtn").addEventListener("click", () => {
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
-        alert("Please select a vehicle model and variant first."); return;
+        showTeamRerAlert("Please select a vehicle model and variant first.", "Vehicle details required"); return;
       }
       if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
-        alert("Please select a partner bank for this transaction."); $("quotePartnerBank").focus(); return;
+        showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
       }
       updateQuotePreview();
       $("quotePreviewWrap").classList.remove("hidden");
@@ -4987,10 +5025,10 @@
     });
     $("printQuoteBtn").addEventListener("click", () => {
       if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
-        alert("Please select a vehicle model and variant first."); return;
+        showTeamRerAlert("Please select a vehicle model and variant first.", "Vehicle details required"); return;
       }
       if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
-        alert("Please select a partner bank for this transaction."); $("quotePartnerBank").focus(); return;
+        showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
       }
       updateQuotePreview();
       document.body.classList.add("printing-quote");
