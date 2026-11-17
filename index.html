@@ -2492,11 +2492,15 @@
           <p class="app-caption">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
-              <div class="credit-field full">
+              <div class="credit-field full" id="creditConsultantSelectWrap">
                 <label for="creditConsultant">Sales Consultant</label>
                 <select id="creditConsultant" required>
                   <option value="">Loading Sales Consultants...</option>
                 </select>
+              </div>
+              <div class="credit-field full hidden" id="creditConsultantUserWrap">
+                <label for="creditConsultantUserDisplay">Sales Consultant</label>
+                <input id="creditConsultantUserDisplay" type="text" readonly aria-readonly="true">
               </div>
               <div class="credit-field full credit-mode-field">
                 <label>Application Mode</label>
@@ -2528,11 +2532,15 @@
           <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
           <div class="credit-section">
             <div class="credit-grid">
-              <div class="credit-field full">
+              <div class="credit-field full" id="creditHistoryConsultantFilterWrap">
                 <label for="creditHistoryConsultantFilter">Sales Consultant</label>
                 <select id="creditHistoryConsultantFilter">
                   <option value="">Loading Sales Consultants...</option>
                 </select>
+              </div>
+              <div class="credit-field full hidden" id="creditHistoryConsultantUserWrap">
+                <label for="creditHistoryConsultantUserDisplay">Sales Consultant</label>
+                <input id="creditHistoryConsultantUserDisplay" type="text" readonly aria-readonly="true">
               </div>
             </div>
             <button id="refreshCreditHistoryBtn" type="button">Refresh Applications</button>
@@ -2734,27 +2742,37 @@
     function isSuperAdminSession() {
       return ["super admin","superadmin"].includes(normalizedSessionRole());
     }
-    function showAccessDenied(message) {
-      // Use the TEAM RER in-app modal instead of the browser alert,
-      // which adds a distracting "hyundai-sales.github.io says" heading.
-      showTeamRerAlert(message || "Team RER Admin Access Only.", "Access Restricted");
+    function isRegularUserSession() {
+      return normalizedSessionRole() === "user";
     }
 
-    function syncRoleRestrictedModules() {
-      const adminAccess = isAdminSession();
-      const superAdminAccess = isSuperAdminSession();
+    function syncCreditConsultantForRole() {
+      const userRole = isRegularUserSession();
+      const name = String((authorizedUser && authorizedUser.name) || "").trim();
+      const select = $("creditConsultant");
+      const selectWrap = $("creditConsultantSelectWrap");
+      const userWrap = $("creditConsultantUserWrap");
+      const userDisplay = $("creditConsultantUserDisplay");
+      if (selectWrap) selectWrap.classList.toggle("hidden", userRole);
+      if (userWrap) userWrap.classList.toggle("hidden", !userRole);
+      if (userDisplay) userDisplay.value = userRole ? name : "";
+      if (select && userRole) {
+        select.value = name;
+        select.disabled = true;
+      } else if (select) {
+        select.disabled = false;
+      }
 
-      const auditButton = $("auditTabBtn");
-      const usersButton = $("userManagementTabBtn");
-      const edgeUsersButton = $("edgeUserManagementBtn");
+      const historySelectWrap = $("creditHistoryConsultantFilterWrap");
+      const historyUserWrap = $("creditHistoryConsultantUserWrap");
+      const historyDisplay = $("creditHistoryConsultantUserDisplay");
+      if (historySelectWrap) historySelectWrap.classList.toggle("hidden", userRole);
+      if (historyUserWrap) historyUserWrap.classList.toggle("hidden", !userRole);
+      if (historyDisplay) historyDisplay.value = userRole ? name : "";
+    }
 
-      if (auditButton) auditButton.classList.toggle("hidden", !adminAccess);
-      if (usersButton) usersButton.classList.toggle("hidden", !superAdminAccess);
-      if (edgeUsersButton) edgeUsersButton.classList.toggle("hidden", !superAdminAccess);
-
-      // Close restricted pages if the active session does not have permission.
-      if (!adminAccess && $("auditPage")) $("auditPage").classList.add("hidden");
-      if (!superAdminAccess && $("userManagementPage")) $("userManagementPage").classList.add("hidden");
+    function showAccessDenied(message) {
+      window.alert(message || "Team RER Admin Access Only.");
     }
 
     function recordUserActivity() {
@@ -3072,7 +3090,10 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
-        syncRoleRestrictedModules();
+        syncCreditConsultantForRole();
+        const superAdminAccess = isSuperAdminSession();
+        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
         adminPinEntry = "";
@@ -3100,10 +3121,11 @@
       if (action === "appData") {
         const data = event.data.appData;
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
-        // Module visibility is based on the verified role returned at sign-in.
-        // Activity Logs: Admin + Super Admin. User Management: Super Admin only.
-        syncRoleRestrictedModules();
+        $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
+        const superAdminAccess = isSuperAdminSession() || data.isSuperAdmin === true;
+        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
@@ -3113,6 +3135,7 @@
           $("roleNote").textContent = "Your registered TEAM RER name will be used.";
         }
         fillSelect($("creditConsultant"), data.consultants || [], "Select Sales Consultant");
+        syncCreditConsultantForRole();
         quotationVehicles = data.vehicles || [];
         const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
         fillSelect($("quoteModel"), models, "Choose vehicle model");
@@ -3805,12 +3828,14 @@
       if (spouseNa) spouseNaCells.forEach(cell => { values[cell] = "N/A"; });
       const vehicleModel = document.querySelector('#creditFormFields [data-cell="E14:I14"]')?.value || "";
       const vehicleVariant = document.querySelector('#creditFormFields [data-vehicle-variant="true"]')?.value || "";
-      const consultant = String($("creditConsultant")?.value || "").trim();
+      const consultant = isRegularUserSession()
+        ? String((authorizedUser && authorizedUser.name) || "").trim()
+        : String($("creditConsultant")?.value || "").trim();
       return {values,checkboxes,vehicleModel,vehicleVariant,spouseNa,consultant};
     }
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); syncCreditConsultantForRole(); buildCreditForm();
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -4169,14 +4194,18 @@
     function populateCreditHistoryConsultantFilter(rows) {
       const select = $("creditHistoryConsultantFilter");
       if (!select) return;
-      const role = String((authorizedUser && authorizedUser.role) || "").trim().toLowerCase().replace(/[ _-]+/g, "");
-      const canSeeAll = role === "superadmin" || role === "admin";
+      syncCreditConsultantForRole();
+      if (isRegularUserSession()) {
+        select.value = String((authorizedUser && authorizedUser.name) || "").trim();
+        select.disabled = true;
+        return;
+      }
       const names = [...new Set((rows || []).map(row => String(row.salesConsultant || "").trim()).filter(Boolean))]
         .sort((a,b) => a.localeCompare(b));
       select.replaceChildren();
       const all = document.createElement("option");
       all.value = "";
-      all.textContent = canSeeAll ? "All Sales Consultants" : (names[0] || "No accessible consultant");
+      all.textContent = "All Sales Consultants";
       select.appendChild(all);
       names.forEach(name => {
         const option = document.createElement("option");
@@ -4184,10 +4213,16 @@
         option.textContent = name;
         select.appendChild(option);
       });
-      if (!canSeeAll && names.length === 1) select.value = names[0];
       select.disabled = false;
     }
     function renderFilteredCreditHistory() {
+      if (isRegularUserSession()) {
+        const ownName = String((authorizedUser && authorizedUser.name) || "").trim().toLowerCase();
+        renderCreditHistory(creditHistoryRows.filter(row =>
+          String(row.salesConsultant || "").trim().toLowerCase() === ownName
+        ));
+        return;
+      }
       const selected = String($("creditHistoryConsultantFilter").value || "").trim().toLowerCase();
       const rows = selected
         ? creditHistoryRows.filter(row => String(row.salesConsultant || "").trim().toLowerCase() === selected)
@@ -5376,55 +5411,37 @@
       $("saveUserBtn").textContent = record ? "Save Changes" : "Add User";
       const fields = $("userEditorFields");
       fields.replaceChildren();
-      // The app editor intentionally exposes only the four account fields.
-      // The spreadsheet may contain additional columns; they remain untouched.
-      const editorFields = [
-        { key: "name", label: "Name" },
-        { key: "email address", label: "Email Address" },
-        { key: "role", label: "Role" },
-        { key: "active", label: "Status" }
-      ];
-      editorFields.forEach((field, fieldIndex) => {
-        const headerIndex = userManagementData.headers.findIndex(
-          header => String(header).trim().toLowerCase() === field.key
-        );
-        if (headerIndex < 0) return;
-        const header = userManagementData.headers[headerIndex];
+      userManagementData.headers.forEach(header => {
+        const normalized = String(header).trim().toLowerCase();
         const value = values[header] ?? "";
         const wrap = document.createElement("div");
-        wrap.className = "user-editor-field" +
-          (field.key === "email address" ? " user-field-wide" : "");
+        wrap.className = "user-editor-field" + (normalized.includes("address") || normalized.includes("email") ? " user-field-wide" : "");
         const label = document.createElement("label");
-        label.textContent = field.label;
-        label.htmlFor = "userField_" + fieldIndex;
+        label.textContent = header;
+        label.htmlFor = "userField_" + userManagementData.headers.indexOf(header);
         let input;
-        if (field.key === "role") {
+        if (normalized === "role") {
           input = document.createElement("select");
           (userManagementData.roles || ["Super Admin","Admin","User"]).forEach(role => {
-            const option = document.createElement("option");
-            option.value = role;
-            option.textContent = role;
-            input.appendChild(option);
+            const option = document.createElement("option"); option.value = role; option.textContent = role; input.appendChild(option);
           });
           input.value = String(value || "User");
-        } else if (field.key === "active") {
+        } else if (normalized === "active") {
           input = document.createElement("select");
           [["true","Active"],["false","Inactive"]].forEach(([v,t]) => {
-            const option = document.createElement("option");
-            option.value = v;
-            option.textContent = t;
-            input.appendChild(option);
+            const option = document.createElement("option"); option.value = v; option.textContent = t; input.appendChild(option);
           });
           input.value = ["true","yes","1","active"].includes(String(value).toLowerCase()) ? "true" : "false";
         } else {
           input = document.createElement("input");
-          input.type = field.key === "email address" ? "email" : "text";
+          input.type = normalized.includes("date") ? "date" : "text";
           input.value = String(value ?? "");
+          if (normalized === "email address") input.type = "email";
         }
-        input.id = "userField_" + fieldIndex;
+        input.id = "userField_" + userManagementData.headers.indexOf(header);
         input.dataset.userHeader = header;
-        input.required = true;
-        if (record && field.key === "email address") input.autocomplete = "off";
+        input.required = ["name","email address","role","active"].includes(normalized);
+        if (record && normalized === "email address") input.autocomplete = "off";
         wrap.append(label,input);
         fields.appendChild(wrap);
       });
