@@ -3131,10 +3131,14 @@
     }
 
     window.addEventListener("message", event => {
-      // Accept replies only from the hidden Apps Script bridge iframe. Google may
-      // serve HtmlService responses from different script.google* origins, so
-      // the iframe WindowProxy plus the one-time nonce is the reliable check.
-      if (event.source !== $("bridgeFrame").contentWindow) return;
+      // HtmlService may run the returned page in a Google-managed nested frame,
+      // so event.source is not guaranteed to equal the outer bridgeFrame.
+      // Accept only Google Apps Script response origins and require the
+      // unpredictable, one-time request nonce before processing any message.
+      const trustedGoogleResponseOrigin =
+        /^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/i.test(event.origin) ||
+        /^https:\/\/script\.google\.com$/i.test(event.origin);
+      if (!trustedGoogleResponseOrigin) return;
       if (!event.data || typeof event.data !== "object" || event.data.nonce !== pendingNonce) return;
 
       clearPendingRequestTimeout();
