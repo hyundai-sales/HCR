@@ -2472,8 +2472,12 @@
                 </select>
               </div>
               <div class="credit-field full credit-mode-field">
-                <label for="creditApplicationMode">Application Mode</label>
-                <select id="creditApplicationMode">
+                <label>Application Mode</label>
+                <div class="credit-mode-buttons" role="group" aria-label="Application Mode">
+                  <button id="creditModeNewBtn" class="credit-mode-choice is-active" type="button" aria-pressed="true">New</button>
+                  <button id="creditModeEditBtn" class="credit-mode-choice" type="button" aria-pressed="false">Edit</button>
+                </div>
+                <select id="creditApplicationMode" class="hidden" aria-hidden="true" tabindex="-1">
                   <option value="new">New</option>
                   <option value="edit">Edit</option>
                 </select>
@@ -4038,7 +4042,22 @@
         .catch(error => setMessage($("creditMessage"), error.message, "error"));
     }
 
+    function syncCreditModeButtons() {
+      const editing = $("creditApplicationMode").value === "edit";
+      $("creditModeNewBtn").classList.toggle("is-active", !editing);
+      $("creditModeEditBtn").classList.toggle("is-active", editing);
+      $("creditModeNewBtn").setAttribute("aria-pressed", String(!editing));
+      $("creditModeEditBtn").setAttribute("aria-pressed", String(editing));
+    }
+    function chooseCreditMode(mode) {
+      $("creditApplicationMode").value = mode;
+      syncCreditModeButtons();
+      $("creditApplicationMode").dispatchEvent(new Event("change", {bubbles:true}));
+    }
+    $("creditModeNewBtn").addEventListener("click", () => chooseCreditMode("new"));
+    $("creditModeEditBtn").addEventListener("click", () => chooseCreditMode("edit"));
     $("creditApplicationMode").addEventListener("change", () => {
+      syncCreditModeButtons();
       const editing = $("creditApplicationMode").value === "edit";
       $("creditPreviousApplicationWrap").classList.toggle("hidden", !editing);
       if (editing) {
@@ -4112,7 +4131,7 @@
     function applyCreditHistoryRecord(record) {
       const data=record.data || {};
       currentCreditApplicationId=record.applicationId || "";
-      if ($("creditApplicationMode")) $("creditApplicationMode").value = "edit";
+      if ($("creditApplicationMode")) { $("creditApplicationMode").value = "edit"; syncCreditModeButtons(); }
       if ($("creditPreviousApplicationWrap")) $("creditPreviousApplicationWrap").classList.remove("hidden");
       $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.add("hidden");
       $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden");
@@ -6210,8 +6229,22 @@
 .team-rer-update-card button{width:100%;min-height:49px;border:0;border-radius:13px;background:linear-gradient(180deg,#0875b8,#004c82);color:#fff;font-size:15px;font-weight:800;line-height:1;font-family:inherit;box-shadow:0 6px 16px rgba(0,76,130,.24);cursor:pointer}
 .team-rer-update-card button:disabled{opacity:.78;cursor:wait}
 
-    /* Credit Application New/Edit selector */
+    /* Credit Application New/Edit button selector */
     .credit-mode-field { margin-top: 12px; }
+    .credit-mode-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+    .credit-mode-choice {
+      min-height:48px; border:1px solid rgba(190,215,238,.34); border-radius:13px;
+      color:#edf6ff !important; font-weight:800; letter-spacing:.2px;
+      background:linear-gradient(150deg,rgba(45,69,91,.88),rgba(18,35,54,.94));
+      box-shadow:0 5px 13px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.20);
+      transition:background .18s ease, box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .credit-mode-choice.is-active {
+      color:#ffffff !important; border-color:rgba(134,255,174,.9);
+      background:linear-gradient(155deg,#28a85c 0%,#128044 55%,#086333 100%);
+      box-shadow:0 0 0 2px rgba(75,220,125,.16),0 7px 18px rgba(0,90,43,.34),inset 0 1px 0 rgba(255,255,255,.42),inset 0 -2px 0 rgba(0,45,20,.20);
+    }
+    .credit-mode-choice:active { transform:translateY(1px); }
     .credit-mode-hint { margin: 7px 2px 0; color: var(--muted, #aab8c8); font-size: .82rem; }
     #creditPreviousApplicationWrap { margin-top: 14px; }
     #creditPreviousApplication { width: 100%; }
