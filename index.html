@@ -4136,7 +4136,8 @@
         '<option value="ALL_BANKS">ALL BANKS</option>',
         ...banks.map(b => `<option value="${promoEsc(b.bankName)}">${promoEsc(b.bankName)}${String(b.status || "Active").toLowerCase() === "active" ? "" : " (Inactive)"}</option>`)
       ].join("");
-      const dpOptions = (promoInventoryData.downpaymentOptions || ["20","25","30","35","40","45","50"]).map(v => `<option value="${promoEsc(v)}">${promoEsc(v)}% DP Offer</option>`).join("");
+      const configuredDpOptions = (promoInventoryData.downpaymentOptions || ["20","25","30","35","40","45","50"]).map(String);
+      const dpOptions = `<option value="ALL_DP">ALL DOWNPAYMENTS</option>` + configuredDpOptions.map(v => `<option value="${promoEsc(v)}">${promoEsc(v)}% DP Offer</option>`).join("");
       const form = document.createElement("form");
       form.className = "promo-form promo-hcr-frame";
       form.id = "batchPromoEditor";
@@ -4246,11 +4247,15 @@
         const useTargetFields = activeFields.some(([id]) => id !== "batchUseFreebies");
         const batch = new Map();
         const bankKey = bank === "ALL_BANKS" ? "ALL_BANKS" : bank;
+        const targetTypes = type === "ALL_DP" ? configuredDpOptions : [type];
         const makeKey = (dp, bankName, id) => id ? `id:${id}` : `key:${dp}|${bankName}`;
         selected.forEach(vehicle => {
           const existing = (promoInventoryData.promotions || []).filter(p => p.model === vehicle.model && p.variant === vehicle.variant);
           if (useFreebies) {
-            existing.forEach(old => {
+            const freebiesTargets = type === "ALL_DP"
+              ? existing.filter(p => configuredDpOptions.includes(String(p.applicableDownpayment || "")))
+              : existing;
+            freebiesTargets.forEach(old => {
               const k = makeKey(old.applicableDownpayment, (old.applicableBanks || ["ALL_BANKS"])[0], old.id);
               const copy = {...old, applicableBanks:[...(old.applicableBanks || ["ALL_BANKS"])]};
               const incoming = form.querySelector("#batchFreebies").value.trim();
@@ -4265,23 +4270,25 @@
               batch.set(k, copy);
             });
           }
-          if (useTargetFields || (useFreebies && !existing.length)) {
-            const old = existing.find(p => String(p.applicableDownpayment || "") === type && (p.applicableBanks || []).includes(bankKey));
-            const k = makeKey(type, bankKey, old?.id);
-            const target = batch.get(k) || (old ? {...old, applicableBanks:[...(old.applicableBanks || [bankKey])]} : {
-              id:"", model:vehicle.model, variant:vehicle.variant, applicableDownpayment:type,
-              applicableBanks:[bankKey], downpaymentOffer:"", cashDiscount:"", fuelVoucher:"",
-              freebies:"", validFrom:"", validUntil:"", description:"", status:"Active", tplIncluded:false
+          if (useTargetFields || (useFreebies && targetTypes.some(dp => !existing.some(p => String(p.applicableDownpayment || "") === dp && (p.applicableBanks || []).includes(bankKey))))) {
+            targetTypes.forEach(targetType => {
+              const old = existing.find(p => String(p.applicableDownpayment || "") === targetType && (p.applicableBanks || []).includes(bankKey));
+              const k = makeKey(targetType, bankKey, old?.id);
+              const target = batch.get(k) || (old ? {...old, applicableBanks:[...(old.applicableBanks || [bankKey])]} : {
+                id:"", model:vehicle.model, variant:vehicle.variant, applicableDownpayment:targetType,
+                applicableBanks:[bankKey], downpaymentOffer:"", cashDiscount:"", fuelVoucher:"",
+                freebies:"", validFrom:"", validUntil:"", description:"", status:"Active", tplIncluded:false
+              });
+              if (form.querySelector("#batchUseDpOffer").checked) target.downpaymentOffer = form.querySelector("#batchDpOffer").value.trim();
+              if (form.querySelector("#batchUseCashDiscount").checked) target.cashDiscount = form.querySelector("#batchCashDiscount").value.trim();
+              if (form.querySelector("#batchUseFuelVoucher").checked) target.fuelVoucher = form.querySelector("#batchFuelVoucher").value.trim();
+              if (useFreebies && !old) target.freebies = form.querySelector("#batchFreebies").value.trim();
+              if (form.querySelector("#batchUseValidFrom").checked) target.validFrom = form.querySelector("#batchValidFrom").value;
+              if (form.querySelector("#batchUseValidUntil").checked) target.validUntil = form.querySelector("#batchValidUntil").value;
+              if (form.querySelector("#batchUseDescription").checked) target.description = form.querySelector("#batchDescription").value.trim();
+              if (form.querySelector("#batchUseStatus").checked) target.status = form.querySelector("#batchStatus").value;
+              batch.set(k, target);
             });
-            if (form.querySelector("#batchUseDpOffer").checked) target.downpaymentOffer = form.querySelector("#batchDpOffer").value.trim();
-            if (form.querySelector("#batchUseCashDiscount").checked) target.cashDiscount = form.querySelector("#batchCashDiscount").value.trim();
-            if (form.querySelector("#batchUseFuelVoucher").checked) target.fuelVoucher = form.querySelector("#batchFuelVoucher").value.trim();
-            if (useFreebies && !old) target.freebies = form.querySelector("#batchFreebies").value.trim();
-            if (form.querySelector("#batchUseValidFrom").checked) target.validFrom = form.querySelector("#batchValidFrom").value;
-            if (form.querySelector("#batchUseValidUntil").checked) target.validUntil = form.querySelector("#batchValidUntil").value;
-            if (form.querySelector("#batchUseDescription").checked) target.description = form.querySelector("#batchDescription").value.trim();
-            if (form.querySelector("#batchUseStatus").checked) target.status = form.querySelector("#batchStatus").value;
-            batch.set(k, target);
           }
         });
         const records = [...batch.values()];
@@ -4289,7 +4296,7 @@
         if (records.length > 200) { setMessage($("promoModuleMessage"), `This batch would update ${records.length} records. The current safe limit is 200 per save; narrow your selection.`, "error"); return; }
         const selectedFieldNames = activeFields.map(([id]) => id.replace("batchUse", ""));
         const variantPreview = selected.map(v => `${v.model} — ${v.variant}`).join("\n");
-        const summary = `BATCH UPDATE PREVIEW\n\nVehicles (${selected.length}):\n${variantPreview}\n\nTarget: ${bank === "ALL_BANKS" ? "ALL BANKS" : bank} · ${type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP"}\nFields: ${selectedFieldNames.join(", ")}\nRecords to save: ${records.length}\n\nOnly checked fields will be changed. Continue?`;
+        const summary = `BATCH UPDATE PREVIEW\n\nVehicles (${selected.length}):\n${variantPreview}\n\nTarget: ${bank === "ALL_BANKS" ? "ALL BANKS" : bank} · ${type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP"}\nFields: ${selectedFieldNames.join(", ")}\nRecords to save: ${records.length}\n\nOnly checked fields will be changed. Continue?`;
         if (!window.confirm(summary)) return;
         const save = form.querySelector("#batchPromoSave");
         save.disabled = true; save.textContent = "Saving batch…";
@@ -4305,7 +4312,7 @@
         const audit = {
           kind: "batchPromotion",
           targetBank: bank === "ALL_BANKS" ? "ALL BANKS" : bank,
-          offerType: type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP",
+          offerType: type === "ALL_DP" ? "ALL DOWNPAYMENTS" : type === "CASH" ? "CASH" : type === "BANK_PO" ? "BANK P.O." : type + "% DP",
           variants: selected.map(v => `${v.model} / ${v.variant}`),
           changes: auditChanges
         };
