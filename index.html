@@ -2450,7 +2450,7 @@
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Credit Application</h2>
-          <p class="app-caption">Fill in the application details. Customer information is only used temporarily to generate the PDF.</p>
+          <p class="app-caption">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
               <div class="credit-field full">
@@ -3294,7 +3294,7 @@
         ["E35:G35","Birthday","text"], ["O35:R35","Citizenship","text"], ["T35:W35","Mobile Number","tel"]
       ]},
       { section:"Address and Residence", fields:[
-        ["F37:P39","Home Address","textarea"], ["T37:W37","Telephone Number","tel"],
+        ["F37:P39","Home Address","textarea"], ["T37:W37","TEL. NO.","tel"],
         ["T39:W39","Length of Stay","text"], ["J41:P41","Mortgagee (if mortgaged)","text"]
       ]},
       { section:"Principal Borrower Employment", fields:[
@@ -3616,7 +3616,10 @@
 
     function collectCreditApplication() {
       const values={};
-      document.querySelectorAll("#creditFormFields [data-cell]").forEach(el=>{ values[el.dataset.cell]=el.value; });
+      document.querySelectorAll("#creditFormFields [data-cell]").forEach(el=>{
+        // Hidden repeatable PDF rows are explicitly marked N/A so their mapped cells are never blank.
+        values[el.dataset.cell] = el.closest("[data-repeat-index][hidden]") ? "N/A" : el.value;
+      });
       const checkboxes={};
       creditChoiceGroups.forEach((group,index)=>{
         const selected=document.querySelector('input[name="credit_choice_'+index+'"]:checked');
@@ -3880,20 +3883,55 @@
 
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
-      const requiredFields = [
-        ["E25:H25","Borrower's Last Name"],
-        ["L25:P25","Borrower's First Name"],
+      const missingItems = [];
+
+      // Every visible, enabled form field must contain a value. Hidden repeatable PDF rows
+      // are explicitly written as N/A by collectCreditApplication().
+      document.querySelectorAll("#creditFormFields [data-cell]").forEach(field => {
+        if (field.disabled || field.closest("[hidden]")) return;
+        if (!String(field.value || "").trim()) {
+          const wrapper = field.closest(".credit-field");
+          const label = wrapper?.querySelector("label")?.textContent?.trim() || field.dataset.cell;
+          missingItems.push({cell:field.dataset.cell,label});
+        }
+      });
+
+      // Require one selection in every applicable choice group.
+      creditChoiceGroups.forEach((group,index) => {
+        if (index === 2 && data.spouseNa) return;
+        if (!document.querySelector('input[name="credit_choice_' + index + '"]:checked')) {
+          missingItems.push({selector:'input[name="credit_choice_' + index + '"]',label:group.title});
+        }
+      });
+
+      if (!data.consultant) missingItems.push({selector:"#creditConsultant",label:"Sales Consultant"});
+      if (!data.vehicleVariant) missingItems.push({selector:'#creditFormFields [data-vehicle-variant="true"]',label:"Vehicle Variant"});
+
+      // Validate common contact formats in addition to requiring a value.
+      const validPhone = value => {
+        const digits = String(value || "").replace(/\D/g, "");
+        return digits.length >= 7 && digits.length <= 15;
+      };
+      [
         ["T29:W29","Borrower's Mobile Number"],
-        ["E14:I14","Vehicle Model"]
-      ];
-      const missingItems = requiredFields
-        .filter(([cell]) => !String(data.values[cell] || "").trim())
-        .map(([cell,label]) => ({cell,label}));
-      if (!data.consultant) {
-        missingItems.push({selector:"#creditConsultant",label:"Sales Consultant"});
-      }
-      if (!data.vehicleVariant) {
-        missingItems.push({selector:'#creditFormFields [data-vehicle-variant="true"]',label:"Vehicle Variant"});
+        ["T37:W37","TEL. NO."],
+        ["T35:W35","Co-maker Mobile Number"],
+        ["U51:W51","Company Telephone"],
+        ["U59:W59","Co-maker Company Telephone"]
+      ].forEach(([cell,label]) => {
+        if (data.spouseNa && ["T35:W35","U59:W59"].includes(cell)) return;
+        const value = String(data.values[cell] || "").trim();
+        const optionalLine = ["T37:W37","U51:W51","U59:W59"].includes(cell);
+        if (value && value.toUpperCase() !== "N/A" && !validPhone(value)) {
+          missingItems.push({cell,label:label + " (enter a valid phone number or N/A if unavailable)"});
+        }
+        if (!optionalLine && value.toUpperCase() === "N/A") {
+          missingItems.push({cell,label:label + " (a valid phone number is required)"});
+        }
+      });
+      const email = String(data.values["E43"] || "").trim();
+      if (email && email.toUpperCase() !== "N/A" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        missingItems.push({cell:"E43",label:"Email Address (enter a valid email address)"});
       }
 
       // Unless N/A is explicitly selected, all co-maker details are required.
@@ -3920,7 +3958,7 @@
       if (missingItems.length) {
         showCreditFieldErrors(
           missingItems,
-          "Complete the required fields. Select any item to jump straight to it."
+          "Complete every field. Enter N/A where a detail does not apply, and select any item to jump straight to it."
         );
         $("generateCreditBtn").disabled = false;
         return;
