@@ -3011,14 +3011,6 @@
     }
 
     let pendingRequestShowsLoading = true;
-    let pendingRequestTimeout = null;
-
-    function clearPendingRequestTimeout() {
-      if (pendingRequestTimeout !== null) {
-        window.clearTimeout(pendingRequestTimeout);
-        pendingRequestTimeout = null;
-      }
-    }
 
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
@@ -3049,24 +3041,6 @@
           : (loadingMessages[action] || "Processing your request...");
         setLoadingProgress(85, "Finalizing your update...");
       }
-      clearPendingRequestTimeout();
-      pendingRequestTimeout = window.setTimeout(() => {
-        if (pendingNonce !== nonce) return;
-        pendingNonce = null;
-        pendingAction = null;
-        pendingRequestTimeout = null;
-        $("tokenField").value = "";
-        $("nonceField").value = "";
-        if (showRequestLoading) hideLoading();
-        const message = "Google Apps Script did not return a response within 45 seconds. Please try again. If this continues, contact your TEAM RER administrator.";
-        if (action === "authorize") {
-          authorizationInProgress = false;
-          showLoginError(message);
-        } else {
-          showTeamRerDynamicIsland(message);
-          setMessage($("resultMessage"), message, "error");
-        }
-      }, 45000);
       $("bridgeForm").submit();
     }
 
@@ -3131,17 +3105,9 @@
     }
 
     window.addEventListener("message", event => {
-      // HtmlService may run the returned page in a Google-managed nested frame,
-      // so event.source is not guaranteed to equal the outer bridgeFrame.
-      // Accept only Google Apps Script response origins and require the
-      // unpredictable, one-time request nonce before processing any message.
-      const trustedGoogleResponseOrigin =
-        /^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/i.test(event.origin) ||
-        /^https:\/\/script\.google\.com$/i.test(event.origin);
-      if (!trustedGoogleResponseOrigin) return;
-      if (!event.data || typeof event.data !== "object" || event.data.nonce !== pendingNonce) return;
+      if (!/^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/i.test(event.origin)) return;
+      if (!event.data || event.data.nonce !== pendingNonce) return;
 
-      clearPendingRequestTimeout();
       const action = pendingAction;
       if (pendingRequestShowsLoading) hideLoading();
       pendingRequestShowsLoading = true;
@@ -3227,8 +3193,7 @@
         syncCreditConsultantForRole();
         const superAdminAccess = isSuperAdminSession();
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
-        const orgAddButton = $("orgAddBtn");
-        if (orgAddButton) orgAddButton.classList.toggle("hidden", !isAdminSession());
+        $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
@@ -6023,7 +5988,6 @@
         $("adminLockScreen").classList.add("hidden");
         $("adminLockScreen").setAttribute("aria-hidden", "true");
         $("adminManualLock").classList.add("hidden");
-        clearPendingRequestTimeout();
         pendingNonce = null;
         pendingAction = null;
         $("appSection").classList.add("hidden");
@@ -6904,5 +6868,70 @@
 
   .org-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px}.org-head .section-title{margin-bottom:4px}.org-tree{overflow-x:auto;padding:18px 4px 28px;text-align:center}.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;padding:0 10px}.org-children{display:flex;justify-content:center;align-items:flex-start;gap:18px;position:relative;padding-top:28px;margin-top:8px}.org-children:before{content:"";position:absolute;top:0;left:50%;height:14px;border-left:2px solid #9bb4c9}.org-children>.org-branch:before{content:"";position:absolute;top:0;height:14px;border-left:2px solid #9bb4c9}.org-person{width:190px;max-width:190px;min-height:175px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 12px;border:1px solid #c8d8e6;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(24,65,99,.09);color:#173f60}.org-avatar{width:66px;height:66px;object-fit:cover;border-radius:50%;border:3px solid #e3edf5}.org-avatar-empty{display:grid;place-items:center;background:#eaf2f8;color:#1a527e;font-size:24px;font-weight:800}.org-person strong{font-size:14px;line-height:1.25;overflow-wrap:anywhere}.org-person>span{font-size:12px;color:#57738a;line-height:1.3}.org-edit-btn{margin-top:3px;padding:5px 13px;border:1px solid #9bb4c9;border-radius:8px;background:#f2f7fb;color:#174c75;font-size:11px;font-weight:700}.org-editor{max-width:520px;margin:18px auto;padding:18px;border:1px solid #c8d8e6;border-radius:14px;background:#f8fbfd}.org-editor form{display:grid;gap:8px}.org-editor label{font-size:12px;font-weight:750;color:#244e6c}.org-editor input,.org-editor select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #a9bfd1;border-radius:8px;background:#fff;color:#173f60}.org-image-preview{min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed #b5c8d8;border-radius:10px;color:#71869a;font-size:12px}.org-image-preview img{width:82px;height:82px;object-fit:cover;border-radius:50%}.org-editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.org-editor-actions button{flex:1;min-width:110px}.org-editor-actions .hidden{display:none!important}@media(max-width:600px){.org-children{gap:8px}.org-person{width:150px;max-width:150px;padding:11px 8px}.org-avatar{width:56px;height:56px}}
 </style>
+
+<style id="team-rer-org-editor-readability-fix">
+  /* Organizational Chart editor: light panel with consistently dark, readable form text. */
+  html[data-rer-theme="dark"] body #orgChartEditor {
+    background: #f8fbfd !important;
+    color: #173f60 !important;
+    border: 1px solid #c8d8e6 !important;
+    box-shadow: 0 10px 28px rgba(0,0,0,.22) !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor h3,
+  html[data-rer-theme="dark"] body #orgChartEditor label {
+    color: #173f60 !important;
+    -webkit-text-fill-color: #173f60 !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor label {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+    margin: 3px 0 2px !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor input:not([type="hidden"]),
+  html[data-rer-theme="dark"] body #orgChartEditor select {
+    color: #173f60 !important;
+    -webkit-text-fill-color: #173f60 !important;
+    background: #ffffff !important;
+    border: 1px solid #9eb5c8 !important;
+    border-radius: 9px !important;
+    box-shadow: inset 0 1px 2px rgba(20,55,82,.06) !important;
+    color-scheme: light !important;
+    opacity: 1 !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor input::placeholder {
+    color: #71869a !important;
+    -webkit-text-fill-color: #71869a !important;
+    opacity: 1 !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor input[type="file"] {
+    padding: 9px !important;
+    font-size: 14px !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor select option {
+    color: #173f60 !important;
+    background: #ffffff !important;
+  }
+  html[data-rer-theme="dark"] body #orgImagePreview {
+    color: #526b80 !important;
+    background: #ffffff !important;
+    border-color: #a9bfd1 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor .org-editor-actions button {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+  }
+  html[data-rer-theme="dark"] body #orgChartEditor .org-editor-actions .secondary {
+    color: #edf5ff !important;
+    -webkit-text-fill-color: #edf5ff !important;
+  }
+</style>
+
 </body>
 </html>
