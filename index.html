@@ -6294,7 +6294,7 @@
         const target = button.dataset.edgeTarget;
         if (target === "home") { goHome(); return; }
         if (target === "users" && !isSuperAdminSession()) { closePanel(); showAccessDenied("Team RER Super Admin Access Only."); return; }
-        if ((target === "audit" || target === "org") && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
+        if (target === "audit" && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
         if (!moduleButtons[target] || target === activeModule) { closePanel(); return; }
         const switchNow = () => goToModule(target);
         if (activeModule === "credit" && typeof creditFormHasEntries === "function" && creditFormHasEntries()) {
