@@ -2368,6 +2368,67 @@
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
   </style>
 
+<style id="team-rer-final-navigation-and-quotation-print-fix">
+/* Restore the requested top navigation buttons in these two modules.
+   The floating edge menu remains available as well. */
+#appSection #backToMenuFromPdf,
+#appSection #backToMenuFromQuote {
+  display:inline-flex !important;
+  visibility:visible !important;
+  position:relative !important;
+  z-index:5 !important;
+  margin:0 0 14px !important;
+}
+@media print {
+  html,
+  body.printing-quote {
+    background:#fff !important;
+    background-image:none !important;
+  }
+  /* Hide every app decoration, then reveal only the quotation and its
+     structural ancestors. This prevents the dark app/footer strip printing. */
+  body.printing-quote * {
+    visibility:hidden !important;
+    background-image:none !important;
+    box-shadow:none !important;
+  }
+  body.printing-quote #appSection,
+  body.printing-quote #quotePage,
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-quote #quotePreview,
+  body.printing-quote #quotePreview * {
+    visibility:visible !important;
+  }
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-quote #quotePreview {
+    background:#fff !important;
+    background-image:none !important;
+    color:#1f2937 !important;
+    border-color:transparent !important;
+  }
+  body.printing-quote #quotePreview * {
+    background-color:transparent !important;
+    background-image:none !important;
+    color:#1f2937 !important;
+  }
+  body.printing-quote #quotePreview::before,
+  body.printing-quote #quotePreview::after,
+  body.printing-quote #quotePreview *::before,
+  body.printing-quote #quotePreview *::after {
+    display:none !important;
+    content:none !important;
+  }
+  body.printing-quote #quotePreviewWrap .quote-preview-head,
+  body.printing-quote #quotePreviewWrap .quote-preview-actions {
+    display:none !important;
+    visibility:hidden !important;
+  }
+}
+</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -3324,7 +3385,18 @@
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
-      const token = await currentUser.getIdToken(true);
+      // Price List PDF requests use the current Firebase token. getIdToken() refreshes
+      // automatically when needed; forcing a refresh on every tap can leave mobile
+      // browsers waiting at the initial 8% loader before the request is submitted.
+      const token = action === "generate"
+        ? await Promise.race([
+            currentUser.getIdToken(),
+            new Promise((_, reject) => window.setTimeout(
+              () => reject(new Error("Secure sign-in is taking too long. Please retry View PDF.")),
+              30000
+            ))
+          ])
+        : await currentUser.getIdToken(true);
       if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
