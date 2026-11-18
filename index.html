@@ -3127,7 +3127,7 @@
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
-      const token = await currentUser.getIdToken(true);
+      const token = await currentUser.getIdToken();
       if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
@@ -7683,5 +7683,4 @@ body.cpl-fullpage-active #teamRerEdgeNav .edge-panel{
 </style>
 </body>
 </html>
-
 
