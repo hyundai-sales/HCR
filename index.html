@@ -1734,26 +1734,6 @@
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
   
-
-/* CPL retrieval readability final: direct element styles complement these overrides */
-#cplPage .cpl-monthly-retrieve select,
-#cplPage .cpl-monthly-retrieve select:disabled,
-#cplPage .cpl-monthly-retrieve select:focus,
-#cplPage .cpl-monthly-retrieve select option {
-  background-color:#edf4fb !important; color:#14283d !important; -webkit-text-fill-color:#14283d !important;
-  opacity:1 !important; filter:none !important; text-shadow:none !important; font-weight:800 !important;
-}
-#cplPage .cpl-monthly-retrieve select:disabled { opacity:1 !important; color:#14283d !important; -webkit-text-fill-color:#14283d !important; }
-#cplPage .cpl-monthly-retrieve label { color:#f4f8ff !important; -webkit-text-fill-color:#f4f8ff !important; opacity:1 !important; font-weight:800 !important; }
-
-/* CPL Monthly retrieval controls: native browser contrast guard */
-#cplPage #cplMonthlyConsultant, #cplPage #cplMonthlyMonth, #cplPage #cplMonthlyYear,
-#cplPage #cplMonthlyConsultant:disabled, #cplPage #cplMonthlyMonth:disabled, #cplPage #cplMonthlyYear:disabled {
-  background:#edf4fb !important; color:#14283d !important; -webkit-text-fill-color:#14283d !important; opacity:1 !important; filter:none !important;
-}
-#cplPage #cplMonthlyConsultant option, #cplPage #cplMonthlyMonth option, #cplPage #cplMonthlyYear option {
-  background:#edf4fb !important; color:#14283d !important; -webkit-text-fill-color:#14283d !important; opacity:1 !important; font-weight:800 !important;
-}
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -2610,7 +2590,7 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary">Clear Selection &amp; New</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
@@ -3618,7 +3598,7 @@
         return;
       }
 
-      if (action === "cplGet") { const preserved=cplMonthlyRetrieved;cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};if(preserved){const consultant=preserved.consultant,month=preserved.month,year=preserved.year;initCplMonthlyRetrieval();setCplConsultant();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=month;$('cplMonthlyYear').value=year;$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}else{cplMonthlyRetrieved=null;initCplForm();initCplMonthlyRetrieval();restoreCplDraft();setCplConsultant();if(isSuperAdminSession()&&$('cplConsultantSelect')){$('cplConsultantSelect').value='';const host=$('cplConsultantSavedEntries');if(host){host.replaceChildren();host.hidden=true;host.style.display='none';}}}attachCplDraftAutosave();renderCplConsultantSavedEntries();renderCplClients();return; }
+      if (action === "cplGet") { const preserved=cplMonthlyRetrieved;cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};if(preserved){const consultant=preserved.consultant,month=preserved.month,year=preserved.year;initCplMonthlyRetrieval();setCplConsultant();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=month;$('cplMonthlyYear').value=year;$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}else{cplMonthlyRetrieved=null;initCplForm();initCplMonthlyRetrieval();restoreCplDraft();setCplConsultant();if(isSuperAdminSession()&&$('cplConsultantSelect')){$('cplConsultantSelect').value='';renderCplConsultantSavedEntries();}}attachCplDraftAutosave();renderCplConsultantSavedEntries();renderCplClients();return; }
       if (action === "cplBlankPdf") {
         const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false;
         const result=event.data.cplBlankPdf||{};
@@ -6234,7 +6214,7 @@
     function renderCplConsultantSavedEntries(){
       const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
       const consultant=isSuperAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim();
-      if(!consultant){host.hidden=true;host.style.display='none';return;}host.hidden=false;host.style.display='';
+      if(!consultant)return;
       const forms=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
       if(!forms.length){const empty=document.createElement('div');empty.className='cpl-saved-empty';empty.textContent='No saved CPL entries for '+consultant+'.';host.appendChild(empty);return;}
       const heading=document.createElement('div');heading.className='cpl-saved-list-heading';heading.textContent='Saved CPL entries · '+consultant;host.appendChild(heading);
@@ -6248,7 +6228,7 @@
         const view=document.createElement('button');view.type='button';view.className='cpl-saved-view';view.textContent='View';
         const details=document.createElement('div');details.className='cpl-saved-client-details hidden';
         Object.keys(labels).forEach(key=>{const value=String(row[key]||'').trim();if(!value)return;const pair=document.createElement('div');pair.className='cpl-saved-detail';const label=document.createElement('small');label.textContent=labels[key];const val=document.createElement('span');val.textContent=value;pair.append(label,val);details.appendChild(pair);});
-        view.addEventListener('click',()=>{const opened=!details.classList.contains('hidden');details.classList.toggle('hidden',opened);view.textContent=opened?'View':'Hide';});
+        view.addEventListener('click',()=>{const opened=!details.classList.contains('hidden');host.querySelectorAll('.cpl-saved-client-details').forEach(d=>d.classList.add('hidden'));host.querySelectorAll('.cpl-saved-view').forEach(b=>b.textContent='View');details.classList.toggle('hidden',opened);view.textContent=opened?'View':'Hide';});
         const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';edit.addEventListener('click',()=>{const date=String(form.date||'');const match=date.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});});
         actions.append(view,edit);item.append(header,actions,details);host.appendChild(item);
       });});
@@ -6268,7 +6248,7 @@
       if($('cplSaveForm'))$('cplSaveForm').textContent='Save CPL';
       clearCplDraft();
     }
-    function initCplMonthlyRetrieval(){const month=$('cplMonthlyMonth'),year=$('cplMonthlyYear'),consultant=$('cplMonthlyConsultant');if(!month||!year||!consultant)return;const styleReadable=(el)=>{el.disabled=false;el.style.setProperty('background-color','#edf4fb','important');el.style.setProperty('color','#14283d','important');el.style.setProperty('-webkit-text-fill-color','#14283d','important');el.style.setProperty('opacity','1','important');el.style.setProperty('filter','none','important');el.style.setProperty('font-size','18px','important');el.style.setProperty('font-weight','800','important');el.style.setProperty('text-shadow','none','important');Array.from(el.options||[]).forEach(opt=>{opt.style.setProperty('background-color','#edf4fb','important');opt.style.setProperty('color','#14283d','important');opt.style.setProperty('-webkit-text-fill-color','#14283d','important');opt.style.setProperty('font-weight','800','important');});};month.replaceChildren();['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((label,i)=>{const o=document.createElement('option');o.value=String(i+1).padStart(2,'0');o.textContent=label;month.appendChild(o);});year.replaceChildren();const current=new Date().getFullYear();for(let y=current-5;y<=current+1;y++){const o=document.createElement('option');o.value=String(y);o.textContent=String(y);year.appendChild(o);}month.value=String(new Date().getMonth()+1).padStart(2,'0');year.value=String(current);consultant.replaceChildren();const first=document.createElement('option');first.value='';first.textContent='Select consultant';consultant.appendChild(first);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;consultant.appendChild(o);});styleReadable(month);styleReadable(year);styleReadable(consultant);}
+    function initCplMonthlyRetrieval(){const month=$('cplMonthlyMonth'),year=$('cplMonthlyYear'),consultant=$('cplMonthlyConsultant');if(!month||!year||!consultant)return;month.replaceChildren();['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((label,i)=>{const o=document.createElement('option');o.value=String(i+1).padStart(2,'0');o.textContent=label;month.appendChild(o);});year.replaceChildren();const current=new Date().getFullYear();for(let y=current-5;y<=current+1;y++){const o=document.createElement('option');o.value=String(y);o.textContent=String(y);year.appendChild(o);}month.value=String(new Date().getMonth()+1).padStart(2,'0');year.value=String(current);consultant.replaceChildren();const first=document.createElement('option');first.value='';first.textContent='Select consultant';consultant.appendChild(first);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;consultant.appendChild(o);});}
     function retrieveCplMonthly(){
       const consultant=$("cplMonthlyConsultant").value,month=$("cplMonthlyMonth").value,year=$("cplMonthlyYear").value;
       if(!consultant){showTeamRerDynamicIsland("Select a Sales Consultant first.");return;}
@@ -6277,14 +6257,14 @@
       if(!matching.length){cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();setCplConsultant();if(isSuperAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const rows=[];
       matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.sc=consultant;rows.push(copy);}));
-      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';
+      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';$('cplConsultantSavedEntries').classList.add('hidden');
       $("cplEntryRows").replaceChildren();rows.forEach(r=>addCplEntryRow(r,{retrieved:true}));
       setCplConsultant();
       if(isSuperAdminSession()){$("cplConsultantSelect").value=consultant;Array.from($("cplEntryRows").querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}
       $("cplHeaderDate").value=`${year}-${month}-01`;
       showTeamRerDynamicIsland(`Loaded ${rows.length} entries from ${matching.length} saved CPL form(s). Ready to review.`);
     }
-    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};if(!document.documentElement.dataset.cplConsultantChangeBound){document.documentElement.dataset.cplConsultantChangeBound='1';document.addEventListener('change',ev=>{if(!ev.target||ev.target.id!=='cplConsultantSelect')return;const chosen=isSuperAdminSession()?String(ev.target.value||'').trim():name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();previousConsultant=chosen;const savedHost=$('cplConsultantSavedEntries');if(!chosen&&savedHost){savedHost.replaceChildren();savedHost.hidden=true;savedHost.style.display='none';}else renderCplConsultantSavedEntries();queueCplDraftSave();},true);}updateRowSC();}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};updateRowSC();}
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
@@ -6298,7 +6278,7 @@
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplAddRow').addEventListener('click',()=>{if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
-    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';if(isSuperAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';const savedHost=$('cplConsultantSavedEntries');if(savedHost){savedHost.replaceChildren();savedHost.hidden=true;savedHost.style.display='none';}if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';if(isSuperAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';renderCplConsultantSavedEntries();if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
@@ -8117,6 +8097,7 @@
     @keyframes cplHyundaiSweepBlue{0%{transform:translateX(-30px) rotate(22deg);opacity:0}18%{opacity:.8}60%{opacity:.6}100%{transform:translateX(125px) rotate(22deg);opacity:0}}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:none!important}}
 
+    #cplPage #cplClearSelectionNew{background:linear-gradient(135deg,#52677b,#34495e)!important;border:1px solid #9eb3c8!important;color:#fff!important;font-weight:800!important;min-height:48px!important;}
     /* CPL retrieval controls: force readable contrast on every device/browser */
     #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.55)!important;font-weight:800!important;}
     #cplPage .cpl-monthly-retrieve select,
@@ -8158,5 +8139,49 @@
 
 
 </style>
+<script>
+(function(){
+  'use strict';
+  const resetConsultantWorkspace = () => {
+    const rows = document.getElementById('cplEntryRows');
+    if (rows) rows.replaceChildren();
+    if (typeof cplMonthlyRetrieved !== 'undefined') cplMonthlyRetrieved = null;
+    const date = document.getElementById('cplHeaderDate');
+    if (date) date.value = '';
+    const save = document.getElementById('cplSaveForm');
+    if (save) save.textContent = 'Save CPL';
+    const monthlyConsultant = document.getElementById('cplMonthlyConsultant');
+    const month = document.getElementById('cplMonthlyMonth');
+    const year = document.getElementById('cplMonthlyYear');
+    if (monthlyConsultant) monthlyConsultant.value = '';
+    if (month) month.value = '';
+    if (year) year.value = '';
+    const saved = document.getElementById('cplConsultantSavedEntries');
+    if (saved) saved.classList.remove('hidden');
+    if (typeof clearCplDraft === 'function') clearCplDraft();
+    if (typeof renderCplConsultantSavedEntries === 'function') renderCplConsultantSavedEntries();
+  };
+  const bindConsultantReset = () => {
+    const select = document.getElementById('cplConsultantSelect');
+    if (select && select.dataset.cplResetBound !== '1') {
+      select.dataset.cplResetBound = '1';
+      select.addEventListener('change', resetConsultantWorkspace, true);
+    }
+    const clearNew = document.getElementById('cplClearSelectionNew');
+    if (clearNew && clearNew.dataset.cplClearBound !== '1') {
+      clearNew.dataset.cplClearBound = '1';
+      clearNew.addEventListener('click', () => {
+        if (select) select.value = '';
+        resetConsultantWorkspace();
+        clearNew.textContent = 'Cleared — New CPL';
+        setTimeout(() => { clearNew.textContent = 'Clear Selection & New'; }, 1800);
+      });
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindConsultantReset, {once:true});
+  else bindConsultantReset();
+})();
+
+</script>
 </body>
 </html>
