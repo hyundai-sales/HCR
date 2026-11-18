@@ -5975,7 +5975,42 @@
     $('cplSaveClient').addEventListener('click',()=>{if(!isSuperAdminSession())return;let consultant=cplName();if(!consultant){setMessage($('cplMessage'),'Select the Sales Consultant first.','error');return;}let r=getCplClient();if(!r.clientName&&!r.phone&&!r.email){setMessage($('cplMessage'),'Enter a client name, phone, or email to save.','error');return;}r.sc=cplInitials(consultant);cplDraftClients.push(r);renderCplPreview();resetCplInterview();setMessage($('cplMessage'),'Client added to preview. Ready for the next client.','success');});
     $('cplConsultantSelect').addEventListener('change',()=>{$('cplSC').value=cplInitials(cplName());});
     $('cplSearch').addEventListener('input',renderCplSaved);
-    function cplPrintMode(mode){if(!isSuperAdminSession())return;const savedDraft=cplDraftClients.slice();if(mode==='blank')cplDraftClients=[];renderCplPreview();document.body.dataset.cplPrintMode=mode;window.print();window.addEventListener('afterprint',()=>{document.body.dataset.cplPrintMode='';cplDraftClients=savedDraft;renderCplPreview();},{once:true});}
+    function cplPrintMode(mode){
+      if(!isSuperAdminSession())return;
+      const printWin=window.open('','_blank');
+      if(!printWin){setMessage($('cplMessage'),'Printing window was blocked. Allow pop-ups for TEAM RER and try again.','error');return;}
+      const savedDraft=cplDraftClients.slice();
+      try{
+        if(mode==='blank')cplDraftClients=[];
+        renderCplPreview();
+        const pages=$('cplPreviewPages').innerHTML;
+        cplDraftClients=savedDraft;
+        renderCplPreview();
+        const title=mode==='blank'?'CLIENT PROBING LOG — BLANK FORM':'CLIENT PROBING LOG — FILLED FORM';
+        printWin.document.open();
+        printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>
+          @page{size:13in 8.5in landscape;margin:.1in}
+          *{box-sizing:border-box}
+          html,body{margin:0;padding:0;width:100%;background:#fff;color:#111;font-family:"Hyundai Sans Head KR",Arial,sans-serif}
+          .cpl-print-page{display:block;width:12.8in;height:8.3in;min-height:8.3in;margin:0;padding:0;overflow:hidden;page-break-after:always;break-after:page;background:#fff}
+          .cpl-print-page:last-child{page-break-after:auto;break-after:auto}
+          .cpl-print-meta{display:grid;grid-template-columns:8% 8% 25% 12% 25%;gap:2px;width:100%;font-size:8pt;margin:4pt 0}
+          .cpl-print-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:6.5pt}
+          .cpl-print-table th,.cpl-print-table td{border:.5pt solid #555;padding:2pt;height:.78in;overflow-wrap:anywhere;vertical-align:top;color:#111}
+          .cpl-print-table th{height:.42in;background:#e7edf3;color:#17344e;text-align:center;font-size:6.5pt}
+          .cpl-date-vertical{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:6.5pt;text-align:center}
+          .cpl-print-logo{display:flex;justify-content:flex-end;margin-top:3pt}
+          .cpl-print-logo img{width:.55in;height:auto;max-height:.32in;object-fit:contain}
+          </style></head><body>${pages}</body></html>`);
+        printWin.document.close();
+        printWin.onload=()=>{printWin.focus();setTimeout(()=>printWin.print(),350);};
+        // Fallback for browsers that don't fire load for a document written to a popup.
+        setTimeout(()=>{try{if(!printWin.closed){printWin.focus();printWin.print();}}catch(e){}},900);
+      }catch(err){
+        try{printWin.close();}catch(e){}
+        setMessage($('cplMessage'),'Unable to prepare print form: '+(err.message||err),'error');
+      }
+    }
     $('cplPrintBlank').addEventListener('click',()=>cplPrintMode('blank'));
     $('cplPrintFilled').addEventListener('click',()=>cplPrintMode('filled'));
     $("userManagementTabBtn").addEventListener("click", () => {
