@@ -2475,7 +2475,7 @@
         </section>
 
         <section id="cplPage" class="hidden">
-<button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button><h2 class="section-title">Client Probing Log (CPL)</h2>
+<h2 class="section-title">Client Probing Log (CPL)</h2>
 <div class="cpl-form-shell cpl-clipboard-shell"><div class="cpl-clip"></div><div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2><div class="cpl-meta-grid">
 <label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label><label>TYPE <input id="cplTypeFixed" value="FIELD" readonly></label>
 <label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label><label>DATE <input id="cplHeaderDate" type="date"></label><label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label></div></div>
@@ -5950,7 +5950,7 @@
     const cplToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
     const cplFields=[['source','SOURCE','text'],['clientName','CLIENT NAME','text'],['phone','PHONE','tel'],['email','EMAIL','email'],['vehicle','VEH. OF INTEREST','text'],['specs','SPECS','textarea'],['timeline','TIMELINE','textarea'],['workProfile','WORK PROFILE?','textarea'],['drivingNow','DRIVING NOW?','textarea'],['likes','LIKES?','textarea'],['concerns','CONCERNS?','textarea'],['freqUsage','FREQ. USAGE?','textarea'],['nextStep','NEXT STEP','select']];
     const cplOptions=['','Test Drive','Reservation','Application','Undecided'];
-    function cplInitials(n){return String(n||'').trim().split(/\\s+/).filter(Boolean).map(x=>x[0]).join('').toUpperCase().slice(0,4);}
+    function cplInitials(n){const parts=String(n||'').trim().split(/\\s+/).filter(Boolean);return parts.length?((parts[0][0]||'')+(parts.length>1?(parts[parts.length-1][0]||''):'')).toUpperCase():'';}
     function loadCpl(){if(!isSuperAdminSession()){showAccessDenied('Team RER Super Admin Access Only.');return;}submitRequest('cplGet').catch(e=>setMessage($('cplMessage'),e.message,'error'));}
     function cplName(){return isSuperAdminSession() ? $('cplConsultantSelect').value : $('cplConsultantFixed').value;}
     function setCplConsultant(){const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||''),sel=$('cplConsultantSelect'),fixed=$('cplConsultantFixed');sel.classList.toggle('hidden',!isSuperAdminSession());fixed.classList.toggle('hidden',isSuperAdminSession());fixed.value=name;if(isSuperAdminSession()){sel.innerHTML='<option value="">Select Sales Consultant</option>';cplData.consultants.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.append(o);});}}
@@ -5965,7 +5965,6 @@
     function initCplForm(){$('cplHeaderDate').value=cplToday();$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';cplDraftClients=[];setCplConsultant();buildCplInterview();renderCplPreview();}
     $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied('Team RER Super Admin Access Only.');return;}runPageTransition('Opening Client Probing Log...',()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
-    $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplSaveClient').addEventListener('click',()=>{if(!isSuperAdminSession())return;let consultant=cplName();if(!consultant){setMessage($('cplMessage'),'Select the Sales Consultant first.','error');return;}let r=getCplClient();if(!r.clientName&&!r.phone&&!r.email){setMessage($('cplMessage'),'Enter a client name, phone, or email to save.','error');return;}r.sc=cplInitials(consultant);cplDraftClients.push(r);renderCplPreview();resetCplInterview();setMessage($('cplMessage'),'Client added to preview. Ready for the next client.','success');});
     $('cplConsultantSelect').addEventListener('change',()=>{$('cplSC').value=cplInitials(cplName());});
     $('cplSearch').addEventListener('input',renderCplSaved);
@@ -7558,6 +7557,59 @@
 </style>
 <style id="cpl-new-design">
 #cplPage .cpl-clipboard-shell{background:#fff;color:#172b40;border:0;border-radius:8px;padding:18px 12px;box-shadow:0 5px 22px #10203018}#cplPage .cpl-clip{width:120px;height:24px;margin:-18px auto 12px;border-radius:6px;background:linear-gradient(#d5dce3,#99a5b1);border:1px solid #8794a0;box-shadow:0 2px 4px #0002}#cplPage .cpl-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:8px}#cplPage .cpl-meta-grid label{font-size:11px;color:#003b70;font-weight:bold}#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{width:100%;padding:8px;box-sizing:border-box;background:#f8fafc;color:#1b2735;border:1px solid #bac6d2;border-radius:5px}#cplPage .cpl-interview-card{padding:14px;margin:12px 0;border:1px solid #d5dde7;border-radius:11px;background:#f8fafc}#cplPage .cpl-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#cplPage .cpl-question{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#28445f}#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-family:'Comic Sans MS','Segoe Print','Bradley Hand',cursive!important;font-weight:400;padding:9px;width:100%;box-sizing:border-box;background:#fff;border:1px solid #d3dde7;border-radius:7px;color:#20374d}#cplPage .cpl-question textarea{min-height:65px}#cplPage .cpl-print-page{background:#fff;color:#111;border:1px solid #cbd3da;margin:12px 0;padding:10px;overflow:auto}#cplPage .cpl-print-meta{display:grid;grid-template-columns:8% 8% 25% 12% 25%;gap:4px;font-size:8px;margin:5px 0}#cplPage .cpl-print-table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:7px}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{border:1px solid #666;padding:2px;vertical-align:top;overflow-wrap:anywhere;height:28px}#cplPage .cpl-print-table th{background:#e7edf3;color:#17344e;text-align:center;font-size:6.5px}#cplPage .cpl-date-vertical{writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;white-space:nowrap;font-size:6px}#cplPage .cpl-print-logo{display:flex;justify-content:flex-end;margin-top:3px}#cplPage .cpl-print-logo img{width:42px;max-height:26px;object-fit:contain}@media(max-width:650px){#cplPage .cpl-question-grid{grid-template-columns:1fr}}@media print{body *{visibility:hidden!important}#cplPage,#cplPage *{visibility:visible!important}#cplPage{position:absolute;left:0;top:0;width:100%;background:white!important;color:#111!important}#cplPage>button,#cplPage>.section-title,#cplPage .cpl-interview-card,#cplPage .cpl-preview-heading,#cplPage .cpl-form-bottom,#cplPage .cpl-saved-wrap,#cplPage #cplMessage,#cplPage .cpl-clip{display:none!important}#cplPage .cpl-print-page{border:0;margin:0;padding:0;break-after:page;page-break-after:always}#cplPage .cpl-print-page:last-child{break-after:auto;page-break-after:auto}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{height:22px;padding:2px}@page{size:13in 8.5in landscape;margin:.1in}}
+</style>
+<style id="cpl-actual-fullscreen-fix">
+#cplPage{
+ position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;
+ max-width:none!important;max-height:none!important;margin:0!important;padding:12px 12px 28px!important;
+ z-index:999999!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;
+ background:#f7f9fc!important;color:#17212d!important;border:0!important;border-radius:0!important;
+ display:block!important;visibility:visible!important;
+}
+#cplPage.hidden{display:none!important}
+#cplPage .cpl-form-shell,#cplPage .cpl-clipboard-shell{
+ width:100%!important;min-width:0!important;max-width:none!important;min-height:calc(100dvh - 40px)!important;
+ height:auto!important;box-sizing:border-box!important;margin:0!important;padding:16px!important;
+ overflow:visible!important;border:1px solid #d5dce5!important;border-radius:0!important;
+ background:#fff!important;color:#202c38!important;box-shadow:none!important;
+}
+#cplPage .cpl-form-heading,#cplPage .cpl-form-heading h2{color:#23384d!important;opacity:1!important}
+#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#cplPage .cpl-meta-grid label,#cplPage .cpl-question{color:#243b52!important;opacity:1!important}
+#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select,
+#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{
+ font-family:inherit!important;font-size:16px!important;font-weight:400!important;line-height:1.4!important;
+ background:#fff!important;color:#182b3e!important;opacity:1!important;
+ border:1px solid #aab7c5!important;border-radius:7px!important;box-shadow:none!important;
+ min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+}
+#cplPage .cpl-interview-card{background:#f5f7fa!important;color:#203348!important}
+#cplPage .cpl-question-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#cplPage .cpl-print-page{max-width:100%;box-sizing:border-box}
+#cplPage .cpl-meta-grid label{display:block;min-width:0}
+#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{display:block}
+@media(max-width:600px){
+ #cplPage{padding:0!important}
+ #cplPage .cpl-clipboard-shell{padding:14px 12px 28px!important}
+ #cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #cplPage .cpl-question-grid{grid-template-columns:1fr!important}
+ #cplPage .cpl-form-heading h2{font-size:20px!important}
+}
+</style>
+<style id="cpl-mobile-responsive-final">
+#cplPage{position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;margin:0!important;padding:0!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:999999!important;background:#f4f7fa!important;color:#142c42!important}
+#cplPage.hidden{display:none!important}
+#cplPage .cpl-clipboard-shell{width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;min-height:100dvh!important;margin:0!important;border-radius:0!important;padding:12px!important;box-sizing:border-box!important;background:#fff!important;color:#1c2e40!important;overflow:visible!important}
+#cplPage .cpl-form-heading h2{color:#183b5b!important;font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;opacity:1!important;text-align:center;font-size:clamp(18px,4vw,25px)!important}
+#cplPage h2,#cplPage h3,#cplPage p,#cplPage label,#cplPage .cpl-meta-grid label,#cplPage .cpl-question{font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;color:#183b5b!important;opacity:1!important}
+#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
+#cplPage .cpl-meta-grid label{min-width:0!important;font-size:12px!important}
+#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select,#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;color:#142c42!important;background:#fff!important;border:1px solid #aab8c7!important;opacity:1!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;font-size:16px!important;line-height:1.4!important}
+#cplPage .cpl-interview-card{background:#f5f8fb!important;color:#18344e!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#cplPage .cpl-question-grid{width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#cplPage .cpl-question{min-width:0!important;max-width:100%!important;font-size:13px!important}
+#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{padding:10px!important;min-height:42px!important}
+@media(max-width:600px){#cplPage{padding:0!important}#cplPage .cpl-clipboard-shell{padding:12px!important}#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#cplPage .cpl-question-grid{grid-template-columns:1fr!important}#cplPage .cpl-form-heading h2{font-size:19px!important}#cplPage .cpl-meta-grid label{font-size:11px!important}#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{font-size:14px!important;padding:8px!important}#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-size:15px!important}}
 </style></body>
 </html>
 
