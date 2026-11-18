@@ -3013,7 +3013,17 @@
       return ["admin","super admin","superadmin"].includes(normalizedSessionRole());
     }
     function isSuperAdminSession() {
-      return ["super admin","superadmin"].includes(normalizedSessionRole());
+      return ["super admin","superadmin","super r admin"].includes(normalizedSessionRole());
+    }
+    function syncUserManagementVisibility() {
+      const allowed = isSuperAdminSession();
+      [$("userManagementTabBtn"), $("edgeUserManagementBtn")].forEach(el => {
+        if (!el) return;
+        el.classList.toggle("hidden", !allowed);
+        el.hidden = !allowed;
+        el.setAttribute("aria-hidden", allowed ? "false" : "true");
+        el.style.setProperty("display", allowed ? "" : "none", "important");
+      });
     }
     function isCplAdminSession() { return isAdminSession(); }
     function canAccessCplSession() { return isCplAdminSession() || isRegularUserSession(); }
@@ -3473,14 +3483,14 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        syncUserManagementVisibility();
         syncCreditConsultantForRole();
-        const superAdminAccess = isSuperAdminSession();
-        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        syncUserManagementVisibility();
         $("cplTabBtn").classList.toggle("hidden", !canAccessCplSession());
         $("edgeCplBtn").classList.toggle("hidden", !canAccessCplSession());
         const orgAddButton = $("orgAddBtn");
         if (orgAddButton) orgAddButton.classList.toggle("hidden", !isAdminSession());
-        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
+
         if (!getLastActivity()) saveLastActivity();
         adminScreenLocked = false;
         adminPinEntry = "";
@@ -3524,14 +3534,14 @@
 
       if (action === "appData") {
         const data = event.data.appData;
+        syncUserManagementVisibility();
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
         $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
         $("edgeActivityLogsBtn")?.classList.toggle("hidden", !data.isAdmin);
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
-        const superAdminAccess = isSuperAdminSession() || data.isSuperAdmin === true;
-        $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        syncUserManagementVisibility();
         $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
-        $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
+
         $("cplTabBtn").classList.toggle("hidden", !canAccessCplSession());
         $("edgeCplBtn").classList.toggle("hidden", !canAccessCplSession());
         if (data.isAdmin) {
