@@ -1733,7 +1733,6 @@
       #cplPage .cpl-saved-client-card { padding:14px !important; }
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
-  
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -1898,7 +1897,7 @@
         transition: none !important;
       }
     }
-    </style>
+  </style>
 
 
   <style id="team-rer-edge-panel">
@@ -2017,7 +2016,7 @@
     #appSection #backToMenuFromCredit {
       display:none !important;
     }
-  </style>
+</style>
 
 
 
@@ -2074,7 +2073,7 @@
     .admin-lock-footnote { margin-top:17px; color:#8394a3; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
     body.admin-screen-locked { overflow:hidden !important; }
     @media(max-height:700px) { .admin-lock-card { padding:17px 20px; } .admin-lock-time { font-size:46px; margin-top:12px; } .admin-lock-icon { margin-top:13px; } .admin-pin-keypad { gap:7px 12px; } .admin-pin-keypad button,.admin-keypad-spacer { height:48px; } }
-    </style>
+  </style>
 
 <style id="team-rer-permanent-dark-liquid">
   /* Permanent dark appearance: explicit palette overrides the legacy light styles. */
@@ -2255,7 +2254,7 @@
     color:#315875 !important;
   }
 
-  </style>
+</style>
 
 
 <style id="team-rer-fullscreen-gray-frost-lock">
@@ -2306,7 +2305,7 @@
   @media(max-height:700px) {
     #adminLockScreen .admin-lock-card { padding-top:calc(18px + env(safe-area-inset-top)) !important; padding-bottom:calc(18px + env(safe-area-inset-bottom)) !important; }
   }
-  </style>
+</style>
 
 
 <style id="team-rer-lock-more-transparent-frost">
@@ -2331,7 +2330,7 @@
     box-shadow:0 8px 20px rgba(0,0,0,.14),inset 0 1px 0 rgba(235,242,248,.16),inset 0 -1px 0 rgba(235,242,248,.04) !important;
   }
   #adminLockScreen .admin-pin-keypad button:active { background:rgba(130,146,160,.40) !important; }
-  </style>
+</style>
 
 
 <style id="team-rer-lock-hidden-state-fix">
@@ -2340,7 +2339,7 @@
   #adminLockScreen.admin-lock-screen:not(.hidden) { display:grid !important; visibility:visible !important; pointer-events:auto !important; }
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad,
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
-  </style>
+</style>
 
 </head>
 <body>
@@ -2590,7 +2589,7 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary">Clear Selection &amp; New</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
@@ -3253,11 +3252,7 @@
 
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
-      const isCplPdfRequest = action === "cplBlankPdf" || action === "cplMonthlyPdf";
-      // CPL PDF requests must not inherit or leave the global 8% loader visible.
-      // A background request may already own that overlay; close it before replacing the bridge nonce.
-      if (isCplPdfRequest) hideLoading();
-      const showRequestLoading = extra.silent !== true && !isCplPdfRequest;
+      const showRequestLoading = extra.silent !== true;
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
@@ -3292,7 +3287,7 @@
         pendingRequestTimeout = null;
         $("tokenField").value = "";
         $("nonceField").value = "";
-        if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
+        if (showRequestLoading) hideLoading();
         if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; } if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
         const message = "Google Apps Script did not return a response within 45 seconds. Please try again. If this continues, contact your TEAM RER administrator.";
         if (action === "authorize") {
@@ -6226,9 +6221,9 @@
         const date=document.createElement('small');date.textContent=String(form.date||'Date unavailable');header.append(title,date);
         const actions=document.createElement('div');actions.className='cpl-saved-client-actions';
         const view=document.createElement('button');view.type='button';view.className='cpl-saved-view';view.textContent='View';
-        const details=document.createElement('div');details.className='cpl-saved-client-details hidden';
-        Object.keys(labels).forEach(key=>{const value=String(row[key]||'').trim();if(!value)return;const pair=document.createElement('div');pair.className='cpl-saved-detail';const label=document.createElement('small');label.textContent=labels[key];const val=document.createElement('span');val.textContent=value;pair.append(label,val);details.appendChild(pair);});
-        view.addEventListener('click',()=>{const opened=!details.classList.contains('hidden');host.querySelectorAll('.cpl-saved-client-details').forEach(d=>d.classList.add('hidden'));host.querySelectorAll('.cpl-saved-view').forEach(b=>b.textContent='View');details.classList.toggle('hidden',opened);view.textContent=opened?'View':'Hide';});
+        const details=document.createElement('table');details.className='cpl-saved-client-details hidden';const body=document.createElement('tbody');
+        Object.keys(labels).forEach(key=>{const value=String(row[key]||'').trim();if(!value)return;const tr=document.createElement('tr');tr.className='cpl-saved-detail';const label=document.createElement('th');label.scope='row';label.textContent=labels[key];const val=document.createElement('td');val.textContent=value;tr.append(label,val);body.appendChild(tr);});details.appendChild(body);
+        view.addEventListener('click',()=>{const opened=!details.classList.contains('hidden');details.classList.toggle('hidden',opened);view.textContent=opened?'View':'Hide';});
         const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';edit.addEventListener('click',()=>{const date=String(form.date||'');const match=date.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});});
         actions.append(view,edit);item.append(header,actions,details);host.appendChild(item);
       });});
@@ -6257,14 +6252,14 @@
       if(!matching.length){cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();setCplConsultant();if(isSuperAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const rows=[];
       matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.sc=consultant;rows.push(copy);}));
-      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';$('cplConsultantSavedEntries').classList.add('hidden');
+      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';
       $("cplEntryRows").replaceChildren();rows.forEach(r=>addCplEntryRow(r,{retrieved:true}));
       setCplConsultant();
       if(isSuperAdminSession()){$("cplConsultantSelect").value=consultant;Array.from($("cplEntryRows").querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}
       $("cplHeaderDate").value=`${year}-${month}-01`;
       showTeamRerDynamicIsland(`Loaded ${rows.length} entries from ${matching.length} saved CPL form(s). Ready to review.`);
     }
-    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};updateRowSC();}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(isSuperAdminSession()&&chosen!==previousConsultant){if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();}previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=updateRowSC;updateRowSC();}
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
@@ -6278,7 +6273,7 @@
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplAddRow').addEventListener('click',()=>{if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
-    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';if(isSuperAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';renderCplConsultantSavedEntries();if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{clearCplDraft();saveBtn.disabled=false;if(meta){meta.formCount=rows.length?1:0;meta.rowCount=rows.length;showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
@@ -6902,7 +6897,7 @@
   @media(max-width:560px) {
     #teamRerEdgeNav .edge-item.is-active::after { font-size:6px; padding:3px 4px; }
   }
-  </style>
+</style>
 
 
 
@@ -6979,7 +6974,7 @@
   html[data-rer-theme="dark"] body #promoOffersPanel .promo-variant-info strong {
     color:#173f60 !important;
   }
-  </style>
+</style>
 
 
 <style id="team-rer-promo-editor-readability-v23">
@@ -7063,7 +7058,7 @@
     -webkit-text-fill-color:#ffffff !important;
     opacity:1 !important;
   }
-  </style>
+</style>
 
 
 <style id="team-rer-promo-editor-readability-v24">
@@ -7080,7 +7075,7 @@
     font-weight:600 !important;
     text-shadow:none !important;
   }
-  </style>
+</style>
 
 
 <style id="team-rer-christmas-main-menu-v26">
@@ -7145,7 +7140,7 @@
     #teamRerSantaPeek.santa-peek { animation:none; transform:translate3d(-5%,0,0); }
     #teamRerChristmasSnow { display:none !important; }
   }
-  </style>
+</style>
 <script id="team-rer-christmas-main-menu-v26-script">
 (function(){
   const app = document.getElementById("appSection");
@@ -7427,7 +7422,7 @@
       }
     }
     @media(prefers-reduced-motion:reduce) { .page-jump-controls button { transition:none; } }
-  </style>
+</style>
 
 <script>
   // Page-jump controls are limited to the two requested modules.
@@ -7619,7 +7614,7 @@
   #orgChartTree .org-person>span{font-size:11px}
   #orgChartTree .org-reporting-label{font-size:9px}
 }
-  </style>
+</style>
 
 <style id="team-rer-org-editor-readable-final">
   /* Organizational Chart editor: enforce readable contrast over global dark-theme rules. */
@@ -7703,7 +7698,7 @@
     outline-offset: 1px !important;
     border-color: #286b9c !important;
   }
-  </style>
+</style>
 
 
 <style id="team-rer-org-card-edit-readable">
@@ -7722,12 +7717,12 @@
     outline: 2px solid #286b9c !important;
     outline-offset: 2px !important;
   }
-  </style>
+</style>
 
 
 <style id="team-rer-org-editor-scroll-position">
   body #orgChartEditor { scroll-margin-top: 22px !important; }
-  </style>
+</style>
 \n
 <style id="team-rer-org-compact-clean-layout">
   /* Keep reporting tiers clear without large decorative headings. */
@@ -7852,7 +7847,7 @@
       font-size: 10.5px !important;
     }
   }
-  </style>
+</style>
 
 <style id="team-rer-cpl-module-style">
   .cpl-toolbar,.cpl-report-controls,.cpl-form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:12px 0}
@@ -8097,7 +8092,6 @@
     @keyframes cplHyundaiSweepBlue{0%{transform:translateX(-30px) rotate(22deg);opacity:0}18%{opacity:.8}60%{opacity:.6}100%{transform:translateX(125px) rotate(22deg);opacity:0}}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:none!important}}
 
-    #cplPage #cplClearSelectionNew{background:linear-gradient(135deg,#52677b,#34495e)!important;border:1px solid #9eb3c8!important;color:#fff!important;font-weight:800!important;min-height:48px!important;}
     /* CPL retrieval controls: force readable contrast on every device/browser */
     #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.55)!important;font-weight:800!important;}
     #cplPage .cpl-monthly-retrieve select,
@@ -8105,130 +8099,17 @@
     #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background:#edf4fb!important;opacity:1!important;font-weight:700!important;text-shadow:none!important;}
     #cplPage .cpl-monthly-retrieve select{border:1.5px solid #9ab9d4!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 9px rgba(0,0,0,.22)!important;}
     #cplPage #cplMonthlyRetrieve{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.45)!important;}
-  
-    /* Final targeted fix: monthly retrieval dropdown text contrast (mobile + desktop) */
-    #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;font-weight:800!important;opacity:1!important;}
-    #cplPage .cpl-monthly-retrieve select,
-    #cplPage .cpl-monthly-retrieve select:focus,
-    #cplPage .cpl-monthly-retrieve select:disabled,
-    #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background-color:#edf4fb!important;opacity:1!important;font-weight:800!important;text-shadow:none!important;}
-    #cplPage .cpl-monthly-retrieve select{font-size:18px!important;line-height:1.4!important;min-height:54px!important;}
-/* CPL FINAL OVERRIDE — consultant workspace reset + readable retrieval controls */
-#cplPage .cpl-monthly-retrieve,
-#cplPage .cpl-monthly-retrieve label,
-#cplPage .cpl-monthly-retrieve select,
-#cplPage .cpl-monthly-retrieve select:disabled,
-#cplPage .cpl-monthly-retrieve select:focus,
-#cplPage .cpl-monthly-retrieve select option {
-  opacity: 1 !important; filter: none !important; text-shadow: none !important;
-}
-#cplPage .cpl-monthly-retrieve label {
-  color: #f6f9ff !important; -webkit-text-fill-color: #f6f9ff !important;
-  font-size: 16px !important; font-weight: 800 !important;
-}
-#cplPage .cpl-monthly-retrieve select,
-#cplPage .cpl-monthly-retrieve select:disabled,
-#cplPage .cpl-monthly-retrieve select:focus,
-#cplPage .cpl-monthly-retrieve select option {
-  color: #10243a !important; -webkit-text-fill-color: #10243a !important;
-  background: #edf4fb !important; font-size: 18px !important;
-  font-weight: 800 !important; line-height: 1.4 !important;
-}
-#cplPage .cpl-monthly-retrieve select { min-height: 56px !important; }
-#cplPage .cpl-monthly-retrieve select:disabled { color: #10243a !important; -webkit-text-fill-color: #10243a !important; }
-
-
-
-/* CPL monthly retrieval dropdown contrast: hard override native disabled-select fading */
-#cplPage .cpl-monthly-retrieve select,
-#cplPage .cpl-monthly-retrieve select:disabled,
-#cplPage .cpl-monthly-retrieve select:focus,
-#cplPage .cpl-monthly-retrieve select option {
-  color: #10243a !important;
-  -webkit-text-fill-color: #10243a !important;
-  background-color: #e2edf8 !important;
-  opacity: 1 !important;
-  filter: none !important;
-  text-shadow: none !important;
-  font-weight: 800 !important;
-  color-scheme: light !important;
-}
-#cplPage .cpl-monthly-retrieve select:disabled {
-  opacity: 1 !important; -webkit-opacity: 1 !important;
-  cursor: default !important;
-}
-#cplPage .cpl-monthly-retrieve label {
-  color: #f8f1e8 !important; -webkit-text-fill-color: #f8f1e8 !important;
-  opacity: 1 !important; font-weight: 900 !important;
-}
-@media (max-width: 700px) {
-  #cplPage .cpl-monthly-retrieve select,
-  #cplPage .cpl-monthly-retrieve select:disabled {
-    min-height: 56px !important; font-size: 18px !important;
-  }
-}
-
-    /* CPL saved client details: enforce separated label/value layout */
-    #cplPage .cpl-saved-client-details .cpl-saved-detail{
-      display:flex!important;flex-direction:column!important;align-items:flex-start!important;
-      justify-content:flex-start!important;gap:5px!important;min-width:0!important;
-      width:100%!important;box-sizing:border-box!important;
-    }
-    #cplPage .cpl-saved-client-details .cpl-saved-detail small{
-      display:block!important;position:static!important;float:none!important;
-      width:100%!important;margin:0!important;padding:0!important;
-      font-size:12px!important;line-height:1.25!important;font-weight:700!important;
-    }
-    #cplPage .cpl-saved-client-details .cpl-saved-detail span{
-      display:block!important;position:static!important;float:none!important;
-      width:100%!important;min-width:0!important;margin:0!important;padding:0!important;
-      font-size:14px!important;line-height:1.45!important;white-space:pre-wrap!important;
-      overflow-wrap:anywhere!important;word-break:break-word!important;
-    }
+    /* CPL saved client details: readable two-column table (label / value). */
+    #cplPage table.cpl-saved-client-details{display:table!important;width:100%!important;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0 5px!important;margin-top:10px!important;padding-top:9px!important;border-top:1px solid rgba(126,164,193,.4)!important;}
+    #cplPage table.cpl-saved-client-details.hidden{display:none!important;}
+    #cplPage table.cpl-saved-client-details th,#cplPage table.cpl-saved-client-details td{display:table-cell!important;vertical-align:top!important;text-align:left!important;padding:8px 9px!important;border:1px solid rgba(126,164,193,.24)!important;overflow-wrap:anywhere!important;word-break:break-word!important;}
+    #cplPage table.cpl-saved-client-details th{width:38%!important;background:rgba(5,17,30,.62)!important;color:#b9d4e9!important;font-size:12px!important;font-weight:800!important;border-radius:8px 0 0 8px!important;}
+    #cplPage table.cpl-saved-client-details td{background:rgba(7,17,29,.38)!important;color:#f2f7fc!important;font-size:14px!important;line-height:1.45!important;border-radius:0 8px 8px 0!important;white-space:pre-wrap!important;}
+    @media(max-width:600px){#cplPage table.cpl-saved-client-details th{width:36%!important;font-size:11px!important;padding:7px!important;}#cplPage table.cpl-saved-client-details td{font-size:13px!important;padding:7px!important;}}
+    /* Monthly retrieval dropdowns: force dark text, including Android/WebView select states. */
+    #cplPage .cpl-monthly-retrieve select,#cplPage .cpl-monthly-retrieve select:focus,#cplPage .cpl-monthly-retrieve select:active,#cplPage .cpl-monthly-retrieve select:disabled,#cplPage .cpl-monthly-retrieve select option,#cplPage .cpl-monthly-retrieve select optgroup{background-color:#f3f7fb!important;background-image:none!important;color:#102b45!important;-webkit-text-fill-color:#102b45!important;opacity:1!important;text-shadow:none!important;filter:none!important;font-weight:700!important;}
+    #cplPage .cpl-monthly-retrieve select{appearance:auto!important;-webkit-appearance:menulist!important;caret-color:#102b45!important;}
+    #cplPage .cpl-monthly-retrieve select option{color:#102b45!important;background:#f3f7fb!important;}
 </style>
-<script>
-(function(){
-  'use strict';
-  const resetConsultantWorkspace = () => {
-    const rows = document.getElementById('cplEntryRows');
-    if (rows) rows.replaceChildren();
-    if (typeof cplMonthlyRetrieved !== 'undefined') cplMonthlyRetrieved = null;
-    const date = document.getElementById('cplHeaderDate');
-    if (date) date.value = '';
-    const save = document.getElementById('cplSaveForm');
-    if (save) save.textContent = 'Save CPL';
-    const monthlyConsultant = document.getElementById('cplMonthlyConsultant');
-    const month = document.getElementById('cplMonthlyMonth');
-    const year = document.getElementById('cplMonthlyYear');
-    if (monthlyConsultant) monthlyConsultant.value = '';
-    if (month) month.value = '';
-    if (year) year.value = '';
-    const saved = document.getElementById('cplConsultantSavedEntries');
-    if (saved) saved.classList.remove('hidden');
-    if (typeof clearCplDraft === 'function') clearCplDraft();
-    if (typeof renderCplConsultantSavedEntries === 'function') renderCplConsultantSavedEntries();
-  };
-  const bindConsultantReset = () => {
-    const select = document.getElementById('cplConsultantSelect');
-    if (select && select.dataset.cplResetBound !== '1') {
-      select.dataset.cplResetBound = '1';
-      select.addEventListener('change', resetConsultantWorkspace, true);
-    }
-    const clearNew = document.getElementById('cplClearSelectionNew');
-    if (clearNew && clearNew.dataset.cplClearBound !== '1') {
-      clearNew.dataset.cplClearBound = '1';
-      clearNew.addEventListener('click', () => {
-        if (select) select.value = '';
-        resetConsultantWorkspace();
-        clearNew.textContent = 'Cleared — New CPL';
-        setTimeout(() => { clearNew.textContent = 'Clear Selection & New'; }, 1800);
-      });
-    }
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindConsultantReset, {once:true});
-  else bindConsultantReset();
-})();
-
-</script>
 </body>
 </html>
