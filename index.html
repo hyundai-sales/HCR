@@ -2483,7 +2483,7 @@
 <label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label><label>DATE <input id="cplHeaderDate" type="date"></label><label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label></div></div>
 <div class="cpl-interview-card"><h3>Client Interview</h3><p>Complete one interview and save it to the preview.</p><div id="cplInterviewForm" class="cpl-question-grid"></div><div class="cpl-entry-tools"><button id="cplSaveClient" type="button">＋ Save Client / Next Client</button></div></div>
 <div class="cpl-preview-heading"><h3>CPL Preview <span id="cplClientCount">0 clients</span></h3><p>8 client entries per page; overflow automatically continues.</p></div><div id="cplPreviewPages"></div>
-<div class="cpl-form-bottom"><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div><div id="cplMessage" class="message hidden" aria-live="polite"></div></div>
+<div class="cpl-form-bottom cpl-print-actions"><button id="cplPrintBlank" type="button">PRINT BLANK FORM</button><button id="cplPrintFilled" type="button">PRINT FILLED FORM</button></div><div id="cplMessage" class="message hidden" aria-live="polite"></div></div>
 <div class="cpl-saved-wrap"><h3>Saved CPL Forms</h3><input id="cplSearch" type="search" placeholder="Search consultant or client"><div id="cplClientsList" class="cpl-list"></div></div></section>
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
@@ -5975,7 +5975,9 @@
     $('cplSaveClient').addEventListener('click',()=>{if(!isSuperAdminSession())return;let consultant=cplName();if(!consultant){setMessage($('cplMessage'),'Select the Sales Consultant first.','error');return;}let r=getCplClient();if(!r.clientName&&!r.phone&&!r.email){setMessage($('cplMessage'),'Enter a client name, phone, or email to save.','error');return;}r.sc=cplInitials(consultant);cplDraftClients.push(r);renderCplPreview();resetCplInterview();setMessage($('cplMessage'),'Client added to preview. Ready for the next client.','success');});
     $('cplConsultantSelect').addEventListener('change',()=>{$('cplSC').value=cplInitials(cplName());});
     $('cplSearch').addEventListener('input',renderCplSaved);
-    $('cplPrintSave').addEventListener('click',()=>{if(!isSuperAdminSession())return;if(!cplDraftClients.length){setMessage($('cplMessage'),'Save at least one client before printing.','error');return;}let payload={date:cplToday(),consultant:cplName(),manager:'Ralph Edward Rosales',dealer:'HCR',type:'FIELD',rows:cplDraftClients};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>window.print()).catch(e=>setMessage($('cplMessage'),e.message,'error'));});
+    function cplPrintMode(mode){if(!isSuperAdminSession())return;const savedDraft=cplDraftClients.slice();if(mode==='blank')cplDraftClients=[];renderCplPreview();document.body.dataset.cplPrintMode=mode;window.print();window.addEventListener('afterprint',()=>{document.body.dataset.cplPrintMode='';cplDraftClients=savedDraft;renderCplPreview();},{once:true});}
+    $('cplPrintBlank').addEventListener('click',()=>cplPrintMode('blank'));
+    $('cplPrintFilled').addEventListener('click',()=>cplPrintMode('filled'));
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
       runPageTransition("Opening User Management...", () => {
