@@ -6263,10 +6263,19 @@
       };
       const showEdge = key => { edge.classList.add("is-visible"); setActive(key); };
       const hideEdge = () => { edge.classList.remove("is-visible"); closePanel(); setActive(""); };
+      const modulePageIds = Object.values(modulePages);
+      const hideAllModulePages = () => modulePageIds.forEach(id => {
+        const page = document.getElementById(id);
+        if (page) page.classList.add("hidden");
+      });
       const goToModule = key => {
         const target = document.getElementById(moduleButtons[key]);
         if (!target) return;
         closePanel();
+        // Quick Menu navigation must start from a clean page state. Some module
+        // handlers hide only a subset of other pages, which caused Org Chart
+        // (and other modules) to remain visible underneath the destination.
+        hideAllModulePages();
         target.click();
         showEdge(key);
       };
