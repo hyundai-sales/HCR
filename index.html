@@ -2713,7 +2713,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
       initializeAuth, browserLocalPersistence, browserPopupRedirectResolver,
-      GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
+      GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -6062,17 +6062,8 @@
         // A fresh manual login starts a new one-hour inactivity window.
         clearIdleMonitor(true);
 
-        // Mobile browsers and installed PWAs can leave popup-based Google
-        // sign-in pending. Use Firebase's full-page redirect flow on mobile.
-        const isMobileSignIn =
-          /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-          (navigator.userAgentData && navigator.userAgentData.mobile === true);
-
-        if (isMobileSignIn) {
-          await signInWithRedirect(auth, provider);
-          return; // The page navigates to Google and returns to this app.
-        }
-
+        // Use popup sign-in on all devices. Firebase redirect sign-in can fail
+        // on externally hosted apps when browsers partition third-party storage.
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         // onAuthStateChanged performs server-side authorization for both
@@ -6080,7 +6071,14 @@
       } catch (error) {
         hideLoading();
         console.error(error);
-        showLoginError("Sign-in failed: " + error.message);
+        const code = String(error && error.code || "");
+        if (code.includes("popup-blocked")) {
+          showLoginError("Google sign-in popup was blocked. Allow pop-ups for TEAM RER, then try again.");
+        } else if (code.includes("popup-closed-by-user")) {
+          showLoginError("Google sign-in was closed before completion. Tap Sign in with Google to try again.");
+        } else {
+          showLoginError("Sign-in failed: " + (error && error.message ? error.message : "Please try again."));
+        }
       }
     });
 
@@ -6198,15 +6196,6 @@
         hideLoading();
         setMessage($("loginMessage"), "Sign-out failed: " + error.message, "error");
       }
-    });
-
-    // Complete/check the mobile redirect result after Google returns to TEAM RER.
-    // The onAuthStateChanged listener below remains the single authorization path.
-    getRedirectResult(auth).catch(error => {
-      console.error(error);
-      hideLoading();
-      authorizationInProgress = false;
-      showLoginError("Google sign-in could not be completed: " + error.message);
     });
 
     onAuthStateChanged(auth, user => {
