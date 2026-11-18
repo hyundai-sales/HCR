@@ -2487,7 +2487,7 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry Row</button><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
+            <input id="cplFormId" type="hidden" value=""><div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry Row</button><button id="cplSaveForm" type="button">Save CPL</button><button id="cplCancelEdit" type="button" class="secondary hidden">Cancel Edit</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
             <div id="cplMessage" class="message hidden" aria-live="polite"></div>
@@ -3283,7 +3283,7 @@
           } else if (action === "userManagementGet" || action === "userManagementSave") {
             setMessage($("userManagementMessage"), error, "error");
             $("userManagementSummary").textContent = "Unable to load user records.";
-          } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet","cplSheetPrint","cplBlankSheetPrint"].includes(action)) {
+          } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet","cplSheetPrint","cplBlankSheetPrint","cplPdf"].includes(action)) {
             if (action === "cplBlankSheetPrint" || action === "cplSheetPrint") {
               if (cplPrintWindow && !cplPrintWindow.closed) cplPrintWindow.close();
               cplPrintWindow = null;
@@ -3480,6 +3480,14 @@
         const bytes=Uint8Array.from(atob(result.pdfBase64),c=>c.charCodeAt(0));
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
         setMessage($("cplMessage"),result.message||"Blank CPL PDF generated successfully.","success");
+        showCplPdfNotification(url,result.fileName);
+        return;
+      }
+      if (action === "cplPdf") {
+        const result=event.data.cplPdf||{};
+        if(!result.pdfBase64) throw new Error("CPL PDF data was not returned.");
+        const bytes=Uint8Array.from(atob(result.pdfBase64),c=>c.charCodeAt(0));
+        const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
         showCplPdfNotification(url,result.fileName);
         return;
       }
@@ -4376,21 +4384,20 @@
     }
 
     function showCplPdfNotification(downloadUrl, fileName) {
-      const toast=ensureCreditToast();
-      toast.className="credit-toast success show";
-      $("creditToastBackdrop")?.classList.add("show");
-      toast.replaceChildren();
-      const head=document.createElement("div");head.className="credit-toast-head";
-      const icon=document.createElement("span");icon.className="credit-toast-icon";icon.textContent="✓";
-      const title=document.createElement("h3");title.className="credit-toast-title";title.textContent="Blank CPL PDF is ready";
-      head.append(icon,title);toast.appendChild(head);
-      const copy=document.createElement("p");copy.className="credit-toast-copy";copy.textContent="Your blank CPL form has been generated. Download it to print or save.";toast.appendChild(copy);
-      const actions=document.createElement("div");actions.className="credit-toast-actions";
-      const download=document.createElement("button");download.type="button";download.className="credit-toast-download";download.textContent="↓ Download PDF";
-      download.addEventListener("click",()=>{if(!downloadUrl)return;const a=document.createElement("a");a.href=downloadUrl;a.download=fileName||"CPL-Blank-Form.pdf";document.body.appendChild(a);a.click();a.remove();download.textContent="PDF download started";download.disabled=true;});
-      const close=document.createElement("button");close.type="button";close.className="credit-toast-close";close.textContent="Close";close.addEventListener("click",hideCreditToast);
-      actions.append(download,close);toast.appendChild(actions);
+      // CPL PDF delivery uses the existing TEAM RER Dynamic Island notification.
+      // Trigger the file download directly, then show a compact success message.
+      if (downloadUrl) {
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = fileName || "CPL-Blank-Form.pdf";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      showTeamRerDynamicIsland("Blank CPL PDF ready — download started");
     }
+
     function showCreditSuccessNotification(downloadUrl, fileName) {
       const toast = ensureCreditToast();
       toast.className = "credit-toast success show";
@@ -5999,20 +6006,24 @@
     function addCplEntryRow(data={}){const card=document.createElement('article');card.className='cpl-entry-card';const head=document.createElement('div');head.className='cpl-entry-card-head';const title=document.createElement('strong');title.textContent='Client Entry';const remove=document.createElement('button');remove.type='button';remove.textContent='Remove Entry';remove.className='cpl-remove-row';remove.onclick=()=>{card.remove();renumberCplCards();};head.append(title,remove);card.appendChild(head);const fields=document.createElement('div');fields.className='cpl-entry-fields';const definitions=[['date','DATE','date',''],['source','SOURCE','text',''],['sc','SALES CONSULTANT','text',''],['clientName','CLIENT NAME','text',''],['phone','PHONE','tel',''],['email','EMAIL','email',''],['vehicle','VEHICLE OF INTEREST','text',''],['specs','SPECS','textarea','full'],['timeline','TIMELINE','textarea',''],['workProfile','WORK PROFILE?','textarea',''],['drivingNow','DRIVING NOW?','textarea',''],['likes','LIKES?','textarea',''],['concerns','CONCERNS?','textarea',''],['freqUsage','FREQUENCY OF USAGE?','textarea',''],['nextStep','NEXT STEP','select','full']];definitions.forEach(([key,label,type,span])=>{const wrap=document.createElement('div');wrap.className='cpl-field'+(span==='full'?' full':'');const lab=document.createElement('label');lab.textContent=label;const el=document.createElement(type==='textarea'?'textarea':type==='select'?'select':'input');if(type==='select'){const opt=document.createElement('option');opt.value='';opt.textContent='Select next step';el.appendChild(opt);['Test Drive','Reservation','Application','Undecided'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});}else if(type!=='textarea')el.type=type;el.dataset.key=key;if(key==='date'){el.readOnly=true;el.placeholder='Set when PDF is generated';}if(key==='sc'){el.readOnly=true;el.placeholder='Sales Consultant name';}el.value=data[key]||(key==='date'?'':key==='sc'?String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||''):'');wrap.append(lab,el);fields.appendChild(wrap);});card.appendChild(fields);$('cplEntryRows').appendChild(card);renumberCplCards();}
     function renumberCplCards(){Array.from($('cplEntryRows').children).forEach((card,i)=>{const title=card.querySelector('.cpl-entry-card-head strong');if(title)title.textContent='Client Entry '+(i+1);});}
     function getCplRows(){return Array.from($('cplEntryRows').children).map(card=>Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value])));}
-    function renderCplClients(){const host=$('cplClientsList'),q=String($('cplSearch').value||'').toLowerCase().trim();host.replaceChildren();(cplData.clients||[]).forEach(item=>{if(q&&!JSON.stringify(item).toLowerCase().includes(q))return;const card=document.createElement('article');card.className='cpl-saved-card';const title=document.createElement('strong');title.textContent=`${item.date||''} · ${item.consultant||''}`;card.appendChild(title);const summary=document.createElement('p');summary.textContent=(item.rows||[]).map(r=>r.clientName).filter(Boolean).join(', ');card.appendChild(summary);host.appendChild(card);});}
+    function loadCplRecord(item,readOnly=false){$('cplFormId').value=item.id||'';$('cplHeaderDate').value=item.date||'';$('cplManagerFixed').value=item.manager||'Ralph Edward Rosales';$('cplDealerFixed').value=item.dealer||'HCR';$('cplTypeFixed').value=item.type||'FIELD';if(isSuperAdminSession())$('cplConsultantSelect').value=item.consultant||'';$('cplEntryRows').replaceChildren();(item.rows||[]).forEach(r=>addCplEntryRow(r));if(!item.rows||!item.rows.length)addCplEntryRow();setCplConsultant();$('cplEntryRows').querySelectorAll('[data-key]').forEach(el=>{el.disabled=readOnly;el.readOnly=readOnly||el.dataset.key==='date'||el.dataset.key==='sc';});$('cplSaveForm').classList.toggle('hidden',readOnly);$('cplCancelEdit').classList.remove('hidden');$('cplPrintSave').textContent='PRINT / SAVE PDF';$('cplPage').scrollIntoView({behavior:'smooth',block:'start'});showTeamRerDynamicIsland(readOnly?'CPL record loaded for viewing':'CPL loaded for editing');}
+    function clearCplEdit(){ $('cplFormId').value='';$('cplEntryRows').querySelectorAll('[data-key]').forEach(el=>{el.disabled=false;el.readOnly=['date','sc'].includes(el.dataset.key);});$('cplSaveForm').classList.remove('hidden');$('cplCancelEdit').classList.add('hidden');initCplForm();}
+    function renderCplClients(){const host=$('cplClientsList'),q=String($('cplSearch').value||'').toLowerCase().trim();host.replaceChildren();(cplData.clients||[]).forEach(item=>{if(q&&!JSON.stringify(item).toLowerCase().includes(q))return;const card=document.createElement('article');card.className='cpl-saved-card';const title=document.createElement('strong');title.textContent=`${item.date||''} · ${item.consultant||''}`;card.appendChild(title);const summary=document.createElement('p');summary.textContent=(item.rows||[]).map(r=>r.clientName).filter(Boolean).join(', ');card.appendChild(summary);const actions=document.createElement('div');actions.className='cpl-saved-actions';[['View',true],['Edit',false]].forEach(([label,ro])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.className=label==='Edit'?'secondary':'';b.onclick=()=>loadCplRecord(item,ro);actions.appendChild(b);});const print=document.createElement('button');print.type='button';print.className='secondary';print.textContent='Print PDF';print.onclick=()=>printCplPdf(item);actions.appendChild(print);card.appendChild(actions);host.appendChild(card);});}
     function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}const updateRowSC=()=>{const chosen=isSuperAdminSession()?select.value:name;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);};select.onchange=updateRowSC;updateRowSC();}
     function initCplForm(){ $('cplHeaderDate').value='';$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';$('cplEntryRows').replaceChildren();addCplEntryRow();setCplConsultant(); }
     $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplAddRow').addEventListener('click',()=>addCplEntryRow());$('cplSearch').addEventListener('input',renderCplClients);
-    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;const payload={date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'',rows};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>{setMessage($('cplMessage'),'CPL saved.','success');loadCpl();}).catch(err=>showTeamRerAlert(err.message,'CPL Error'));});
+    $('cplCancelEdit').addEventListener('click',clearCplEdit);
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;const payload={formId:$('cplFormId').value,date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>{showTeamRerDynamicIsland(payload.formId?'CPL changes saved':'CPL saved');clearCplEdit();loadCpl();}).catch(err=>showTeamRerAlert(err.message,'CPL Error'));});
+    function printCplPdf(item){const payload={date:item.date,consultant:item.consultant,manager:item.manager||'Ralph Edward Rosales',dealer:item.dealer||'HCR',type:item.type||'FIELD',rows:item.rows||[]};submitRequest('cplPdf',{payload:JSON.stringify(payload),silent:true}).catch(err=>showTeamRerAlert(err.message,'CPL PDF Error'));}
     $('cplPrintBlank').addEventListener('click',()=>{
       const consultant=isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
-      submitRequest('cplBlankPdf',{consultant}).catch(err=>showTeamRerAlert(err.message,'CPL PDF Error'));
+      submitRequest('cplBlankPdf',{consultant,silent:true}).catch(err=>showTeamRerAlert(err.message,'CPL PDF Error'));
     });
-    $('cplPrintSave').addEventListener('click',()=>{const generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"date\"]')).forEach(el=>el.value=generatedDate);const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before printing.','CPL Validation');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;if(!consultant){showTeamRerAlert('Select a Sales Consultant before printing.','CPL Validation');return;}cplPrintWindow=window.open('about:blank','_blank');if(cplPrintWindow){try{cplPrintWindow.document.write('<title>Preparing CPL print sheet...</title><p style=\"font-family:Arial;padding:24px\">Preparing your CPL worksheet...</p>');cplPrintWindow.document.close();}catch(e){}}const payload={date:generatedDate,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};submitRequest('cplSheetPrint',{payload:JSON.stringify(payload)}).catch(err=>{if(cplPrintWindow&&!cplPrintWindow.closed)cplPrintWindow.close();cplPrintWindow=null;showTeamRerAlert(err.message,'CPL PDF Error');});});
+    $('cplPrintSave').addEventListener('click',()=>{const generatedDate=$('cplFormId').value?$('cplHeaderDate').value:cplToday();$('cplHeaderDate').value=generatedDate;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"date\"]')).forEach(el=>el.value=generatedDate);const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before printing.','CPL Validation');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;if(!consultant){showTeamRerAlert('Select a Sales Consultant before printing.','CPL Validation');return;}const payload={date:generatedDate,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};submitRequest('cplPdf',{payload:JSON.stringify(payload),silent:true}).catch(err=>showTeamRerAlert(err.message,'CPL PDF Error'));});});
     function renderCplPreview(){/* table is the live print preview */}
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
