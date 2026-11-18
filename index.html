@@ -2729,7 +2729,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
       initializeAuth, browserLocalPersistence, browserPopupRedirectResolver,
-      GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+      GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -6155,31 +6155,28 @@
     });
 
     $("loginBtn").addEventListener("click", async () => {
-      $("loginBtn").disabled = true;
+      const button = $("loginBtn");
+      button.disabled = true;
+      button.textContent = "Opening Google sign-in...";
       showLoading("Connecting securely to Google...");
-      setMessage($("loginMessage"), "Connecting to Google...");
+      setMessage($("loginMessage"), "Opening Google sign-in...");
       try {
-        // A fresh manual login starts a new one-hour inactivity window.
         clearIdleMonitor(true);
-
-        // Use popup sign-in on all devices. Firebase redirect sign-in can fail
-        // on externally hosted apps when browsers partition third-party storage.
-        const result = await signInWithPopup(auth, provider);
-        currentUser = result.user;
-        // onAuthStateChanged performs server-side authorization for both
-        // new logins and restored sessions; do not submit it twice here.
+        await signInWithRedirect(auth, provider);
       } catch (error) {
         hideLoading();
-        console.error(error);
-        const code = String(error && error.code || "");
-        if (code.includes("popup-blocked")) {
-          showLoginError("Google sign-in popup was blocked. Allow pop-ups for TEAM RER, then try again.");
-        } else if (code.includes("popup-closed-by-user")) {
-          showLoginError("Google sign-in was closed before completion. Tap Sign in with Google to try again.");
-        } else {
-          showLoginError("Sign-in failed: " + (error && error.message ? error.message : "Please try again."));
-        }
+        console.error("TEAM RER Google redirect sign-in error:", error);
+        showLoginError("Google sign-in failed: " + (error && error.message ? error.message : "Please try again."));
+        button.textContent = "Sign in with Google";
       }
+    });
+
+    // Consume redirect result on return. Auth-state listener handles authorization.
+    getRedirectResult(auth).catch(error => {
+      console.error("TEAM RER Google redirect result error:", error);
+      const button = $("loginBtn");
+      if (button) button.textContent = "Sign in with Google";
+      showLoginError("Google sign-in failed: " + (error && error.message ? error.message : "Please try again."));
     });
 
     function closePdfPreview() {
