@@ -2475,7 +2475,7 @@
         </section>
 
         <section id="cplPage" class="hidden">
-<h2 class="section-title">Client Probing Log (CPL)</h2>
+<button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button><h2 class="section-title">Client Probing Log (CPL)</h2>
 <div class="cpl-form-shell cpl-clipboard-shell"><div class="cpl-clip"></div><div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2><div class="cpl-meta-grid">
 <label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label><label>TYPE <input id="cplTypeFixed" value="FIELD" readonly></label>
 <label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label><label>DATE <input id="cplHeaderDate" type="date"></label><label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label></div></div>
@@ -5965,6 +5965,7 @@
     function initCplForm(){$('cplHeaderDate').value=cplToday();$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';cplDraftClients=[];setCplConsultant();buildCplInterview();renderCplPreview();}
     $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied('Team RER Super Admin Access Only.');return;}runPageTransition('Opening Client Probing Log...',()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
+    $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplSaveClient').addEventListener('click',()=>{if(!isSuperAdminSession())return;let consultant=cplName();if(!consultant){setMessage($('cplMessage'),'Select the Sales Consultant first.','error');return;}let r=getCplClient();if(!r.clientName&&!r.phone&&!r.email){setMessage($('cplMessage'),'Enter a client name, phone, or email to save.','error');return;}r.sc=cplInitials(consultant);cplDraftClients.push(r);renderCplPreview();resetCplInterview();setMessage($('cplMessage'),'Client added to preview. Ready for the next client.','success');});
     $('cplConsultantSelect').addEventListener('change',()=>{$('cplSC').value=cplInitials(cplName());});
     $('cplSearch').addEventListener('input',renderCplSaved);
@@ -6313,7 +6314,7 @@
       if (!edge || !toggle || !panel) return;
       const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", history:"creditHistoryPage", promo:"promoPage", audit:"auditPage", users:"userManagementPage", org:"orgChartPage", cpl:"cplPage" };
       const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", audit:"auditTabBtn", users:"userManagementTabBtn", org:"orgChartTabBtn", cpl:"cplTabBtn" };
-      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers", org:"backToMenuFromOrg" };
+      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers", org:"backToMenuFromOrg", cpl:"backToMenuFromCpl" };
       let activeModule = "";
       const closePanel = () => { edge.classList.remove("is-open"); toggle.setAttribute("aria-expanded","false"); toggle.setAttribute("aria-label","Open quick navigation"); };
       const openPanel = () => { edge.classList.add("is-open"); toggle.setAttribute("aria-expanded","true"); toggle.setAttribute("aria-label","Close quick navigation"); };
@@ -6346,8 +6347,7 @@
       const goHome = () => {
         const back = document.getElementById(backButtons[activeModule]);
         closePanel();
-        if (activeModule === "cpl") { document.getElementById("cplPage")?.classList.add("hidden"); document.getElementById("appNav")?.classList.remove("hidden"); clearLastAppView(); }
-        else if (back) back.click();
+        if (back) back.click();
         hideEdge();
       };
       toggle.addEventListener("click",() => edge.classList.contains("is-open") ? closePanel() : openPanel());
@@ -6371,7 +6371,7 @@
           const key = Object.keys(moduleButtons).find(k => moduleButtons[k] === clickedId.id);
           if (key) showEdge(key);
         }
-        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers,#backToMenuFromOrg");
+        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers,#backToMenuFromOrg,#backToMenuFromCpl");
         if (back && !(back.id === "backToMenuFromCredit" && typeof creditFormHasEntries === "function" && creditFormHasEntries())) hideEdge();
       },true);
       document.addEventListener("click",event => {
@@ -7558,20 +7558,7 @@
 </style>
 <style id="cpl-new-design">
 #cplPage .cpl-clipboard-shell{background:#fff;color:#172b40;border:0;border-radius:8px;padding:18px 12px;box-shadow:0 5px 22px #10203018}#cplPage .cpl-clip{width:120px;height:24px;margin:-18px auto 12px;border-radius:6px;background:linear-gradient(#d5dce3,#99a5b1);border:1px solid #8794a0;box-shadow:0 2px 4px #0002}#cplPage .cpl-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:8px}#cplPage .cpl-meta-grid label{font-size:11px;color:#003b70;font-weight:bold}#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{width:100%;padding:8px;box-sizing:border-box;background:#f8fafc;color:#1b2735;border:1px solid #bac6d2;border-radius:5px}#cplPage .cpl-interview-card{padding:14px;margin:12px 0;border:1px solid #d5dde7;border-radius:11px;background:#f8fafc}#cplPage .cpl-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#cplPage .cpl-question{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#28445f}#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-family:'Comic Sans MS','Segoe Print','Bradley Hand',cursive!important;font-weight:400;padding:9px;width:100%;box-sizing:border-box;background:#fff;border:1px solid #d3dde7;border-radius:7px;color:#20374d}#cplPage .cpl-question textarea{min-height:65px}#cplPage .cpl-print-page{background:#fff;color:#111;border:1px solid #cbd3da;margin:12px 0;padding:10px;overflow:auto}#cplPage .cpl-print-meta{display:grid;grid-template-columns:8% 8% 25% 12% 25%;gap:4px;font-size:8px;margin:5px 0}#cplPage .cpl-print-table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:7px}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{border:1px solid #666;padding:2px;vertical-align:top;overflow-wrap:anywhere;height:28px}#cplPage .cpl-print-table th{background:#e7edf3;color:#17344e;text-align:center;font-size:6.5px}#cplPage .cpl-date-vertical{writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;white-space:nowrap;font-size:6px}#cplPage .cpl-print-logo{display:flex;justify-content:flex-end;margin-top:3px}#cplPage .cpl-print-logo img{width:42px;max-height:26px;object-fit:contain}@media(max-width:650px){#cplPage .cpl-question-grid{grid-template-columns:1fr}}@media print{body *{visibility:hidden!important}#cplPage,#cplPage *{visibility:visible!important}#cplPage{position:absolute;left:0;top:0;width:100%;background:white!important;color:#111!important}#cplPage>button,#cplPage>.section-title,#cplPage .cpl-interview-card,#cplPage .cpl-preview-heading,#cplPage .cpl-form-bottom,#cplPage .cpl-saved-wrap,#cplPage #cplMessage,#cplPage .cpl-clip{display:none!important}#cplPage .cpl-print-page{border:0;margin:0;padding:0;break-after:page;page-break-after:always}#cplPage .cpl-print-page:last-child{break-after:auto;page-break-after:auto}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{height:22px;padding:2px}@page{size:13in 8.5in landscape;margin:.1in}}
-</style><style id="cpl-fullscreen-workspace-fix">
-#cplPage:not(.hidden){position:fixed!important;inset:0!important;z-index:99999!important;display:block!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:none!important;margin:0!important;padding:0!important;overflow-y:auto!important;overflow-x:hidden!important;background:#f1f4f7!important;color:#1f2933!important;box-sizing:border-box!important;border-radius:0!important}
-#cplPage:not(.hidden) .cpl-clipboard-shell{width:100%!important;min-height:100dvh!important;height:auto!important;max-height:none!important;box-sizing:border-box!important;margin:0!important;padding:18px clamp(12px,3vw,34px) 32px!important;border-radius:0!important;overflow:visible!important;box-shadow:none!important;background:#f7f9fb!important}
-#cplPage:not(.hidden) .cpl-clip{margin:0 auto 12px!important}
-#cplPage:not(.hidden) .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important}
-#cplPage:not(.hidden) .cpl-meta-grid input,#cplPage:not(.hidden) .cpl-meta-grid select{min-width:0!important;max-width:100%!important}
-#cplPage:not(.hidden) .cpl-interview-card{width:100%!important;box-sizing:border-box!important;margin:16px 0!important}
-#cplPage:not(.hidden) .cpl-question-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-#cplPage:not(.hidden) .cpl-question input,#cplPage:not(.hidden) .cpl-question select,#cplPage:not(.hidden) .cpl-question textarea{font-family:inherit!important;background:#fff!important;color:#202a35!important;border:1px solid #b9c4ce!important;box-shadow:none!important}
-#cplPage:not(.hidden) .cpl-question span{color:#263b50!important;opacity:1!important}
-#cplPage:not(.hidden) .cpl-print-page{max-width:100%!important;box-sizing:border-box!important;overflow-x:auto!important}
-@media(max-width:650px){#cplPage:not(.hidden) .cpl-meta-grid{grid-template-columns:minmax(0,1fr)!important}#cplPage:not(.hidden) .cpl-question-grid{grid-template-columns:minmax(0,1fr)!important}#cplPage:not(.hidden) .cpl-clipboard-shell{padding:12px 12px 30px!important}#cplPage:not(.hidden) .cpl-form-heading h2{font-size:clamp(20px,6vw,28px)!important;text-align:center!important}}
-</style>
-</body>
+</style></body>
 </html>
 
 
