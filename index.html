@@ -4553,7 +4553,11 @@
       island.classList.remove('cpl-pdf-generating','cpl-pdf-expanded');
       island.classList.add('cpl-pdf-ready','cpl-pdf-centered','show');
       island.setAttribute('role','button'); island.setAttribute('tabindex','0'); island.setAttribute('aria-label','PDF generated. Tap to open download options.');
-      island.querySelector('.island-check').textContent = '✓';
+      const logoSlot=island.querySelector('.island-check');
+      if(logoSlot){
+        logoSlot.classList.add('cpl-hyundai-logo');
+        logoSlot.innerHTML='<svg class="cpl-hyundai-emblem" viewBox="0 0 100 64" aria-label="Hyundai emblem" role="img"><defs><linearGradient id="cplHyundaiChrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#d8f3ff"/><stop offset="38%" stop-color="#75b9e8"/><stop offset="68%" stop-color="#f2fbff"/><stop offset="100%" stop-color="#6ba4d5"/></linearGradient><clipPath id="cplHyundaiClip"><ellipse cx="50" cy="32" rx="43" ry="25"/></clipPath><linearGradient id="cplHyundaiBeam" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="50%" stop-color="#e8faff" stop-opacity=".8"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><ellipse cx="50" cy="32" rx="43" ry="25" fill="none" stroke="url(#cplHyundaiChrome)" stroke-width="5"/><path d="M29 18 L43 18 L34 45 L20 45 Z M57 18 L71 18 L62 45 L48 45 Z M37 29 L63 29 L59 39 L33 39 Z" fill="url(#cplHyundaiChrome)"/><g clip-path="url(#cplHyundaiClip)"><rect class="cpl-hyundai-sweep" x="-24" y="4" width="20" height="56" fill="url(#cplHyundaiBeam)" transform="rotate(22 0 32)"/></g></svg>';
+      }
       island.querySelector('.island-message').textContent = titleText || 'PDF generated successfully';
       let actions = island.querySelector('.cpl-island-actions');
       if (!actions) { actions = document.createElement('div'); actions.className='cpl-island-actions'; island.appendChild(actions); }
@@ -7979,6 +7983,24 @@
     @keyframes cplGreenRingSpin{to{transform:rotate(360deg)}}
     #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded::after{inset:-2px;border-radius:26px}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after{animation:none!important}}
+    /* CPL PDF-ready success: metallic Hyundai emblem + soft moving light sweep */
+    #teamRerDynamicIsland.cpl-pdf-ready .island-check.cpl-hyundai-logo{
+      background:transparent!important;box-shadow:none!important;color:transparent!important;
+      width:54px!important;height:42px!important;flex-basis:54px!important;
+      display:grid!important;place-items:center!important;overflow:visible!important;perspective:600px;
+    }
+    #teamRerDynamicIsland.cpl-pdf-ready .island-check.cpl-hyundai-logo::after{display:none!important;content:none!important}
+    #teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem{
+      width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 4px rgba(105,197,255,.55)) drop-shadow(0 2px 2px rgba(0,0,0,.5));
+      transform-origin:center;animation:cplHyundaiLogoFloat 3.8s ease-in-out infinite;
+    }
+    #teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:cplHyundaiSweep 2.8s ease-in-out infinite}
+    @keyframes cplHyundaiSweep{0%{transform:translateX(-30px) rotate(22deg);opacity:0}18%{opacity:.75}60%{opacity:.55}100%{transform:translateX(125px) rotate(22deg);opacity:0}}
+    @keyframes cplHyundaiLogoFloat{0%,100%{transform:rotateY(-5deg) translateY(0);filter:drop-shadow(0 0 3px rgba(105,197,255,.45))}50%{transform:rotateY(5deg) translateY(-1px);filter:drop-shadow(0 0 8px rgba(105,197,255,.75))}}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded) .island-check.cpl-hyundai-logo{width:58px!important;height:40px!important;flex-basis:58px!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded .island-check.cpl-hyundai-logo{width:42px!important;height:28px!important;flex-basis:42px!important}
+    @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:none!important}}
+
 
     /* CPL premium palette: midnight glass, slate depth, restrained champagne accents */
     #cplPage .cpl-form-shell,
