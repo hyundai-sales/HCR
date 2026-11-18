@@ -3315,8 +3315,10 @@
         $("tokenField").value = "";
         $("nonceField").value = "";
         if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
+        if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
         if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; } if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
-        const message = "Google Apps Script did not return a response within 45 seconds. Please try again. If this continues, contact your TEAM RER administrator.";
+        const timeoutSeconds = action === "cplMonthlyPdf" ? 150 : 45;
+        const message = "Google Apps Script did not return a response within " + timeoutSeconds + " seconds. Please try again. If this continues, contact your TEAM RER administrator.";
         if (action === "authorize") {
           authorizationInProgress = false;
           showLoginError(message);
@@ -3324,7 +3326,7 @@
           showTeamRerDynamicIsland(message);
           setMessage($("resultMessage"), message, "error");
         }
-      }, 45000);
+      }, action === "cplMonthlyPdf" ? 150000 : 45000);
       $("bridgeForm").submit();
     }
 
