@@ -6046,12 +6046,28 @@
       }
       updateQuotePreview();
       document.body.classList.add("printing-quote");
+      // iOS Home Screen web apps may not reliably return an afterprint event.
+      // Use a safety cleanup so the normal app view is not left in print mode.
+      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
       window.print();
+      window.__teamRerPrintCleanupTimer = setTimeout(() => {
+        document.body.classList.remove("printing-quote");
+        window.__teamRerPrintCleanupTimer = null;
+      }, 15000);
+      // iPhone/iPad users get a practical fallback if the native print sheet is not shown.
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+      if (isIOS && isStandalone) {
+        showTeamRerDynamicIsland("If the print options do not appear, open TEAM RER in Safari and try Print / Save as PDF again.");
+      }
     });
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("printing-quote");
+      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
+      window.__teamRerPrintCleanupTimer = null;
       // The browser does not expose whether the user saved or cancelled the PDF.
-      showTeamRerDynamicIsland("Quotation print dialog closed. Check your PDF destination.");
+      showTeamRerDynamicIsland("Print options closed. Check your PDF destination.");
     });
 
     $("loginBtn").addEventListener("click", async () => {
