@@ -2487,9 +2487,9 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry Row</button><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
-            <div class="cpl-form-bottom"><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
+            <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
             <div id="cplMessage" class="message hidden" aria-live="polite"></div>
           </div>
           <div class="cpl-saved-wrap">
@@ -4414,8 +4414,17 @@
           const note = document.createElement('div'); note.className = 'cpl-pdf-wait-message';
           overlay.appendChild(note); document.body.appendChild(overlay);
         }
+        overlay.classList.remove('cpl-pdf-ready-overlay');
         overlay.querySelector('.cpl-pdf-wait-message').textContent = message || 'Please wait. Generating your CPL PDF…';
       } else if (overlay) overlay.remove();
+    }
+    function setCplPdfReadyOverlay() {
+      const overlay=document.getElementById('cplPdfBusyOverlay');
+      if(!overlay)return;
+      overlay.classList.add('cpl-pdf-ready-overlay');
+      const note=overlay.querySelector('.cpl-pdf-wait-message');
+      if(note)note.remove();
+      document.body.classList.add('cpl-pdf-busy');
     }
     function beginCplPdfGeneration(message) {
       setCplPdfBusy(true, 'Please wait. Generating your CPL PDF…');
@@ -4430,14 +4439,14 @@
       }
     }
     function showCplPdfNotification(downloadUrl, fileName, titleText, copyText) {
-      setCplPdfBusy(false);
+      setCplPdfReadyOverlay();
       hideCreditToast();
       const island = document.getElementById('teamRerDynamicIsland') || (showTeamRerDynamicIsland('PDF ready',true),document.getElementById('teamRerDynamicIsland'));
       if (!island) return;
       if (teamRerIslandTimer) { clearTimeout(teamRerIslandTimer); teamRerIslandTimer = null; }
       teamRerIslandHold = true;
       island.classList.remove('cpl-pdf-generating','cpl-pdf-expanded');
-      island.classList.add('cpl-pdf-ready','show');
+      island.classList.add('cpl-pdf-ready','cpl-pdf-centered','show');
       island.setAttribute('role','button'); island.setAttribute('tabindex','0'); island.setAttribute('aria-label','PDF generated. Tap to open download options.');
       island.querySelector('.island-check').textContent = '✓';
       island.querySelector('.island-message').textContent = titleText || 'PDF generated successfully';
@@ -4447,7 +4456,7 @@
       const download=document.createElement('button');download.type='button';download.className='cpl-island-download';download.textContent='↓  Download PDF';
       download.addEventListener('click',e=>{e.stopPropagation();if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'CPL.pdf';document.body.appendChild(a);a.click();a.remove();download.textContent='✓  Download started';});
       const close=document.createElement('button');close.type='button';close.className='cpl-island-close';close.textContent='Close';
-      close.addEventListener('click',e=>{e.stopPropagation();hideTeamRerDynamicIsland();island.classList.remove('cpl-pdf-ready','cpl-pdf-expanded');island.removeAttribute('role');island.removeAttribute('tabindex');actions.remove();try{URL.revokeObjectURL(downloadUrl);}catch(_){}});
+      close.addEventListener('click',e=>{e.stopPropagation();hideTeamRerDynamicIsland();setCplPdfBusy(false);island.classList.remove('cpl-pdf-ready','cpl-pdf-expanded','cpl-pdf-centered');island.removeAttribute('role');island.removeAttribute('tabindex');actions.remove();try{URL.revokeObjectURL(downloadUrl);}catch(_){}});
       actions.append(download,close);
       const toggleOptions=e=>{if(e.target.closest('.cpl-island-actions'))return;island.classList.toggle('cpl-pdf-expanded');};
       island.onclick=toggleOptions;
@@ -6094,7 +6103,7 @@
       if(!consultant){showTeamRerDynamicIsland("Select a Sales Consultant first.");return;}
       const prefix=`${year}-${month}`;
       const matching=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant&&String(f.date||'').slice(0,7)===prefix);
-      if(!matching.length){cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();addCplEntryRow();setCplConsultant();if(isSuperAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
+      if(!matching.length){cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();setCplConsultant();if(isSuperAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const rows=[];
       matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.sc=consultant;rows.push(copy);}));
       cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';
@@ -6113,11 +6122,11 @@
     function clearCplDraft(){try{localStorage.removeItem(cplDraftKey());}catch(_){}}
     function restoreCplDraft(){try{const draft=JSON.parse(localStorage.getItem(cplDraftKey())||'null');if(!draft||!Array.isArray(draft.rows)||!draft.rows.length)return false;cplMonthlyRetrieved=draft.monthly||null;$('cplHeaderDate').value=draft.headerDate||'';$('cplManagerFixed').value=draft.manager||'Ralph Edward Rosales';if($('cplMonthlyMonth')&&draft.month)$('cplMonthlyMonth').value=draft.month;if($('cplMonthlyYear')&&draft.year)$('cplMonthlyYear').value=draft.year;if($('cplMonthlyConsultant')&&draft.monthlyConsultant)$('cplMonthlyConsultant').value=draft.monthlyConsultant;if(draft.consultant){$('cplConsultantSelect').value=draft.consultant;if(!$('cplMonthlyConsultant').value)$('cplMonthlyConsultant').value=draft.consultant;} $('cplSaveForm').textContent=cplMonthlyRetrieved?'Save Monthly Changes':'Save CPL';$('cplEntryRows').replaceChildren();draft.rows.forEach(item=>addCplEntryRow(item.data||{}, {retrieved:!!item.retrieved}));setCplConsultant();if(isSuperAdminSession()&&draft.consultant){$('cplConsultantSelect').value=draft.consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=draft.consultant);}return true;}catch(err){console.warn('CPL draft restore failed:',err);return false;}}
     function attachCplDraftAutosave(){if(cplDraftAutosaveAttached)return;cplDraftAutosaveAttached=true;const rows=$('cplEntryRows');rows.addEventListener('input',queueCplDraftSave);rows.addEventListener('change',queueCplDraftSave);$('cplConsultantSelect').addEventListener('change',queueCplDraftSave);$('cplAddRow').addEventListener('click',queueCplDraftSave);$('cplMonthlyConsultant').addEventListener('change',queueCplDraftSave);$('cplMonthlyMonth').addEventListener('change',queueCplDraftSave);$('cplMonthlyYear').addEventListener('change',queueCplDraftSave);new MutationObserver(queueCplDraftSave).observe(rows,{childList:true});}
-    function initCplForm(){ $('cplSaveForm').textContent='Save CPL';$('cplHeaderDate').value='';$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';$('cplEntryRows').replaceChildren();addCplEntryRow();setCplConsultant(); }
-    $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
+    function initCplForm(){ $('cplSaveForm').textContent='Save CPL';$('cplHeaderDate').value='';$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';$('cplEntryRows').replaceChildren();setCplConsultant(); }
+    $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;$('cplPage').scrollIntoView({block:'start',behavior:'smooth'});loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
-    $('cplAddRow').addEventListener('click',()=>addCplEntryRow());$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
+    $('cplAddRow').addEventListener('click',()=>{addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
     $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{clearCplDraft();saveBtn.disabled=false;if(meta){meta.formCount=rows.length?1:0;meta.rowCount=rows.length;showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
@@ -7805,7 +7814,29 @@
     @keyframes cplIslandOptions{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
     body.cpl-pdf-busy{overflow:hidden!important;touch-action:none!important}
     body.cpl-pdf-busy #teamRerDynamicIsland{pointer-events:none!important}
+    body.cpl-pdf-busy #teamRerDynamicIsland.cpl-pdf-ready{pointer-events:auto!important}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-generating,.cpl-pdf-wait-message{animation:none!important}}
+
+    /* CPL Update 3: button placement, blank start, centered success island */
+    #cplPage .cpl-entry-tools{justify-content:flex-start;flex-wrap:wrap}
+    #cplPage .cpl-entry-tools button,#cplPage .cpl-form-bottom button{min-height:48px;font-size:15px;font-weight:900}
+    #cplPage .cpl-form-bottom{justify-content:stretch;flex-wrap:wrap;gap:10px;margin-top:18px}
+    #cplPage #cplSaveForm{background:linear-gradient(135deg,#15845b,#075b3c)!important;color:#fff!important;border:1px solid #75e4b0!important;flex:1 1 100%;box-shadow:0 4px 14px rgba(0,0,0,.25)!important}
+    #cplPage #cplPrintSave{flex:1 1 100%}
+    #cplPage #cplEntryRows:empty{display:none!important}
+    #cplPdfBusyOverlay.cpl-pdf-ready-overlay{background:rgba(4,9,17,.20)!important;backdrop-filter:blur(12px) saturate(1.35)!important;-webkit-backdrop-filter:blur(12px) saturate(1.35)!important}
+    #teamRerDynamicIsland.cpl-pdf-ready{z-index:100601!important;transition:top .5s cubic-bezier(.2,.7,.2,1),width .5s cubic-bezier(.2,.7,.2,1),height .5s cubic-bezier(.2,.7,.2,1),border-radius .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s ease!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded){top:50%!important;left:50%!important;width:78px!important;height:78px!important;min-width:78px!important;min-height:78px!important;max-width:78px!important;padding:0!important;gap:0!important;border-radius:50%!important;transform:translate(-50%,-50%) scale(1)!important;justify-content:center!important;overflow:visible!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded) .island-message{display:none!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded) .island-check{width:40px!important;height:40px!important;flex-basis:40px!important;font-size:18px!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded{top:50%!important;left:50%!important;min-width:min(300px,calc(100vw - 30px))!important;max-width:min(360px,calc(100vw - 30px))!important;min-height:118px!important;padding:18px!important;border-radius:24px!important;transform:translate(-50%,-50%) scale(1)!important;overflow:hidden!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded .island-message{display:block!important;text-align:center;font-size:14px!important;max-width:100%!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded .island-check{width:32px!important;height:32px!important;flex-basis:32px!important}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded .cpl-island-actions{display:flex!important}
+    #teamRerDynamicIsland.cpl-pdf-ready::after{content:"";position:absolute;inset:-2px;border-radius:inherit;padding:2px;background:conic-gradient(from 0deg,#24e38b,#b4ffdb 20%,#24e38b 42%,#16a96a 62%,#c0ffe0 80%,#24e38b);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;animation:cplGreenRingSpin 2.8s linear infinite;filter:drop-shadow(0 0 7px rgba(35,227,139,.55)}
+    @keyframes cplGreenRingSpin{to{transform:rotate(360deg)}}
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-expanded::after{inset:-2px;border-radius:26px}
+    @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after{animation:none!important}}
 </style>
 </body>
 </html>
