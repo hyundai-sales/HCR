@@ -1631,7 +1631,37 @@
     .price-promo-table{width:100%;border-collapse:collapse;min-width:640px;font-size:11px}.price-promo-table th,.price-promo-table td{padding:10px 9px;border-bottom:1px solid #e5edf3;text-align:left;vertical-align:top}
     .price-promo-table thead th{background:#eaf2f8;color:#234865;font-weight:700;white-space:nowrap}.price-promo-table td strong{color:#123d63}.price-promo-value{display:block;margin:2px 0;color:#174f7b;font-weight:750}.price-promo-sub{display:block;color:#71869a;font-size:10px;line-height:1.4;margin-top:3px}
 
-  </style>
+  
+    /* CPL Update 4: hide static header metadata while retaining internal values */
+    #cplPage .cpl-meta-grid{grid-template-columns:minmax(0,1fr)!important}
+    #cplPage .cpl-meta-grid>label:nth-child(1),
+    #cplPage .cpl-meta-grid>label:nth-child(2),
+    #cplPage .cpl-meta-grid>label:nth-child(4),
+    #cplPage .cpl-meta-grid>label:nth-child(5){display:none!important}
+    #cplPage .cpl-meta-grid>label:nth-child(3){grid-column:1/-1!important}
+    /* Slower, smoother oval-to-circle transition for CPL PDF-ready state */
+    #teamRerDynamicIsland.cpl-pdf-ready{
+      transition:top 1.05s cubic-bezier(.22,.61,.36,1),left 1.05s cubic-bezier(.22,.61,.36,1),
+        width 1.05s cubic-bezier(.22,.61,.36,1),height 1.05s cubic-bezier(.22,.61,.36,1),
+        min-width 1.05s cubic-bezier(.22,.61,.36,1),min-height 1.05s cubic-bezier(.22,.61,.36,1),
+        max-width 1.05s cubic-bezier(.22,.61,.36,1),padding 1.05s cubic-bezier(.22,.61,.36,1),
+        gap 1.05s cubic-bezier(.22,.61,.36,1),border-radius 1.05s cubic-bezier(.22,.61,.36,1),
+        transform 1.05s cubic-bezier(.22,.61,.36,1),box-shadow .8s ease!important;
+    }
+    #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded){
+      animation:cplReadyCircleSettle 1.12s cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes cplReadyCircleSettle{
+      0%{transform:translate(-50%,-50%) scale(.92);filter:brightness(1)}
+      55%{transform:translate(-50%,-50%) scale(1.06);filter:brightness(1.16)}
+      100%{transform:translate(-50%,-50%) scale(1);filter:brightness(1)}
+    }
+    @media(prefers-reduced-motion:reduce){
+      #teamRerDynamicIsland.cpl-pdf-ready{transition:none!important}
+      #teamRerDynamicIsland.cpl-pdf-ready.cpl-pdf-centered:not(.cpl-pdf-expanded){animation:none!important}
+    }
+
+</style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
   <!-- TEAM RER iOS-style home screen: presentation only; existing module IDs and handlers are unchanged. -->
