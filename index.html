@@ -63,10 +63,6 @@
     .google { background:white; color:#24364b; border:1px solid #cbd5e1; }
     .secondary { margin-top:10px; background:#e8eef5; color:#173a5e; }
     .link { margin-top:10px; }
-    /* Price List PDF.js page viewer: renders actual pages on Android/iOS without the browser's Open-only PDF wrapper. */
-    #pdfPreviewPages { flex:1 1 auto; min-height:0; overflow:auto; padding:14px; background:#e7edf4; display:flex; flex-direction:column; align-items:center; gap:14px; -webkit-overflow-scrolling:touch; }
-    #pdfPreviewPages canvas { display:block; width:100%; height:auto; max-width:100%; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.16); }
-    #pdfPreviewPages .pdf-page-loading { color:#334155; font-size:13px; padding:24px 10px; text-align:center; }
     /* Floating PDF preview modal */
     .preview-wrap {
       position:fixed;
@@ -2372,51 +2368,6 @@
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
   </style>
 
-
-<style id="team-rer-vehicle-quotation-print-isolation-fix">
-@media print {
-  /* Print only the quotation sheet. Hide every other app layer,
-     including dark-mode decorations and fixed overlays. */
-  body.printing-quote * { visibility:hidden !important; }
-  body.printing-quote #quotePreviewWrap,
-  body.printing-quote #quotePreviewWrap * { visibility:visible !important; }
-  body.printing-quote #quotePreviewWrap {
-    display:block !important;
-    position:absolute !important;
-    top:0 !important; left:0 !important; right:0 !important;
-    width:100% !important; height:auto !important;
-    margin:0 !important; padding:0 !important;
-    overflow:visible !important;
-    background:#fff !important;
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
-  }
-  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
-  body.printing-quote #quotePreviewWrap .quote-preview-scroll {
-    display:block !important; visibility:visible !important;
-    position:static !important; width:100% !important; height:auto !important;
-    max-width:none !important; max-height:none !important;
-    margin:0 !important; padding:0 !important; overflow:visible !important;
-    border:0 !important; border-radius:0 !important; box-shadow:none !important;
-    background:#fff !important;
-  }
-  body.printing-quote #quotePreviewWrap .quote-preview-head,
-  body.printing-quote #quotePreviewWrap .quote-preview-actions {
-    display:none !important; visibility:hidden !important;
-  }
-  body.printing-quote #quotePreview {
-    display:block !important; visibility:visible !important;
-    width:100% !important; min-height:0 !important; height:auto !important;
-    margin:0 !important; padding:5mm 6mm !important;
-    background:#fff !important; color:#1f2937 !important;
-    box-shadow:none !important; border:0 !important;
-  }
-  body.printing-quote #quotePreview::before,
-  body.printing-quote #quotePreview::after {
-    display:none !important; content:none !important;
-  }
-}
-</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -2746,7 +2697,7 @@
         <section id="pdfPage" class="hidden">
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
         <div id="pdfFormFields">
-        <h2 class="section-title">Price List PDF</h2>
+        <h2 class="section-title">Generate PDF</h2>
 
         <div class="field">
           <label for="worksheet">Select worksheet</label>
@@ -2758,10 +2709,11 @@
         </div>
 
         <div class="message" id="roleNote"></div>
+        <button id="generateBtn" type="button">Generate PDF</button>
         </div>
         <div id="resultMessage" class="message hidden" aria-live="polite"></div>
 
-        <button id="viewBtn" class="secondary" type="button">View PDF</button>
+        <button id="viewBtn" class="secondary hidden" type="button">View PDF</button>
 
         <div id="previewWrap" class="preview-wrap hidden" role="dialog" aria-modal="true" aria-label="PDF Preview">
           <div class="preview-dialog">
@@ -2772,7 +2724,7 @@
                 <button id="closePreviewBtn" class="preview-close" type="button" aria-label="Close PDF preview">Close ✕</button>
               </div>
             </div>
-            <div id="pdfPreviewPages" aria-label="PDF pages"><div class="pdf-page-loading">Preparing PDF preview...</div></div>
+            <iframe id="pdfPreview" title="Generated PDF preview"></iframe>
           </div>
         </div>
         </section>
@@ -2931,7 +2883,6 @@
     <input type="hidden" name="payload" id="payloadField">
   </form>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
@@ -3035,8 +2986,6 @@
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
     let pendingPriceListPdfUrl = null;
-    let pendingPriceListPdfBase64 = "";
-    let pendingPriceListPdfName = "Price-List.pdf";
     let promoInventoryLoaded = false;
     let creditModeHistoryRows = [];
     let creditModeHistoryLoaded = false;
@@ -3585,8 +3534,7 @@
             if (action === "generate") setCplPdfBusy(false);
             setMessage($("resultMessage"), error, "error");
             $("pdfFormFields").classList.remove("hidden");
-            $("viewBtn").disabled = false;
-            $("viewBtn").textContent = "View PDF";
+            $("generateBtn").disabled = false;
           }
         }
         return;
@@ -3865,23 +3813,30 @@
       if (action === "generate") {
         const result = event.data;
         const worksheetName = String($("worksheet").value || "Price List").trim();
-        const worksheetFileName = worksheetName.replace(/[^a-z0-9 _-]/gi, "").replace(/\s+/g, "-") + ".pdf";
-        if (!result.pdfBase64) throw new Error("The PDF was generated, but the PDF data was not received. Please try again.");
+        const worksheetFileName = worksheetName.replace(/[^a-z0-9 _-]/gi, "").replace(/\\s+/g, "-") + ".pdf";
+        if (!result.pdfBase64) {
+          throw new Error("The PDF was generated, but the download data was not received. Please try again.");
+        }
         if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
-        pendingPriceListPdfBase64 = result.pdfBase64;
-        pendingPriceListPdfName = result.fileName || worksheetFileName;
-        const pdfBytes = Uint8Array.from(atob(pendingPriceListPdfBase64), c => c.charCodeAt(0));
+        const pdfBytes = Uint8Array.from(atob(result.pdfBase64), c => c.charCodeAt(0));
         const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
         pendingPriceListPdfUrl = URL.createObjectURL(pdfBlob);
+        setMessage(
+          $("resultMessage"),
+          worksheetName + " PDF generated successfully. Select View PDF to preview or download it. No Google Drive file access is required.",
+          "success"
+        );
         $("downloadLink").href = pendingPriceListPdfUrl;
-        $("downloadLink").download = pendingPriceListPdfName;
-        $("downloadLink").classList.remove("hidden");
+        $("downloadLink").download = result.fileName || worksheetFileName;
+        $("downloadLink").classList.add("hidden");
+        $("viewBtn").dataset.viewUrl = pendingPriceListPdfUrl;
+        $("viewBtn").classList.remove("hidden");
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
-        setMessage($("resultMessage"), worksheetName + " PDF is ready. The preview is displayed below.", "success");
-        $("previewWrap").classList.remove("hidden");
-        await renderPriceListPdfPreview();
-        hideLoading();
+        $("previewWrap").classList.add("hidden");
+        $("pdfPreview").src = "about:blank";
+        previewLoadPending = false;
+        $("generateBtn").disabled = false;
       }
     });
 
@@ -6486,12 +6441,6 @@
       $("appNav").classList.add("hidden");
       $("pdfPage").classList.remove("hidden");
       $("pdfFormFields").classList.remove("hidden");
-      pendingPriceListPdfBase64 = "";
-      if (pendingPriceListPdfUrl) { URL.revokeObjectURL(pendingPriceListPdfUrl); pendingPriceListPdfUrl = null; }
-      $("viewBtn").disabled = false;
-      $("viewBtn").classList.remove("hidden");
-      $("viewBtn").textContent = "View PDF";
-      $("downloadLink").classList.add("hidden");
       $("quotePage").classList.add("hidden");
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
@@ -6616,36 +6565,9 @@
       $("previewWrap").classList.add("hidden");
       previewLoadPending = false;
       hideLoading();
+      $("pdfPreview").src = "about:blank";
       $("viewBtn").disabled = false;
       $("viewBtn").textContent = "View PDF";
-    }
-
-    async function renderPriceListPdfPreview() {
-      const host = $("pdfPreviewPages");
-      host.replaceChildren();
-      if (!pendingPriceListPdfBase64) throw new Error("Please select a worksheet and tap View PDF.");
-      if (!window.pdfjsLib) throw new Error("The PDF preview viewer could not load. Check your internet connection and try again.");
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      const raw = atob(pendingPriceListPdfBase64);
-      const data = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) data[i] = raw.charCodeAt(i);
-      const pdf = await window.pdfjsLib.getDocument({data}).promise;
-      for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
-        const page = await pdf.getPage(pageNo);
-        const base = page.getViewport({scale:1});
-        const availableWidth = Math.max(260, Math.min(host.clientWidth - 28, 980));
-        const scale = availableWidth / base.width;
-        const viewport = page.getViewport({scale});
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d", {alpha:false});
-        const outputScale = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.floor(viewport.width * outputScale);
-        canvas.height = Math.floor(viewport.height * outputScale);
-        canvas.style.width = Math.floor(viewport.width) + "px";
-        canvas.style.height = Math.floor(viewport.height) + "px";
-        host.appendChild(canvas);
-        await page.render({canvasContext:context, viewport, transform:outputScale !== 1 ? [outputScale,0,0,outputScale,0,0] : null}).promise;
-      }
     }
 
     $("closePreviewBtn").addEventListener("click", closePdfPreview);
@@ -6653,56 +6575,64 @@
       if (event.target === $("previewWrap")) closePdfPreview();
     });
 
-    $("worksheet").addEventListener("change", () => {
-      pendingPriceListPdfBase64 = "";
-      if (pendingPriceListPdfUrl) { URL.revokeObjectURL(pendingPriceListPdfUrl); pendingPriceListPdfUrl = null; }
+    $("viewBtn").addEventListener("click", () => {
+      const viewUrl = $("viewBtn").dataset.viewUrl || "";
+      if (!viewUrl) return;
+
+      const fileIdMatch = viewUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      const previewUrl = fileIdMatch
+        ? `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`
+        : viewUrl;
+
       $("downloadLink").classList.add("hidden");
-      $("previewWrap").classList.add("hidden");
-      $("pdfPreviewPages").replaceChildren();
-      $("viewBtn").disabled = false;
-      $("viewBtn").textContent = "View PDF";
+      $("previewWrap").classList.remove("hidden");
+      $("viewBtn").disabled = true;
+      $("viewBtn").textContent = "Loading preview...";
+      showLoading("Loading your PDF preview...");
+      previewLoadPending = true;
+      $("pdfPreview").src = previewUrl;
     });
 
-    $("viewBtn").addEventListener("click", async () => {
+    $("pdfPreview").addEventListener("load", () => {
+      if (!previewLoadPending || $("previewWrap").classList.contains("hidden")) return;
+      previewLoadPending = false;
+      hideLoading();
+      $("viewBtn").disabled = false;
+      $("viewBtn").textContent = "Refresh PDF Preview";
+      $("downloadLink").classList.remove("hidden");
+    });
+
+    $("generateBtn").addEventListener("click", async () => {
       const worksheet = $("worksheet").value;
       if (!worksheet) {
-        setMessage($("resultMessage"), "Please select a worksheet first.", "error");
+        setMessage($("resultMessage"), "Please select a worksheet.", "error");
         return;
       }
+
+      const downpayment = "20";
+      const bank = "BDO";
       const isAdmin = authorizedUser && ["admin","super admin","superadmin"].includes(String(authorizedUser.role || "").toLowerCase().replace(/[_-]+/g," "));
       const consultant = isAdmin ? $("consultant").value : "";
+
       if (isAdmin && !consultant) {
         setMessage($("resultMessage"), "Please select a sales consultant.", "error");
         return;
       }
-      $("viewBtn").disabled = true;
-      if (!pendingPriceListPdfBase64) {
-        $("viewBtn").textContent = "Generating PDF...";
-        $("downloadLink").classList.add("hidden");
-        $("previewWrap").classList.add("hidden");
-        setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
-        try {
-          await submitRequest("generate", {worksheet, downpayment:"20", bank:"BDO", consultant});
-        } catch (error) {
-          $("viewBtn").disabled = false;
-          $("viewBtn").textContent = "View PDF";
-          hideLoading();
-          setMessage($("resultMessage"), error.message, "error");
-        }
-        return;
-      }
+
+      $("generateBtn").disabled = true;
+      $("pdfFormFields").classList.add("hidden");
+      $("downloadLink").classList.add("hidden");
+      $("viewBtn").classList.add("hidden");
+      $("previewWrap").classList.add("hidden");
+      $("pdfPreview").src = "about:blank";
+      previewLoadPending = false;
+      setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
       try {
-        $("previewWrap").classList.remove("hidden");
-        showLoading("Rendering PDF pages...");
-        await renderPriceListPdfPreview();
-        hideLoading();
-        $("downloadLink").classList.remove("hidden");
+        await submitRequest("generate", { worksheet, downpayment, bank, consultant });
       } catch (error) {
-        hideLoading();
+        $("generateBtn").disabled = false;
+        setCplPdfBusy(false);
         setMessage($("resultMessage"), error.message, "error");
-      } finally {
-        $("viewBtn").disabled = false;
-        $("viewBtn").textContent = "View PDF";
       }
     });
 
