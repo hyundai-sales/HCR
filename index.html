@@ -339,7 +339,6 @@
       body.printing-quote .footer,
       body.printing-quote #logoutBtn,
       body.printing-quote #printQuoteBtn,
-      body.printing-quote #cplPdfBusyOverlay,
       body.printing-quote .cover-container,
       body.printing-quote #backToMenuFromQuote,
       body.printing-quote #quoteControls,
@@ -3330,12 +3329,9 @@
         $("tokenField").value = "";
         $("nonceField").value = "";
         if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
-        if (action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate") setCplPdfBusy(false);
-        if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; }
-        if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
-        if (action === "generate") { const generateBtn=$("generateBtn"); if(generateBtn) generateBtn.disabled=false; }
-        const longPdfRequest = action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate";
-        const timeoutSeconds = longPdfRequest ? 240 : 45;
+        if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
+        if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; } if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
+        const timeoutSeconds = (action === "cplBlankPdf" || action === "cplMonthlyPdf") ? 240 : 45;
         const message = "Google Apps Script did not return a response within " + timeoutSeconds + " seconds. Please try again. If this continues, contact your TEAM RER administrator.";
         if (action === "authorize") {
           authorizationInProgress = false;
@@ -3344,7 +3340,7 @@
           showTeamRerDynamicIsland(message);
           setMessage($("resultMessage"), message, "error");
         }
-      }, (action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate") ? 240000 : 45000);
+      }, (action === "cplBlankPdf" || action === "cplMonthlyPdf") ? 240000 : 45000);
       $("bridgeForm").submit();
     }
 
@@ -3430,7 +3426,7 @@
 
       if (!event.data.success) {
         const error = event.data.error || "Request failed.";
-        if (action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate") setCplPdfBusy(false);
+        if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
         if (action === "authorize") {
           authorizationInProgress = false;
           showLoginError(error);
@@ -3505,7 +3501,6 @@
               toast.append(head, copy, actions);
             }
           } else {
-            if (action === "generate") setCplPdfBusy(false);
             setMessage($("resultMessage"), error, "error");
             $("pdfFormFields").classList.remove("hidden");
             $("generateBtn").disabled = false;
@@ -3786,15 +3781,7 @@
 
       if (action === "generate") {
         const result = event.data;
-        const worksheetName = String($("worksheet").value || "Price List").trim();
-        const worksheetFileName = worksheetName.replace(/[^a-z0-9 _-]/gi, "").replace(/\\s+/g, "-") + ".pdf";
-        setMessage($("resultMessage"), result.message || worksheetName + " PDF generated successfully.", "success");
-        showCplPdfNotification(
-          result.downloadUrl || "",
-          worksheetFileName,
-          worksheetName + " PDF Ready!",
-          "Your " + worksheetName + " worksheet PDF has been generated successfully. Download the file or use View PDF to preview it."
-        );
+        setMessage($("resultMessage"), result.message || "PDF generated successfully.", "success");
         $("downloadLink").href = result.downloadUrl;
         $("downloadLink").classList.add("hidden");
         $("viewBtn").dataset.viewUrl = result.viewUrl;
@@ -4616,11 +4603,8 @@
       const successTitle=active.querySelector('.cpl-heendy-success h2'); if(successTitle) { successTitle.textContent=titleText || 'CPL PDF Ready!'; successTitle.setAttribute('data-module-success-title','true'); }
       const successText=active.querySelector('#cplHeendySuccessText'); if(successText) successText.textContent=copyText||'Your document has been generated successfully.';
       const download=active.querySelector('.cpl-heendy-download'); const close=active.querySelector('.cpl-heendy-close');
-      if(download) {
-        download.hidden=!downloadUrl;
-        download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'TEAM-RER.pdf';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';};
-      }
-      if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
+      if(download) { download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'CPL.pdf';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';}; }
+      if(close) { close.onclick=()=>{setCplPdfBusy(false);try{URL.revokeObjectURL(downloadUrl);}catch(_){}}; }
       active.setAttribute('role','dialog'); active.setAttribute('aria-modal','true');
     }
     function showCreditSuccessNotification(downloadUrl, fileName) {
@@ -6478,27 +6462,29 @@
         showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
       }
       updateQuotePreview();
-      const quoteModelName = String($("quoteModel").value || "Vehicle").trim();
-      const quoteVariantName = String($("quoteVariant").value || "").trim();
-      const quoteDescription = [quoteModelName, quoteVariantName].filter(Boolean).join(" - ");
-      window.__teamRerQuoteDescription = quoteDescription;
-      window.__teamRerOriginalDocumentTitle = document.title;
-      document.title = "Vehicle Quotation - " + quoteDescription;
-      const quotePrintButton = $("printQuoteBtn");
-      if (quotePrintButton) quotePrintButton.disabled = true;
-      window.__teamRerQuotePrintPending = true;
       document.body.classList.add("printing-quote");
+      // iOS Home Screen web apps may not reliably return an afterprint event.
+      // Use a safety cleanup so the normal app view is not left in print mode.
+      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
       window.print();
+      window.__teamRerPrintCleanupTimer = setTimeout(() => {
+        document.body.classList.remove("printing-quote");
+        window.__teamRerPrintCleanupTimer = null;
+      }, 15000);
+      // iPhone/iPad users get a practical fallback if the native print sheet is not shown.
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+      if (isIOS && isStandalone) {
+        showTeamRerDynamicIsland("If the print options do not appear, open TEAM RER in Safari and try Print / Save as PDF again.");
+      }
     });
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("printing-quote");
-      if (window.__teamRerQuotePrintPending) {
-        window.__teamRerQuotePrintPending = false;
-        if (window.__teamRerOriginalDocumentTitle) document.title = window.__teamRerOriginalDocumentTitle;
-        window.__teamRerOriginalDocumentTitle = "";
-        if ($("printQuoteBtn")) $("printQuoteBtn").disabled = false;
-        window.__teamRerQuoteDescription = "";
-      }
+      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
+      window.__teamRerPrintCleanupTimer = null;
+      // The browser does not expose whether the user saved or cancelled the PDF.
+      showTeamRerDynamicIsland("Print options closed. Check your PDF destination.");
     });
 
     $("loginBtn").addEventListener("click", async () => {
@@ -6594,14 +6580,12 @@
       $("previewWrap").classList.add("hidden");
       $("pdfPreview").src = "about:blank";
       previewLoadPending = false;
-      setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
-      beginCplPdfGeneration("Generating " + worksheet + " PDF…");
+      setMessage($("resultMessage"), "Generating PDF. Please wait...");
 
       try {
         await submitRequest("generate", { worksheet, downpayment, bank, consultant });
       } catch (error) {
         $("generateBtn").disabled = false;
-        setCplPdfBusy(false);
         setMessage($("resultMessage"), error.message, "error");
       }
     });
