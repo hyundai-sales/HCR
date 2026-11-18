@@ -1690,6 +1690,49 @@
     #cplPage .cpl-monthly-retrieve select{background:linear-gradient(145deg,#f1f5f8,#dce5ed)!important;border-color:#8fa7bd!important;box-shadow:inset 0 2px 5px rgba(18,35,51,.08)!important;}
     @media(prefers-reduced-motion:reduce){#cplPage button{transition:none!important}}
 
+
+    /* CPL visual correction: match the app's navy module surfaces and force clean saved-client spacing */
+    #cplPage .cpl-form-shell,
+    #cplPage .cpl-entry-card,
+    #cplPage .cpl-saved-client-card,
+    #cplPage .cpl-monthly-retrieve {
+      background:linear-gradient(145deg,#17283a 0%,#1c3045 52%,#21374c 100%) !important;
+      color:#f3f7fb !important;
+      border-color:rgba(157,190,216,.42) !important;
+      box-shadow:0 10px 26px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07) !important;
+    }
+    #cplPage .cpl-form-shell { border-radius:20px !important; }
+    #cplPage .cpl-saved-client-card {
+      display:block !important; box-sizing:border-box !important; width:100% !important;
+      min-width:0 !important; overflow:hidden !important; padding:16px !important; margin:0 0 12px !important;
+    }
+    #cplPage .cpl-saved-client-head {
+      display:grid !important; grid-template-columns:minmax(0,1fr) !important;
+      justify-items:start !important; align-items:start !important; gap:8px !important;
+      width:100% !important; min-width:0 !important; margin:0 !important;
+    }
+    #cplPage .cpl-saved-client-head strong {
+      display:block !important; width:100% !important; min-width:0 !important;
+      margin:0 !important; padding:0 2px !important; line-height:1.4 !important;
+      font-size:17px !important; color:#f3f7fb !important;
+      overflow-wrap:anywhere !important; word-break:break-word !important; white-space:normal !important;
+    }
+    #cplPage .cpl-saved-client-head small {
+      display:block !important; width:max-content !important; max-width:100% !important;
+      margin:2px 0 0 !important; padding:5px 9px !important;
+      line-height:1.3 !important; white-space:nowrap !important;
+      color:#d7e4ef !important; background:rgba(8,18,30,.48) !important;
+      border:1px solid rgba(157,190,216,.24) !important; border-radius:9px !important;
+    }
+    #cplPage .cpl-saved-client-actions {
+      display:flex !important; flex-wrap:wrap !important; width:100% !important;
+      gap:9px !important; margin:13px 0 0 !important;
+    }
+    #cplPage .cpl-saved-client-actions button { flex:1 1 100px !important; min-width:0 !important; }
+    @media(max-width:600px){
+      #cplPage .cpl-saved-client-card { padding:14px !important; }
+      #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
+    }
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -6128,7 +6171,7 @@
     let cplMonthlyRetrieved=null;
     let cplPrintWindow=null;
     const cplToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-    function loadCpl(){if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}submitRequest("cplGet",{silent:true}).catch(err=>showTeamRerAlert(err.message,"CPL Error"));}
+    function loadCpl(){if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}submitRequest("cplGet").catch(err=>showTeamRerAlert(err.message,"CPL Error"));}
     function cplEsc(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
     function addCplEntryRow(data={},options={}){
       const retrieved=!!options.retrieved;
