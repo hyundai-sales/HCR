@@ -1733,7 +1733,8 @@
       #cplPage .cpl-saved-client-card { padding:14px !important; }
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
-  </style>
+  
+</style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
   <!-- TEAM RER iOS-style home screen: presentation only; existing module IDs and handlers are unchanged. -->
@@ -8111,6 +8112,56 @@
     #cplPage .cpl-monthly-retrieve select:disabled,
     #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background-color:#edf4fb!important;opacity:1!important;font-weight:800!important;text-shadow:none!important;}
     #cplPage .cpl-monthly-retrieve select{font-size:18px!important;line-height:1.4!important;min-height:54px!important;}
+/* CPL FINAL OVERRIDE — consultant workspace reset + readable retrieval controls */
+#cplPage .cpl-monthly-retrieve,
+#cplPage .cpl-monthly-retrieve label,
+#cplPage .cpl-monthly-retrieve select,
+#cplPage .cpl-monthly-retrieve select:disabled,
+#cplPage .cpl-monthly-retrieve select:focus,
+#cplPage .cpl-monthly-retrieve select option {
+  opacity: 1 !important; filter: none !important; text-shadow: none !important;
+}
+#cplPage .cpl-monthly-retrieve label {
+  color: #f6f9ff !important; -webkit-text-fill-color: #f6f9ff !important;
+  font-size: 16px !important; font-weight: 800 !important;
+}
+#cplPage .cpl-monthly-retrieve select,
+#cplPage .cpl-monthly-retrieve select:disabled,
+#cplPage .cpl-monthly-retrieve select:focus,
+#cplPage .cpl-monthly-retrieve select option {
+  color: #10243a !important; -webkit-text-fill-color: #10243a !important;
+  background: #edf4fb !important; font-size: 18px !important;
+  font-weight: 800 !important; line-height: 1.4 !important;
+}
+#cplPage .cpl-monthly-retrieve select { min-height: 56px !important; }
+#cplPage .cpl-monthly-retrieve select:disabled { color: #10243a !important; -webkit-text-fill-color: #10243a !important; }
+
+
 </style>
+<script>
+(function(){
+  'use strict';
+  const resetConsultantWorkspace = () => {
+    const rows = document.getElementById('cplEntryRows');
+    if (rows) rows.replaceChildren();
+    if (typeof cplMonthlyRetrieved !== 'undefined') cplMonthlyRetrieved = null;
+    const date = document.getElementById('cplHeaderDate');
+    if (date) date.value = '';
+    const save = document.getElementById('cplSaveForm');
+    if (save) save.textContent = 'Save CPL';
+    if (typeof clearCplDraft === 'function') clearCplDraft();
+    if (typeof renderCplConsultantSavedEntries === 'function') renderCplConsultantSavedEntries();
+  };
+  const bindConsultantReset = () => {
+    const select = document.getElementById('cplConsultantSelect');
+    if (!select || select.dataset.cplResetBound === '1') return;
+    select.dataset.cplResetBound = '1';
+    select.addEventListener('change', resetConsultantWorkspace, true);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindConsultantReset, {once:true});
+  else bindConsultantReset();
+})();
+
+</script>
 </body>
 </html>
