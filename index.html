@@ -8212,5 +8212,58 @@
 })();
 
 </script>
+
+<!-- CPL ONLY: Monthly retrieval dropdown text contrast fix -->
+<style id="cpl-monthly-dropdown-font-only-fix">
+  #cplPage #cplMonthlyConsultant,
+  #cplPage #cplMonthlyMonth,
+  #cplPage #cplMonthlyYear,
+  #cplPage #cplMonthlyConsultant:disabled,
+  #cplPage #cplMonthlyMonth:disabled,
+  #cplPage #cplMonthlyYear:disabled {
+    color: #10243a !important;
+    -webkit-text-fill-color: #10243a !important;
+    opacity: 1 !important; -webkit-opacity: 1 !important;
+    filter: none !important; text-shadow: none !important;
+    background-color: #edf4fb !important; color-scheme: light !important;
+    font-weight: 700 !important;
+  }
+  #cplPage #cplMonthlyConsultant option,
+  #cplPage #cplMonthlyMonth option,
+  #cplPage #cplMonthlyYear option {
+    color: #10243a !important; -webkit-text-fill-color: #10243a !important;
+    background-color: #edf4fb !important; opacity: 1 !important;
+  }
+</style>
+<script id="cpl-monthly-dropdown-font-only-fix-script">
+(function(){
+  'use strict';
+  const ids = ['cplMonthlyConsultant','cplMonthlyMonth','cplMonthlyYear'];
+  function forceMonthlyDropdownContrast(){
+    ids.forEach(function(id){
+      const el=document.getElementById(id); if(!el) return;
+      el.style.setProperty('color','#10243a','important');
+      el.style.setProperty('-webkit-text-fill-color','#10243a','important');
+      el.style.setProperty('opacity','1','important');
+      el.style.setProperty('filter','none','important');
+      el.style.setProperty('text-shadow','none','important');
+      el.style.setProperty('background-color','#edf4fb','important');
+      el.style.setProperty('color-scheme','light','important');
+      el.querySelectorAll('option').forEach(function(opt){
+        opt.style.setProperty('color','#10243a','important');
+        opt.style.setProperty('-webkit-text-fill-color','#10243a','important');
+        opt.style.setProperty('opacity','1','important');
+        opt.style.setProperty('background-color','#edf4fb','important');
+      });
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',forceMonthlyDropdownContrast,{once:true}); else forceMonthlyDropdownContrast();
+  const page=document.getElementById('cplPage');
+  if(page && window.MutationObserver){
+    const observer=new MutationObserver(forceMonthlyDropdownContrast);
+    observer.observe(page,{childList:true,subtree:true});
+  }
+})();
+</script>
 </body>
 </html>
