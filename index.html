@@ -8138,6 +8138,35 @@
 #cplPage .cpl-monthly-retrieve select:disabled { color: #10243a !important; -webkit-text-fill-color: #10243a !important; }
 
 
+
+/* CPL monthly retrieval dropdown contrast: hard override native disabled-select fading */
+#cplPage .cpl-monthly-retrieve select,
+#cplPage .cpl-monthly-retrieve select:disabled,
+#cplPage .cpl-monthly-retrieve select:focus,
+#cplPage .cpl-monthly-retrieve select option {
+  color: #10243a !important;
+  -webkit-text-fill-color: #10243a !important;
+  background-color: #e2edf8 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+  color-scheme: light !important;
+}
+#cplPage .cpl-monthly-retrieve select:disabled {
+  opacity: 1 !important; -webkit-opacity: 1 !important;
+  cursor: default !important;
+}
+#cplPage .cpl-monthly-retrieve label {
+  color: #f8f1e8 !important; -webkit-text-fill-color: #f8f1e8 !important;
+  opacity: 1 !important; font-weight: 900 !important;
+}
+@media (max-width: 700px) {
+  #cplPage .cpl-monthly-retrieve select,
+  #cplPage .cpl-monthly-retrieve select:disabled {
+    min-height: 56px !important; font-size: 18px !important;
+  }
+}
 </style>
 <script>
 (function(){
