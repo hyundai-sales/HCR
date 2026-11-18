@@ -3399,6 +3399,7 @@
             return;
           }
           if (["creditHistoryList","creditHistoryGet","creditHistoryPdf","creditHistorySave"].includes(action)) {
+            if(action === "creditHistoryPdf") setCplPdfBusy(false);
             setMessage($("creditHistoryMessage"), error, "error");
             return;
           } else if (action === "auditLogsGet") {
@@ -3429,6 +3430,7 @@
               }
             }
           } else if (action === "creditApplication" || action === "creditVariants") {
+            if(action === "creditApplication") setCplPdfBusy(false);
             setMessage($("creditMessage"), error, "error");
             if (action === "creditApplication") {
               $("generateCreditBtn").disabled = false;
@@ -3665,9 +3667,8 @@
         if(!pdfData.pdfBase64) throw new Error("Saved PDF data was not returned.");
         const bytes=Uint8Array.from(atob(pdfData.pdfBase64),c=>c.charCodeAt(0));
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
-        const link=document.createElement("a"); link.href=url; link.download=pdfData.fileName || "Hyundai-Credit-Application.pdf";
-        document.body.appendChild(link); link.click(); link.remove();
-        setMessage($("creditHistoryMessage"),"Saved PDF download started.", "success");
+        setMessage($("creditHistoryMessage"),"Saved PDF is ready.", "success");
+        showCplPdfNotification(url,pdfData.fileName||"Hyundai-Credit-Application.pdf","","Your saved application PDF is ready to download.");
         return;
       }
       if (action === "creditHistorySave") {
@@ -3731,7 +3732,7 @@
         pendingCreditPdfUrl = URL.createObjectURL(blob);
 
         setMessage($("creditMessage"), "Application PDF generated successfully. Your entered details are still here if you need to review or edit them.", "success");
-        showCreditSuccessNotification(pendingCreditPdfUrl, result.fileName);
+        showCplPdfNotification(pendingCreditPdfUrl, result.fileName||"Hyundai-Credit-Application.pdf","","Your credit application PDF is ready to download.");
         $("generateCreditBtn").disabled = false;
         return;
       }
@@ -4770,7 +4771,7 @@
         const review=document.createElement("button"); review.type="button"; review.textContent="Review / Edit";
         review.addEventListener("click",()=>submitRequest("creditHistoryGet",{applicationId:record.applicationId}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error")));
         const pdf=document.createElement("button"); pdf.type="button"; pdf.className="secondary"; pdf.textContent="Download PDF";
-        pdf.addEventListener("click",()=>submitRequest("creditHistoryPdf",{applicationId:record.applicationId}).catch(e=>setMessage($("creditHistoryMessage"),e.message,"error")));
+        pdf.addEventListener("click",()=>{beginCplPdfGeneration("Retrieving saved Credit Application PDF…");submitRequest("creditHistoryPdf",{applicationId:record.applicationId}).catch(e=>{setCplPdfBusy(false);setMessage($("creditHistoryMessage"),e.message,"error");});});
         actions.append(review,pdf); card.append(title,meta,actions); host.appendChild(card);
       });
     }
@@ -4902,8 +4903,9 @@
       hideCreditToast();
 
       $("generateCreditBtn").disabled=true; setMessage($("creditMessage"),"Preparing your application PDF. Please wait...");
+      beginCplPdfGeneration("Generating Credit Application PDF…");
       try { await submitRequest("creditApplication",{applicationData:data,applicationId:currentCreditApplicationId}); }
-      catch(error){$("generateCreditBtn").disabled=false;setMessage($("creditMessage"),error.message,"error");}
+      catch(error){$("generateCreditBtn").disabled=false;setCplPdfBusy(false);setMessage($("creditMessage"),error.message,"error");}
     });
 
 
