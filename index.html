@@ -2448,6 +2448,16 @@
             <p class="welcome-eyebrow" id="welcomeRoleLabel"></p>
             <p class="userline" id="userDetails"></p>
             <p class="welcome-note">Your Hyundai Cainta workspace is ready.</p>
+            <div class="teamrer-xmas-countdown" id="teamrerChristmasCountdown" aria-label="Countdown to Christmas Day 2026">
+              <div class="teamrer-xmas-kicker">✦ CHRISTMAS DAY ✦</div>
+              <div class="teamrer-xmas-year">2026</div>
+              <div class="teamrer-xmas-clock" aria-live="off">
+                <span><b id="teamrerXmasDays">--</b><small>DAYS</small></span>
+                <i>:</i><span><b id="teamrerXmasHours">--</b><small>HRS</small></span>
+                <i>:</i><span><b id="teamrerXmasMinutes">--</b><small>MIN</small></span>
+                <i>:</i><span><b id="teamrerXmasSeconds">--</b><small>SEC</small></span>
+              </div>
+            </div>
           </div>
           <section id="applicationsDashboard" class="applications-dashboard" aria-label="Credit applications dashboard">
             <div class="applications-dashboard-head">
@@ -8371,6 +8381,50 @@
   document.addEventListener('teamrer-auth-ready',sync);
   window.addEventListener('load',sync);
   setTimeout(sync,300);setTimeout(sync,1200);
+})();
+</script>
+
+
+<style id="teamrer-christmas-countdown-style">
+  #appSection .dashboard-welcome{position:relative;overflow:hidden;min-height:104px;padding-right:47%;}
+  #appSection .teamrer-xmas-countdown{position:absolute;z-index:2;right:12px;top:50%;transform:translateY(-50%);width:43%;max-width:245px;min-width:175px;text-align:center;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,.45);}
+  #appSection .teamrer-xmas-kicker{font-size:9px;font-weight:800;letter-spacing:2px;color:#f4d58a;white-space:nowrap;}
+  #appSection .teamrer-xmas-year{font-size:11px;letter-spacing:4px;color:#e8edf5;margin:1px 0 5px;}
+  #appSection .teamrer-xmas-clock{display:flex;align-items:center;justify-content:center;gap:4px;}
+  #appSection .teamrer-xmas-clock span{display:flex;flex-direction:column;min-width:29px;}
+  #appSection .teamrer-xmas-clock b{font-size:clamp(16px,3.4vw,23px);line-height:1.05;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;}
+  #appSection .teamrer-xmas-clock small{font-size:7px;letter-spacing:1px;color:#e9d7ac;margin-top:3px;}
+  #appSection .teamrer-xmas-clock i{font-style:normal;font-size:15px;color:#e9d7ac;margin-top:-7px;}
+  @media(max-width:560px){
+    #appSection .dashboard-welcome{min-height:112px;padding:14px 48% 14px 14px;}
+    #appSection .dashboard-welcome .userline{font-size:clamp(13px,3.7vw,16px);}
+    #appSection .welcome-note{font-size:10px;max-width:100%;}
+    #appSection .teamrer-xmas-countdown{right:7px;width:45%;min-width:0;}
+    #appSection .teamrer-xmas-kicker{font-size:7px;letter-spacing:1.2px;}
+    #appSection .teamrer-xmas-clock{gap:2px;}
+    #appSection .teamrer-xmas-clock span{min-width:23px;}
+    #appSection .teamrer-xmas-clock b{font-size:17px;}
+    #appSection .teamrer-xmas-clock small{font-size:6px;}
+  }
+  @media(prefers-reduced-motion:reduce){#appSection .teamrer-xmas-countdown{scroll-behavior:auto}}
+</style>
+<script id="teamrer-christmas-countdown-script">
+(function(){
+  if(window.__teamRerChristmasCountdown2026)return;
+  window.__teamRerChristmasCountdown2026=true;
+  const target=Date.UTC(2026,11,24,16,0,0); // Dec 25, 2026 at 12:00 AM Philippines time
+  const ids=['teamrerXmasDays','teamrerXmasHours','teamrerXmasMinutes','teamrerXmasSeconds'];
+  function tick(){
+    const root=document.getElementById('teamrerChristmasCountdown');
+    if(!root)return;
+    let remaining=Math.max(0,target-Date.now());
+    const day=86400000,hour=3600000,minute=60000;
+    const values=[Math.floor(remaining/day),Math.floor((remaining%day)/hour),Math.floor((remaining%hour)/minute),Math.floor((remaining%minute)/1000)];
+    ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=String(values[i]).padStart(2,'0')});
+    if(remaining===0){const label=root.querySelector('.teamrer-xmas-kicker');if(label)label.textContent='MERRY CHRISTMAS!';}
+  }
+  tick();window.setInterval(tick,1000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)tick()});
 })();
 </script>
 
