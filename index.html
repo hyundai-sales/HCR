@@ -2303,7 +2303,7 @@
 
   <div class="seasonal-decor" aria-hidden="true"></div>
 
-  <div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="false">
     <div class="loading-content">
       <div class="loading-logo-wrap">
         <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai">
@@ -2474,17 +2474,30 @@
           <div id="orgChartMessage" class="message hidden" aria-live="polite"></div>
         </section>
 
-        <!-- CPL home navigation hook; intentionally invisible -->
-<button id="backToMenuFromCpl" class="hidden" type="button" aria-hidden="true" tabindex="-1"></button>
-<section id="cplPage" class="hidden">
-<h2 class="section-title">Client Probing Log (CPL)</h2>
-<div class="cpl-form-shell cpl-clipboard-shell"><div class="cpl-clip"></div><div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2><div class="cpl-meta-grid">
-<label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label><label>TYPE <input id="cplTypeFixed" value="FIELD" readonly></label>
-<label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label><label>DATE <input id="cplHeaderDate" type="date"></label><label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label></div></div>
-<div class="cpl-interview-card"><h3>Client Interview</h3><p>Complete one interview and save it to the preview.</p><div id="cplInterviewForm" class="cpl-question-grid"></div><div class="cpl-entry-tools"><button id="cplSaveClient" type="button">＋ Save Client / Next Client</button></div></div>
-<div class="cpl-preview-heading"><h3>CPL Preview <span id="cplClientCount">0 clients</span></h3><p>8 client entries per page; overflow automatically continues.</p></div><div id="cplPreviewPages"></div>
-<div class="cpl-form-bottom cpl-print-actions"><button id="cplPrintBlank" type="button">PRINT BLANK FORM</button><button id="cplPrintFilled" type="button">PRINT FILLED FORM</button></div><div id="cplMessage" class="message hidden" aria-live="polite"></div></div>
-<div class="cpl-saved-wrap"><h3>Saved CPL Forms</h3><input id="cplSearch" type="search" placeholder="Search consultant or client"><div id="cplClientsList" class="cpl-list"></div></div><div id="cplPrintSelectModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cplPrintSelectTitle"><div class="cpl-print-select-card"><h3 id="cplPrintSelectTitle">Select Sales Consultant(s)</h3><p>All saved CPL entries for the selected consultant(s) will be included.</p><label class="cpl-print-all"><input type="checkbox" id="cplPrintSelectAll"> <b>Select All Consultants</b></label><div id="cplPrintConsultantChoices"></div><div class="cpl-print-select-actions"><button type="button" id="cplPrintSelectCancel" class="secondary">Cancel</button><button type="button" id="cplPrintSelectGenerate">Generate PDF</button></div></div></div></section>
+        <section id="cplPage" class="hidden">
+          <button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Client Probing Log (CPL)</h2>
+          <div class="cpl-form-shell">
+            <div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2>
+              <div class="cpl-meta-grid">
+                <label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label>
+                <label>TYPE <input id="cplTypeFixed" value="" readonly></label>
+                <label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label>
+                <label>DATE <input id="cplHeaderDate" readonly></label>
+                <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
+              </div>
+            </div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry Row</button><button id="cplSaveForm" type="button">Save CPL</button></div>
+            <div class="cpl-preview-wrap"><table id="cplEntryTable" class="cpl-entry-table"><thead><tr>
+              <th>#</th><th>SOURCE</th><th>SC</th><th>CLIENT NAME</th><th>PHONE</th><th>EMAIL</th><th>VEH. OF INTEREST</th><th>SPECS</th><th>TIMELINE</th><th>WORK PROFILE?</th><th>DRIVING NOW?</th><th>LIKES?</th><th>CONCERNS?</th><th>FREQ. USAGE?</th><th>NEXT STEP</th>
+            </tr></thead><tbody id="cplEntryRows"></tbody></table></div>
+            <div class="cpl-form-bottom"><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
+            <div id="cplMessage" class="message hidden" aria-live="polite"></div>
+          </div>
+          <div class="cpl-saved-wrap"><h3>Saved CPL Forms</h3><input id="cplSearch" type="search" placeholder="Search consultant or client"><div id="cplClientsList" class="cpl-list"></div></div>
+        </section>
+
+
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Promos and Vehicle Info</h2>
@@ -2729,7 +2742,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
       initializeAuth, browserLocalPersistence, browserPopupRedirectResolver,
-      GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
+      GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -3127,7 +3140,7 @@
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
-      const token = await currentUser.getIdToken();
+      const token = await currentUser.getIdToken(true);
       if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
@@ -3272,9 +3285,7 @@
           } else if (action === "userManagementGet" || action === "userManagementSave") {
             setMessage($("userManagementMessage"), error, "error");
             $("userManagementSummary").textContent = "Unable to load user records.";
-          } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet","cplPrintPdf"].includes(action)) {
-            if(action === "cplClientSave"){cplSavePending=false;cplPendingSaveForm=null;const saveButton=$("cplSaveClient");if(saveButton)saveButton.disabled=false;}
-            if(action === "cplPrintPdf"){try{cplPrintPopup&&cplPrintPopup.close();}catch(e){}cplPrintPopup=null;}
+          } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet"].includes(action)) {
             setMessage($("cplMessage"), error, "error");
           } else if (["orgChartGet","orgChartSave","orgChartDelete"].includes(action)) {
             setMessage($("orgChartMessage"), error, "error");
@@ -3458,14 +3469,8 @@
         return;
       }
 
-      if (action === "cplPrintPdf") {
-        const pdf=event.data.cplPrintPdf||{};
-        if(!pdf.base64){setMessage($('cplMessage'),'The PDF response was empty.','error');try{cplPrintPopup&&cplPrintPopup.close();}catch(e){}cplPrintPopup=null;return;}
-        try{const raw=atob(pdf.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);const blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob);if(cplPrintPopup&&!cplPrintPopup.closed){cplPrintPopup.location.href=url;}else{const w=window.open(url,'_blank');if(!w){setMessage($('cplMessage'),'PDF prepared, but the viewer popup was blocked. Allow pop-ups and try again.','error');return;}}setMessage($('cplMessage'),pdf.message||'PDF ready. Use your PDF viewer to print or save.','success');}catch(err){setMessage($('cplMessage'),'Unable to open PDF: '+(err.message||err),'error');try{cplPrintPopup&&cplPrintPopup.close();}catch(e){}}cplPrintPopup=null;return;
-      }
-      if (action === "cplGet") { cplData=event.data.cpl||{clients:[],consultants:[]};initCplForm();renderCplSaved();return; }
-      if (action === "cplClientSave") { cplSavePending=false;$('cplSaveClient').disabled=false;const saved=event.data.cplClientSave||{},form=cplPendingSaveForm;if(saved.success&&form){cplData.clients.push({id:saved.id,date:form.date,consultant:form.consultant,dealer:form.dealer,type:form.type,manager:form.manager,rows:form.rows});renderCplSaved();}cplPendingSaveForm=null;setMessage($('cplMessage'),saved.message||'Client recorded successfully.','success');return; }
-      if (action === \"cplActivitySave\") { setMessage($(\"cplMessage\"),(event.data[action]||{}).message||\"Saved.\",\"success\");loadCpl();return; }
+      if (action === "cplGet") { cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};initCplForm();renderCplClients();return; }
+      if (action === "cplClientSave" || action === "cplActivitySave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
       if (action === "cplReportGet") { renderCplReport(event.data.cplReport||{rows:[],month:""});return; }
       if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
       if (action === "orgChartSave" || action === "orgChartDelete") { $("orgChartEditor").classList.add("hidden");setMessage($("orgChartMessage"),action==="orgChartSave"?"Position saved.":"Position deleted.","success");loadOrgChart();return; }
@@ -5955,56 +5960,23 @@
     $("orgDeleteBtn").addEventListener("click",()=>{if(!confirm("Delete this position? Any direct reports will become top-level positions."))return;submitRequest("orgChartDelete",{payload:JSON.stringify({id:$("orgRecordId").value})}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
 
 
-    // CPL interview capture / preview.
-    let cplData={clients:[],consultants:[]},cplDraftClients=[],cplSavePending=false,cplPendingSaveForm=null;
+    // CLIENT PROBING LOG: form-style CPL, Super Admin only.
+    let cplData={clients:[],variants:[],consultants:[]};
     const cplToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-    const cplFields=[['source','SOURCE','text'],['clientName','CLIENT NAME','text'],['phone','PHONE','tel'],['email','EMAIL','email'],['vehicle','VEH. OF INTEREST','text'],['specs','SPECS','textarea'],['timeline','TIMELINE','textarea'],['workProfile','WORK PROFILE?','textarea'],['drivingNow','DRIVING NOW?','textarea'],['likes','LIKES?','textarea'],['concerns','CONCERNS?','textarea'],['freqUsage','FREQ. USAGE?','textarea'],['nextStep','NEXT STEP','select']];
-    const cplOptions=['','Test Drive','Reservation','Application','Undecided'];
-    function cplInitials(n){const parts=String(n||'').trim().split(/\\s+/).filter(Boolean);return parts.length?((parts[0][0]||'')+(parts.length>1?(parts[parts.length-1][0]||''):'')).toUpperCase():'';}
-    function loadCpl(){if(!isSuperAdminSession()){showAccessDenied('Team RER Super Admin Access Only.');return;}submitRequest('cplGet').catch(e=>setMessage($('cplMessage'),e.message,'error'));}
-    function cplName(){return isSuperAdminSession() ? $('cplConsultantSelect').value : $('cplConsultantFixed').value;}
-    function setCplConsultant(){const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||''),sel=$('cplConsultantSelect'),fixed=$('cplConsultantFixed');sel.classList.toggle('hidden',!isSuperAdminSession());fixed.classList.toggle('hidden',isSuperAdminSession());fixed.value=name;if(isSuperAdminSession()){sel.innerHTML='<option value="">Select Sales Consultant</option>';cplData.consultants.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.append(o);});}}
-    function buildCplInterview(){const host=$('cplInterviewForm');host.replaceChildren();let sc=document.createElement('label');sc.className='cpl-question';sc.innerHTML='<span>SC (Initials)</span><input id="cplSC" readonly>';host.append(sc);cplFields.forEach(([k,l,t])=>{let wrap=document.createElement('label');wrap.className='cpl-question';let title=document.createElement('span');title.textContent=l;wrap.append(title);let el=t==='select'?document.createElement('select'):document.createElement(t==='textarea'?'textarea':'input');if(t==='select')cplOptions.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=v||'Choose next step';el.append(o);});else if(t!=='textarea')el.type=t;el.dataset.key=k;el.placeholder=l;wrap.append(el);host.append(wrap);});$('cplSC').value=cplInitials(cplName());}
-    function resetCplInterview(){ $('cplInterviewForm').querySelectorAll('[data-key]').forEach(x=>x.value='');$('cplHeaderDate').value=cplToday();$('cplSC').value=cplInitials(cplName());}
-    function getCplClient(){let r={date:$('cplHeaderDate').value||cplToday(),sc:cplInitials(cplName())};$('cplInterviewForm').querySelectorAll('[data-key]').forEach(x=>r[x.dataset.key]=x.value.trim());return r;}
-    function cplFmt(d){if(!d)return '';let x=new Date(d+'T12:00:00');return isNaN(x)?d:`${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}-${x.getFullYear()}`;}
-    function cplEscape(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-    function cplPage(p){let list=cplDraftClients.slice(p*8,p*8+8),body='',keys=['source','sc','clientName','phone','email','vehicle','specs','timeline','workProfile','drivingNow','likes','concerns','freqUsage','nextStep'];list.forEach((r,i)=>{body+=`<tr><td class="cpl-date-vertical">${p*8+i+1} · ${cplEscape(cplFmt(r.date))}</td>${keys.map(k=>`<td>${cplEscape(r[k]||'')}</td>`).join('')}</tr>`;});for(let i=list.length;i<8;i++){body+=`<tr><td class="cpl-date-vertical">${p*8+i+1}</td>${keys.map(k=>'<td></td>').join('')}</tr>`;}let heads=['#','SOURCE','SC','CLIENT NAME','PHONE','EMAIL','VEH. OF INTEREST','SPECS','TIMELINE','WORK PROFILE?','DRIVING NOW?','LIKES?','CONCERNS?','FREQ. USAGE?','NEXT STEP'];return `<div class="cpl-print-page"><b>CLIENT PROBING LOG (CPL)</b><div class="cpl-print-meta"><span><b>DEALER:</b><br>HCR</span><span><b>TYPE:</b><br>FIELD</span><span><b>DESC:</b><br>${cplEscape(cplName())}</span><span><b>DATE:</b><br>${cplFmt(cplToday())}</span><span><b>MANAGER:</b><br>Ralph Edward Rosales</span></div><table class="cpl-print-table"><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table><div class="cpl-print-logo"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai logo"></div></div>`;}
-    function renderCplPreview(){let host=$('cplPreviewPages');host.replaceChildren();for(let p=0;p<Math.max(1,Math.ceil(cplDraftClients.length/8));p++){let holder=document.createElement('div');holder.innerHTML=cplPage(p);host.append(holder.firstElementChild);}$('cplClientCount').textContent=`${cplDraftClients.length} client(s)`;}
-    function renderCplSaved(){let host=$('cplClientsList'),q=$('cplSearch').value.toLowerCase();host.replaceChildren();cplData.clients.forEach(f=>{if(q&&!JSON.stringify(f).toLowerCase().includes(q))return;let card=document.createElement('article');card.className='cpl-saved-card';card.textContent=`${f.date||''} · ${f.consultant||''}: ${(f.rows||[]).map(r=>r.clientName).filter(Boolean).join(', ')}`;host.append(card);});}
-    function initCplForm(){$('cplHeaderDate').value=cplToday();$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';cplDraftClients=[];setCplConsultant();buildCplInterview();renderCplPreview();}
-    // CPL temporarily detaches from the TEAM RER card so ancestors cannot clip it.
-    let cplHomeAnchor=null, cplMounted=false;
-    function mountCplFullPage(){const page=$('cplPage');if(!page||cplMounted)return;if(!cplHomeAnchor){cplHomeAnchor=document.createComment('CPL page original position');page.parentNode.insertBefore(cplHomeAnchor,page);}document.body.appendChild(page);document.body.classList.add('cpl-fullpage-active');document.documentElement.classList.add('cpl-fullpage-active');cplMounted=true;}
-    function restoreCplPage(){const page=$('cplPage');if(!page)return;if(cplHomeAnchor&&cplHomeAnchor.parentNode)cplHomeAnchor.parentNode.insertBefore(page,cplHomeAnchor);if(cplHomeAnchor&&cplHomeAnchor.parentNode)cplHomeAnchor.parentNode.removeChild(cplHomeAnchor);cplHomeAnchor=null;cplMounted=false;document.body.classList.remove('cpl-fullpage-active');document.documentElement.classList.remove('cpl-fullpage-active');page.classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}
-    $('backToMenuFromCpl').addEventListener('click',restoreCplPage);
-    $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied('Team RER Super Admin Access Only.');return;}runPageTransition('Opening Client Probing Log...',()=>{mountCplFullPage();$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
+    function loadCpl(){if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}submitRequest("cplGet").catch(err=>setMessage($("cplMessage"),err.message,"error"));}
+    function cplEsc(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+    function addCplEntryRow(data={}){const tr=document.createElement('tr');const fields=[['date','date'],['source','text'],['sc','text'],['clientName','text'],['phone','tel'],['email','email'],['vehicle','select'],['specs','textarea'],['timeline','textarea'],['workProfile','textarea'],['drivingNow','textarea'],['likes','textarea'],['concerns','textarea'],['freqUsage','textarea'],['nextStep','textarea']];fields.forEach(([key,type],i)=>{const td=document.createElement('td');if(type==='select'){const el=document.createElement('select');el.dataset.key=key;el.innerHTML='<option value="">Select vehicle/variant</option>';(cplData.variants||[]).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});el.value=data[key]||'';td.appendChild(el);}else{const el=document.createElement(type==='textarea'?'textarea':'input');if(type!=='textarea')el.type=type;el.dataset.key=key;if(key==='date')el.value=data[key]||cplToday();else el.value=data[key]||'';td.appendChild(el);}tr.appendChild(td);});const td=document.createElement('td');td.style.display='none';const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.className='cpl-remove-row';remove.onclick=()=>tr.remove();td.appendChild(remove);tr.appendChild(td);$('cplEntryRows').appendChild(tr);}
+    function getCplRows(){return Array.from($('cplEntryRows').rows).map(tr=>Object.fromEntries(Array.from(tr.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value])));}
+    function renderCplClients(){const host=$('cplClientsList'),q=String($('cplSearch').value||'').toLowerCase().trim();host.replaceChildren();(cplData.clients||[]).forEach(item=>{if(q&&!JSON.stringify(item).toLowerCase().includes(q))return;const card=document.createElement('article');card.className='cpl-saved-card';const title=document.createElement('strong');title.textContent=`${item.date||''} · ${item.consultant||''}`;card.appendChild(title);const summary=document.createElement('p');summary.textContent=(item.rows||[]).map(r=>r.clientName).filter(Boolean).join(', ');card.appendChild(summary);host.appendChild(card);});}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}}
+    function initCplForm(){ $('cplHeaderDate').value=cplToday();$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='';$('cplEntryRows').replaceChildren();addCplEntryRow();setCplConsultant(); }
+    $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
-    $('cplSaveClient').addEventListener('click',()=>{if(!isSuperAdminSession()||cplSavePending)return;let consultant=cplName();if(!consultant){setMessage($('cplMessage'),'Select the Sales Consultant first.','error');return;}let r=getCplClient();if(!r.clientName&&!r.phone&&!r.email){setMessage($('cplMessage'),'Enter client name, phone, or email to save.','error');return;}r.sc=cplInitials(consultant);cplDraftClients.push(r);renderCplPreview();cplSavePending=true;$('cplSaveClient').disabled=true;cplPendingSaveForm={date:r.date,consultant:consultant,dealer:'HCR',type:'FIELD',manager:'Ralph Edward Rosales',rows:[r]};resetCplInterview();submitRequest('cplClientSave',{payload:JSON.stringify(cplPendingSaveForm),silent:true}).catch(err=>{cplSavePending=false;cplPendingSaveForm=null;$('cplSaveClient').disabled=false;setMessage($('cplMessage'),'Save failed. This client remains in the preview but was not recorded: '+(err.message||err),'error');});});
-    $('cplConsultantSelect').addEventListener('change',()=>{$('cplSC').value=cplInitials(cplName());});
-    $('cplSearch').addEventListener('input',renderCplSaved);
-    let cplPrintPopup=null,cplPrintPendingMode='';
-    function openCplPrintPopup(){const w=window.open('','_blank');if(!w){setMessage($('cplMessage'),'PDF viewer window was blocked. Allow pop-ups for TEAM RER and retry.','error');return null;}w.document.write('<html><body style="font:16px Arial;padding:24px">Preparing your CPL PDF…</body></html>');return w;}
-    function requestCplPdf(mode,consultants){
-      if(!isSuperAdminSession())return;
-      cplPrintPopup=openCplPrintPopup();if(!cplPrintPopup)return;
-      cplPrintPendingMode=mode;
-      setMessage($('cplMessage'),'Preparing '+(mode==='blank'?'blank CPL template':'selected consultant CPL entries')+' PDF…','success');
-      submitRequest('cplPrintPdf',{payload:JSON.stringify({mode:mode,consultants:consultants||[]}),silent:true}).catch(err=>{setMessage($('cplMessage'),err.message||'Unable to request CPL PDF.','error');try{cplPrintPopup.close();}catch(e){}cplPrintPopup=null;});
-    }
-    function openCplFilledSelection(){
-      if(!isSuperAdminSession())return;if(cplSavePending){setMessage($('cplMessage'),'Please wait for the current client save to finish before generating the filled PDF.','error');return;}
-      const modal=$('cplPrintSelectModal'),host=$('cplPrintConsultantChoices');host.replaceChildren();
-      $('cplPrintSelectAll').checked=false;
-      const names=Array.from(new Set((cplData.consultants||[]).concat((cplData.clients||[]).map(f=>f.consultant||'')).filter(Boolean))).sort();
-      names.forEach(name=>{const label=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.className='cpl-print-consultant-checkbox';cb.value=name;const text=document.createElement('span');text.textContent=name;label.append(cb,text);host.append(label);});
-      modal.classList.remove('hidden');
-    }
-    $('cplPrintSelectAll').addEventListener('change',e=>{$('cplPrintConsultantChoices').querySelectorAll('.cpl-print-consultant-checkbox').forEach(cb=>cb.checked=e.target.checked);});
-    $('cplPrintSelectCancel').addEventListener('click',()=>{$('cplPrintSelectModal').classList.add('hidden');});
-    $('cplPrintSelectGenerate').addEventListener('click',()=>{const selected=Array.from($('cplPrintConsultantChoices').querySelectorAll('.cpl-print-consultant-checkbox:checked')).map(cb=>cb.value);if(!selected.length){setMessage($('cplMessage'),'Select at least one Sales Consultant.','error');return;} $('cplPrintSelectModal').classList.add('hidden');requestCplPdf('filled',selected);});
-    $('cplPrintBlank').addEventListener('click',()=>requestCplPdf('blank',[]));
-    $('cplPrintFilled').addEventListener('click',openCplFilledSelection);
+    $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
+    $('cplAddRow').addEventListener('click',()=>addCplEntryRow());$('cplSearch').addEventListener('input',renderCplClients);
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){setMessage($('cplMessage'),'Enter at least a client name, phone, or email before saving.','error');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;const payload={date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'',rows};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>{setMessage($('cplMessage'),'CPL saved.','success');loadCpl();}).catch(err=>setMessage($('cplMessage'),err.message,'error'));});
+    $('cplPrintSave').addEventListener('click',()=>window.print());
+    function renderCplPreview(){/* table is the live print preview */}
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
       runPageTransition("Opening User Management...", () => {
@@ -6155,28 +6127,31 @@
     });
 
     $("loginBtn").addEventListener("click", async () => {
-      const button = $("loginBtn");
-      button.disabled = true;
-      button.textContent = "Opening Google sign-in...";
+      $("loginBtn").disabled = true;
       showLoading("Connecting securely to Google...");
-      setMessage($("loginMessage"), "Opening Google sign-in...");
+      setMessage($("loginMessage"), "Connecting to Google...");
       try {
+        // A fresh manual login starts a new one-hour inactivity window.
         clearIdleMonitor(true);
-        await signInWithRedirect(auth, provider);
+
+        // Use popup sign-in on all devices. Firebase redirect sign-in can fail
+        // on externally hosted apps when browsers partition third-party storage.
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        // onAuthStateChanged performs server-side authorization for both
+        // new logins and restored sessions; do not submit it twice here.
       } catch (error) {
         hideLoading();
-        console.error("TEAM RER Google redirect sign-in error:", error);
-        showLoginError("Google sign-in failed: " + (error && error.message ? error.message : "Please try again."));
-        button.textContent = "Sign in with Google";
+        console.error(error);
+        const code = String(error && error.code || "");
+        if (code.includes("popup-blocked")) {
+          showLoginError("Google sign-in popup was blocked. Allow pop-ups for TEAM RER, then try again.");
+        } else if (code.includes("popup-closed-by-user")) {
+          showLoginError("Google sign-in was closed before completion. Tap Sign in with Google to try again.");
+        } else {
+          showLoginError("Sign-in failed: " + (error && error.message ? error.message : "Please try again."));
+        }
       }
-    });
-
-    // Consume redirect result on return. Auth-state listener handles authorization.
-    getRedirectResult(auth).catch(error => {
-      console.error("TEAM RER Google redirect result error:", error);
-      const button = $("loginBtn");
-      if (button) button.textContent = "Sign in with Google";
-      showLoginError("Google sign-in failed: " + (error && error.message ? error.message : "Please try again."));
     });
 
     function closePdfPreview() {
@@ -7588,96 +7563,7 @@
     @media(max-width:700px){.cpl-meta-grid{grid-template-columns:1fr 1fr}.cpl-form-shell{padding:8px}.cpl-entry-table{min-width:1300px}}
     @media print{body *{visibility:hidden!important}#cplPage,#cplPage *{visibility:visible!important}#cplPage{position:absolute;left:0;top:0;width:100%;background:white!important;color:#111!important}#cplPage>button,#cplPage .section-title,#cplPage .cpl-entry-tools,#cplPage .cpl-form-bottom,#cplPage .cpl-saved-wrap,#cplPage #cplMessage{display:none!important}.cpl-form-shell{border:0;border-radius:0;margin:0;padding:0;overflow:visible}.cpl-form-heading{border-bottom:2px solid #003b70}.cpl-entry-table{font-size:7pt;table-layout:fixed;width:100%;min-width:0}.cpl-entry-table th{font-size:6.5pt;background:#003b70!important;color:white!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.cpl-entry-table td input,.cpl-entry-table td select,.cpl-entry-table td textarea{font-size:6.5pt;color:#111!important}.cpl-entry-table td textarea{min-height:32px}.cpl-entry-table tr{break-inside:avoid;page-break-inside:avoid} @page{size:landscape; margin:0.25in}}
 </style>
-<style id="cpl-new-design">
-#cplPage .cpl-clipboard-shell{background:#fff;color:#172b40;border:0;border-radius:8px;padding:18px 12px;box-shadow:0 5px 22px #10203018}#cplPage .cpl-clip{width:120px;height:24px;margin:-18px auto 12px;border-radius:6px;background:linear-gradient(#d5dce3,#99a5b1);border:1px solid #8794a0;box-shadow:0 2px 4px #0002}#cplPage .cpl-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:8px}#cplPage .cpl-meta-grid label{font-size:11px;color:#003b70;font-weight:bold}#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{width:100%;padding:8px;box-sizing:border-box;background:#f8fafc;color:#1b2735;border:1px solid #bac6d2;border-radius:5px}#cplPage .cpl-interview-card{padding:14px;margin:12px 0;border:1px solid #d5dde7;border-radius:11px;background:#f8fafc}#cplPage .cpl-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#cplPage .cpl-question{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#28445f}#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-family:'Comic Sans MS','Segoe Print','Bradley Hand',cursive!important;font-weight:400;padding:9px;width:100%;box-sizing:border-box;background:#fff;border:1px solid #d3dde7;border-radius:7px;color:#20374d}#cplPage .cpl-question textarea{min-height:65px}#cplPage .cpl-print-page{background:#fff;color:#111;border:1px solid #cbd3da;margin:12px 0;padding:10px;overflow:auto}#cplPage .cpl-print-meta{display:grid;grid-template-columns:8% 8% 25% 12% 25%;gap:4px;font-size:8px;margin:5px 0}#cplPage .cpl-print-table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:7px}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{border:1px solid #666;padding:2px;vertical-align:top;overflow-wrap:anywhere;height:28px}#cplPage .cpl-print-table th{background:#e7edf3;color:#17344e;text-align:center;font-size:6.5px}#cplPage .cpl-date-vertical{writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;white-space:nowrap;font-size:6px}#cplPage .cpl-print-logo{display:flex;justify-content:flex-end;margin-top:3px}#cplPage .cpl-print-logo img{width:42px;max-height:26px;object-fit:contain}@media(max-width:650px){#cplPage .cpl-question-grid{grid-template-columns:1fr}}@media print{body *{visibility:hidden!important}#cplPage,#cplPage *{visibility:visible!important}#cplPage{position:absolute;left:0;top:0;width:100%;background:white!important;color:#111!important}#cplPage>button,#cplPage>.section-title,#cplPage .cpl-interview-card,#cplPage .cpl-preview-heading,#cplPage .cpl-form-bottom,#cplPage .cpl-saved-wrap,#cplPage #cplMessage,#cplPage .cpl-clip{display:none!important}#cplPage .cpl-print-page{border:0;margin:0;padding:0;break-after:page;page-break-after:always}#cplPage .cpl-print-page:last-child{break-after:auto;page-break-after:auto}#cplPage .cpl-print-table th,#cplPage .cpl-print-table td{height:22px;padding:2px}@page{size:13in 8.5in landscape;margin:.1in}}
-</style>
-<style id="cpl-actual-fullscreen-fix">
-#cplPage{
- position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;
- max-width:none!important;max-height:none!important;margin:0!important;padding:12px 12px 28px!important;
- z-index:999999!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;
- background:#f7f9fc!important;color:#17212d!important;border:0!important;border-radius:0!important;
- display:block!important;visibility:visible!important;
-}
-#cplPage.hidden{display:none!important}
-#cplPage .cpl-form-shell,#cplPage .cpl-clipboard-shell{
- width:100%!important;min-width:0!important;max-width:none!important;min-height:calc(100dvh - 40px)!important;
- height:auto!important;box-sizing:border-box!important;margin:0!important;padding:16px!important;
- overflow:visible!important;border:1px solid #d5dce5!important;border-radius:0!important;
- background:#fff!important;color:#202c38!important;box-shadow:none!important;
-}
-#cplPage .cpl-form-heading,#cplPage .cpl-form-heading h2{color:#23384d!important;opacity:1!important}
-#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
-#cplPage .cpl-meta-grid label,#cplPage .cpl-question{color:#243b52!important;opacity:1!important}
-#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select,
-#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{
- font-family:inherit!important;font-size:16px!important;font-weight:400!important;line-height:1.4!important;
- background:#fff!important;color:#182b3e!important;opacity:1!important;
- border:1px solid #aab7c5!important;border-radius:7px!important;box-shadow:none!important;
- min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
-}
-#cplPage .cpl-interview-card{background:#f5f7fa!important;color:#203348!important}
-#cplPage .cpl-question-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-#cplPage .cpl-print-page{max-width:100%;box-sizing:border-box}
-#cplPage .cpl-meta-grid label{display:block;min-width:0}
-#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{display:block}
-@media(max-width:600px){
- #cplPage{padding:0!important}
- #cplPage .cpl-clipboard-shell{padding:14px 12px 28px!important}
- #cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
- #cplPage .cpl-question-grid{grid-template-columns:1fr!important}
- #cplPage .cpl-form-heading h2{font-size:20px!important}
-}
-</style>
-<style id="cpl-mobile-responsive-final">
-#cplPage{position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;margin:0!important;padding:0!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:999999!important;background:#f4f7fa!important;color:#142c42!important}
-#cplPage.hidden{display:none!important}
-#cplPage .cpl-clipboard-shell{width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;min-height:100dvh!important;margin:0!important;border-radius:0!important;padding:12px!important;box-sizing:border-box!important;background:#fff!important;color:#1c2e40!important;overflow:visible!important}
-#cplPage .cpl-form-heading h2{color:#183b5b!important;font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;opacity:1!important;text-align:center;font-size:clamp(18px,4vw,25px)!important}
-#cplPage h2,#cplPage h3,#cplPage p,#cplPage label,#cplPage .cpl-meta-grid label,#cplPage .cpl-question{font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;color:#183b5b!important;opacity:1!important}
-#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
-#cplPage .cpl-meta-grid label{min-width:0!important;font-size:12px!important}
-#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select,#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;color:#142c42!important;background:#fff!important;border:1px solid #aab8c7!important;opacity:1!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;font-size:16px!important;line-height:1.4!important}
-#cplPage .cpl-interview-card{background:#f5f8fb!important;color:#18344e!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
-#cplPage .cpl-question-grid{width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
-#cplPage .cpl-question{min-width:0!important;max-width:100%!important;font-size:13px!important}
-#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{padding:10px!important;min-height:42px!important}
-@media(max-width:600px){#cplPage{padding:0!important}#cplPage .cpl-clipboard-shell{padding:12px!important}#cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#cplPage .cpl-question-grid{grid-template-columns:1fr!important}#cplPage .cpl-form-heading h2{font-size:19px!important}#cplPage .cpl-meta-grid label{font-size:11px!important}#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{font-size:14px!important;padding:8px!important}#cplPage .cpl-question input,#cplPage .cpl-question select,#cplPage .cpl-question textarea{font-size:15px!important}}
-</style><style id="cpl-body-root-overlay-fix">
-html.cpl-fullpage-active,body.cpl-fullpage-active{overflow:hidden!important;height:100%!important;min-height:100%!important;width:100%!important}body.cpl-fullpage-active{margin:0!important;padding:0!important;transform:none!important;filter:none!important;contain:none!important;overflow:hidden!important;background:#f5f8fc!important}body.cpl-fullpage-active #cplPage{position:fixed!important;inset:0!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;width:100%!important;height:100vh!important;height:100dvh!important;max-height:none!important;min-height:100dvh!important;margin:0!important;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;box-sizing:border-box!important;overflow-x:hidden!important;overflow-y:auto!important;border:0!important;border-radius:0!important;z-index:2147483000!important;background:#f5f8fc!important;display:block!important}body.cpl-fullpage-active #cplPage .cpl-clipboard-shell{width:100%!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:100dvh!important;margin:0!important;padding:12px clamp(10px,2vw,24px) 24px!important;box-sizing:border-box!important;border-radius:0!important;overflow:visible!important}body.cpl-fullpage-active #cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important}body.cpl-fullpage-active #cplPage .cpl-question-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important}body.cpl-fullpage-active #cplPage input,body.cpl-fullpage-active #cplPage select,body.cpl-fullpage-active #cplPage textarea{max-width:100%!important;min-width:0!important;width:100%!important;box-sizing:border-box!important;font-family:"Hyundai Sans Head KR",Arial,sans-serif!important;color:#183047!important;background:#fff!important}body.cpl-fullpage-active #cplPage label,body.cpl-fullpage-active #cplPage h2,body.cpl-fullpage-active #cplPage h3,body.cpl-fullpage-active #cplPage p{color:#183047!important;opacity:1!important;font-family:"Hyundai Sans Head KR",Arial,sans-serif!important}body.cpl-fullpage-active #cplPage .cpl-clip{margin-top:0!important}
-@media(max-width:600px){body.cpl-fullpage-active #cplPage .cpl-clipboard-shell{padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 24px)!important}body.cpl-fullpage-active #cplPage .cpl-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}body.cpl-fullpage-active #cplPage .cpl-question-grid{grid-template-columns:1fr!important;gap:9px!important}body.cpl-fullpage-active #cplPage .cpl-question{width:100%!important;min-width:0!important}body.cpl-fullpage-active #cplPage .cpl-form-heading h2{font-size:clamp(18px,5vw,22px)!important;overflow-wrap:anywhere}}
-</style>
-
-<style id="cpl-quickmenu-visible-fix">
-/* Keep the existing Quick Menu above the CPL fullscreen layer. */
-body.cpl-fullpage-active #teamRerEdgeNav,
-html.cpl-fullpage-active #teamRerEdgeNav{
-  display:block!important;visibility:visible!important;opacity:1!important;
-  position:fixed!important;inset:0 0 0 auto!important;width:0!important;height:100dvh!important;
-  z-index:2147483647!important;pointer-events:none!important;overflow:visible!important;
-}
-body.cpl-fullpage-active #teamRerEdgeNav.is-visible{display:block!important;visibility:visible!important;opacity:1!important}
-body.cpl-fullpage-active #teamRerEdgeNav .edge-toggle{
-  display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
-  position:fixed!important;right:0!important;top:50%!important;transform:translateY(-50%)!important;
-  z-index:2147483647!important;
-}
-body.cpl-fullpage-active #teamRerEdgeNav .edge-panel{
-  position:fixed!important;right:8px!important;top:50%!important;
-  z-index:2147483646!important;pointer-events:auto!important;
-}
-</style>
-
-<style id="cpl-print-selection-dialog-css">
-#cplPrintSelectModal{position:fixed;inset:0;z-index:2147483647;background:rgba(8,20,34,.65);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
-#cplPrintSelectModal.hidden{display:none!important}
-#cplPrintSelectModal .cpl-print-select-card{width:min(520px,100%);max-height:90dvh;overflow:auto;background:#fff;color:#162a3a;border-radius:14px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
-#cplPrintSelectModal h3{margin:0 0 8px;font-size:1.25rem}#cplPrintSelectModal p{margin:0 0 14px;color:#475569}
-#cplPrintSelectModal label{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #dce3e9;font-size:1rem}
-#cplPrintSelectModal input[type=checkbox]{width:20px;height:20px;accent-color:#003b70;flex:0 0 auto}
-#cplPrintConsultantChoices{max-height:45dvh;overflow:auto;border:1px solid #d7e0e8;border-radius:10px;margin:8px 0}
-#cplPrintSelectModal .cpl-print-select-actions{display:flex;gap:10px;margin-top:14px}#cplPrintSelectModal button{flex:1;min-height:46px}
-</style>
 </body>
 </html>
+
 
