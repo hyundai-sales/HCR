@@ -2230,6 +2230,15 @@
   #adminLockScreen .admin-pin-keypad button:active { background:rgba(130,146,160,.40) !important; }
 </style>
 
+
+<style id="team-rer-lock-hidden-state-fix">
+  /* Fullscreen layout must not override the hidden state after PIN unlock. */
+  #adminLockScreen.admin-lock-screen.hidden { display:none !important; visibility:hidden !important; pointer-events:none !important; }
+  #adminLockScreen.admin-lock-screen:not(.hidden) { display:grid !important; visibility:visible !important; pointer-events:auto !important; }
+  #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad,
+  #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
+</style>
+
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
