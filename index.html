@@ -5700,25 +5700,112 @@
     let orgImageData = "";
     function loadOrgChart() { submitRequest("orgChartGet").catch(error => setMessage($("orgChartMessage"), error.message, "error")); }
     function renderOrgChart() {
-      const host = $("orgChartTree"); host.replaceChildren();
+      const host = $("orgChartTree");
+      host.replaceChildren();
+
       const map = new Map(orgChartRecords.map(r => [r.id, {...r, children:[]} ]));
-      const roots=[];
-      map.forEach(r => { const parent=map.get(r.parentId); if(parent && parent.id!==r.id) parent.children.push(r); else roots.push(r); });
+      const roots = [];
+      map.forEach(r => {
+        const parent = map.get(r.parentId);
+        if (parent && parent.id !== r.id) parent.children.push(r);
+        else roots.push(r);
+      });
+
       const admin = isAdminSession();
-      const makeNode = (r, depth=0, seen=new Set()) => {
-        if(seen.has(r.id)) return; const next=new Set(seen); next.add(r.id);
-        const card=document.createElement("article"); card.className="org-person";
-        if(r.image){const img=document.createElement("img");img.className="org-avatar";img.src=r.image;img.alt="";card.appendChild(img);} else {const avatar=document.createElement("div");avatar.className="org-avatar org-avatar-empty";avatar.textContent=(r.name||"?").trim().charAt(0).toUpperCase();card.appendChild(avatar);}
-        const name=document.createElement("strong");name.textContent=r.name;card.appendChild(name);
-        const pos=document.createElement("span");pos.textContent=r.position;card.appendChild(pos);
-        if(admin){const edit=document.createElement("button");edit.type="button";edit.className="org-edit-btn";edit.textContent="Edit";edit.addEventListener("click",()=>editOrgRecord(r));card.appendChild(edit);}
-        const wrap=document.createElement("div");wrap.className="org-branch";wrap.appendChild(card);
-        if(r.children.length){const kids=document.createElement("div");kids.className="org-children";r.children.sort((a,b)=>a.sortOrder-b.sortOrder).forEach(c=>kids.appendChild(makeNode(c,depth+1,next)));wrap.appendChild(kids);}
-        return wrap;
+      const makeCard = (r) => {
+        const card = document.createElement("article");
+        card.className = "org-person";
+
+        if (r.image) {
+          const img = document.createElement("img");
+          img.className = "org-avatar";
+          img.src = r.image;
+          img.alt = "";
+          card.appendChild(img);
+        } else {
+          const avatar = document.createElement("div");
+          avatar.className = "org-avatar org-avatar-empty";
+          avatar.textContent = (r.name || "?").trim().charAt(0).toUpperCase();
+          card.appendChild(avatar);
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = r.name || "";
+        card.appendChild(name);
+
+        const pos = document.createElement("span");
+        pos.textContent = r.position || "";
+        card.appendChild(pos);
+
+        const parent = map.get(r.parentId);
+        if (parent) {
+          const reporting = document.createElement("small");
+          reporting.className = "org-reporting-label";
+          reporting.textContent = "Reports to: " + (parent.name || parent.position || "—");
+          card.appendChild(reporting);
+        }
+
+        if (admin) {
+          const edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "org-edit-btn";
+          edit.textContent = "Edit";
+          edit.addEventListener("click", () => editOrgRecord(r));
+          card.appendChild(edit);
+        }
+        return card;
       };
-      roots.sort((a,b)=>a.sortOrder-b.sortOrder).forEach(r=>host.appendChild(makeNode(r)));
-      $("orgChartSummary").textContent=orgChartRecords.length?`${orgChartRecords.length} position(s) in the organizational chart.`:"No positions have been added yet.";
-      if(!roots.length && orgChartRecords.length) $("orgChartSummary").textContent += " Check reporting relationships for circular or missing parent links.";
+
+      roots.sort((a,b) => a.sortOrder - b.sortOrder);
+      let level = roots.slice();
+      const visited = new Set();
+      let levelNumber = 0;
+
+      while (level.length && levelNumber < 50) {
+        level = level.filter(r => {
+          if (visited.has(r.id)) return false;
+          visited.add(r.id);
+          return true;
+        });
+        if (!level.length) break;
+
+        const levelWrap = document.createElement("section");
+        levelWrap.className = "org-level-wrap";
+
+        const levelTitle = document.createElement("div");
+        levelTitle.className = "org-level-title";
+        levelTitle.textContent = levelNumber === 0 ? "Leadership" : "Reporting Level " + (levelNumber + 1);
+        levelWrap.appendChild(levelTitle);
+
+        const grid = document.createElement("div");
+        grid.className = "org-level";
+        level.sort((a,b) => a.sortOrder - b.sortOrder).forEach(r => grid.appendChild(makeCard(r)));
+        levelWrap.appendChild(grid);
+        host.appendChild(levelWrap);
+
+        const next = [];
+        level.forEach(r => {
+          (r.children || []).sort((a,b) => a.sortOrder - b.sortOrder).forEach(child => {
+            if (!visited.has(child.id)) next.push(child);
+          });
+        });
+
+        if (next.length) {
+          const connector = document.createElement("div");
+          connector.className = "org-level-connector";
+          connector.setAttribute("aria-hidden", "true");
+          host.appendChild(connector);
+        }
+        level = next;
+        levelNumber++;
+      }
+
+      $("orgChartSummary").textContent = orgChartRecords.length
+        ? `${orgChartRecords.length} position(s) in the organizational chart.`
+        : "No positions have been added yet.";
+      if (!roots.length && orgChartRecords.length) {
+        $("orgChartSummary").textContent += " Check reporting relationships for circular or missing parent links.";
+      }
     }
     function editOrgRecord(r=null) {
       $("orgEditorTitle").textContent=r?"Edit Position":"Add Position"; $("orgRecordId").value=r?.id||"";
@@ -6972,6 +7059,81 @@
   .org-avatar{width:56px;height:56px}
   .org-person strong{font-size:13px}
   .org-person>span{font-size:11px}
+}
+
+/* TEAM RER org chart: render each reporting tier as a full-width responsive grid.
+   This avoids nested child groups inheriting the narrow width of a manager card. */
+#orgChartTree.org-tree{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+  box-sizing:border-box!important;
+  gap:0!important;
+}
+#orgChartTree .org-level-wrap{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#orgChartTree .org-level-title{
+  margin:10px 0 12px;
+  color:#b9cad9;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:.04em;
+  text-align:center;
+  text-transform:uppercase;
+}
+#orgChartTree .org-level{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),220px));
+  justify-content:center;
+  align-items:stretch;
+  gap:18px 14px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#orgChartTree .org-person{
+  width:100%;
+  max-width:220px;
+  min-width:0;
+  min-height:175px;
+  justify-self:center;
+  box-sizing:border-box;
+}
+#orgChartTree .org-reporting-label{
+  display:block;
+  width:100%;
+  margin-top:1px;
+  color:#607b90;
+  font-size:10px;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+  text-align:center;
+}
+#orgChartTree .org-level-connector{
+  width:2px;
+  height:24px;
+  margin:14px auto 4px;
+  background:#9bb4c9;
+  opacity:.9;
+}
+@media(max-width:600px){
+  #orgChartTree.org-tree{padding-left:2px!important;padding-right:2px!important}
+  #orgChartTree .org-level{grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),170px));gap:14px 8px}
+  #orgChartTree .org-person{max-width:170px;min-height:165px;padding:11px 8px}
+  #orgChartTree .org-avatar{width:56px;height:56px}
+  #orgChartTree .org-person strong{font-size:13px}
+  #orgChartTree .org-person>span{font-size:11px}
+  #orgChartTree .org-reporting-label{font-size:9px}
 }
 </style>
 
