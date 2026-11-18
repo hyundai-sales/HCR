@@ -2788,7 +2788,7 @@
           <div id="quotePreviewWrap" class="preview-wrap quote-liquid-preview hidden" role="dialog" aria-modal="true" aria-label="Vehicle Quotation Preview">
             <div class="preview-dialog quote-preview-dialog">
               <div class="preview-head quote-preview-head">
-                <span>Vehicle Quotation Preview</span>
+                <span>VEHICLE QUOTATION</span>
                 <button id="closeQuotePreviewBtn" class="preview-close" type="button" aria-label="Close quotation preview">Close ✕</button>
               </div>
               <div class="quote-preview-scroll">
@@ -6516,6 +6516,9 @@
       }
       updateQuotePreview();
       $("quotePreviewWrap").classList.remove("hidden");
+      // Always start the quotation preview at its top so the document title is immediately visible.
+      const quoteScroll = $("quotePreviewWrap").querySelector(".quote-preview-scroll");
+      if (quoteScroll) quoteScroll.scrollTop = 0;
     });
     $("closeQuotePreviewBtn").addEventListener("click", closeQuotePreview);
     $("quotePreviewWrap").addEventListener("click", event => {
@@ -8629,6 +8632,123 @@
   }
   tick();window.setInterval(tick,1000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)tick()});
+})();
+</script>
+
+
+<style id="teamrer-quote-final-print-isolation-and-module-back-buttons">
+/* Restore module navigation only while the corresponding module is open. */
+#pdfPage:not(.hidden) > #backToMenuFromPdf,
+#quotePage:not(.hidden) > #backToMenuFromQuote {
+  display:inline-flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative !important;
+  z-index:20 !important;
+}
+#pdfPage:not(.hidden) > #backToMenuFromPdf.hidden,
+#quotePage:not(.hidden) > #backToMenuFromQuote.hidden {
+  display:inline-flex !important;
+}
+@media print {
+  /* The quotation printout must contain only the quotation document itself.
+     This prevents app-shell/theme/footer layers from being printed. */
+  body.printing-quote,
+  body.printing-quote .wrap,
+  body.printing-quote .wrap > .card,
+  body.printing-quote #appSection,
+  body.printing-quote #quotePage,
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote .quote-preview-dialog,
+  body.printing-quote .quote-preview-scroll {
+    background:#fff !important;
+    background-image:none !important;
+    box-shadow:none !important;
+    filter:none !important;
+    -webkit-filter:none !important;
+  }
+  body.printing-quote * {
+    visibility:hidden !important;
+  }
+  body.printing-quote #quotePage,
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-quote #quotePreview {
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+  }
+  body.printing-quote #quotePreview,
+  body.printing-quote #quotePreview * {
+    visibility:visible !important;
+    background-color:transparent !important;
+    background-image:none !important;
+    box-shadow:none !important;
+    filter:none !important;
+    color:#1f2937 !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  body.printing-quote #quotePreview {
+    background:#fff !important;
+    width:100% !important;
+    max-width:none !important;
+    min-height:0 !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:5mm 6mm !important;
+    overflow:visible !important;
+  }
+  body.printing-quote #quotePreviewWrap .quote-preview-head,
+  body.printing-quote #quotePreviewWrap .quote-preview-actions,
+  body.printing-quote #backToMenuFromQuote,
+  body.printing-quote .cover-container,
+  body.printing-quote .seasonal-decor,
+  body.printing-quote #teamRerEdgeNav,
+  body.printing-quote #adminManualLock,
+  body.printing-quote #adminLockScreen {
+    display:none !important;
+    visibility:hidden !important;
+  }
+  body.printing-quote #quotePreviewWrap::before,
+  body.printing-quote #quotePreviewWrap::after,
+  body.printing-quote .quote-preview-dialog::before,
+  body.printing-quote .quote-preview-dialog::after,
+  body.printing-quote .quote-preview-scroll::before,
+  body.printing-quote .quote-preview-scroll::after {
+    content:none !important;
+    display:none !important;
+  }
+}
+</style>
+<script id="teamrer-ensure-module-back-buttons">
+(function(){
+  function syncBackButtons(){
+    const pairs=[
+      ['pdfPage','backToMenuFromPdf'],
+      ['quotePage','backToMenuFromQuote']
+    ];
+    pairs.forEach(([pageId,buttonId])=>{
+      const page=document.getElementById(pageId);
+      const button=document.getElementById(buttonId);
+      if(!page||!button)return;
+      if(!page.classList.contains('hidden')){
+        button.classList.remove('hidden');
+        button.removeAttribute('hidden');
+        button.style.setProperty('display','inline-flex','important');
+        button.style.setProperty('visibility','visible','important');
+      }
+    });
+  }
+  syncBackButtons();
+  const observer=new MutationObserver(syncBackButtons);
+  ['pdfPage','quotePage'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)observer.observe(el,{attributes:true,attributeFilter:['class']});
+  });
+  document.addEventListener('teamrer-auth-ready',syncBackButtons);
+  window.addEventListener('pageshow',syncBackButtons);
 })();
 </script>
 
