@@ -2476,59 +2476,27 @@
 
         <section id="cplPage" class="hidden">
           <button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button>
-          <h2 class="section-title">Client Probing Log</h2>
-          <p class="app-caption">Super Admin only · Daily client records and monthly report compilation</p>
-          <div class="cpl-toolbar">
-            <button id="cplAddClientBtn" type="button">＋ Add Client</button>
-            <button id="cplRefreshBtn" class="secondary" type="button">Refresh</button>
+          <h2 class="section-title">Client Probing Log (CPL)</h2>
+          <div class="cpl-form-shell">
+            <div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2>
+              <div class="cpl-meta-grid">
+                <label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label>
+                <label>TYPE <input id="cplTypeFixed" value="" readonly></label>
+                <label>DESC <select id="cplConsultantSelect" class="hidden"></select><input id="cplConsultantFixed" readonly></label>
+                <label>DATE <input id="cplHeaderDate" readonly></label>
+                <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
+              </div>
+            </div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry Row</button><button id="cplSaveForm" type="button">Save CPL</button></div>
+            <div class="cpl-preview-wrap"><table id="cplEntryTable" class="cpl-entry-table"><thead><tr>
+              <th>#</th><th>SOURCE</th><th>SC</th><th>CLIENT NAME</th><th>PHONE</th><th>EMAIL</th><th>VEH. OF INTEREST</th><th>SPECS</th><th>TIMELINE</th><th>WORK PROFILE?</th><th>DRIVING NOW?</th><th>LIKES?</th><th>CONCERNS?</th><th>FREQ. USAGE?</th><th>NEXT STEP</th>
+            </tr></thead><tbody id="cplEntryRows"></tbody></table></div>
+            <div class="cpl-form-bottom"><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
+            <div id="cplMessage" class="message hidden" aria-live="polite"></div>
           </div>
-          <div id="cplClientEditor" class="cpl-panel hidden">
-            <h3 id="cplClientEditorTitle">Add Client</h3>
-            <form id="cplClientForm" class="cpl-form">
-              <input type="hidden" id="cplClientId">
-              <label>Source<input id="cplSource" placeholder="Facebook, referral, walk-in..."></label>
-              <label>Sales Consultant<input id="cplConsultant" placeholder="Sales consultant"></label>
-              <label>Client Name<input id="cplName" required placeholder="Full name"></label>
-              <label>Phone<input id="cplPhone" inputmode="tel" placeholder="Contact number"></label>
-              <label>Dealer<input id="cplDealer" value="Hyundai Cainta"></label>
-              <label>Client Type<input id="cplType" placeholder="Individual, business, etc."></label>
-              <label>Timeline<input id="cplTimeline" placeholder="Immediate, 1 month, etc."></label>
-              <label>Description<textarea id="cplDescription" rows="2" placeholder="Work, income, needs, background"></textarea></label>
-              <label>Likes<textarea id="cplLikes" rows="2" placeholder="Vehicle / offer preferences"></textarea></label>
-              <label>Concerns<textarea id="cplConcerns" rows="2" placeholder="Objections, financing concerns"></textarea></label>
-              <label>Manager<input id="cplManager" placeholder="Assigned manager"></label>
-              <label>Free / Suggest<textarea id="cplFreeSuggest" rows="2" placeholder="Freebies or offer suggestion"></textarea></label>
-              <label>Status<select id="cplStatus"><option>Active</option><option>Converted</option><option>Lost</option><option>On Hold</option></select></label>
-              <div class="cpl-form-actions"><button type="submit">Save Client</button><button id="cplClientCancel" class="secondary" type="button">Cancel</button></div>
-            </form>
-          </div>
-          <div class="cpl-panel">
-            <h3>Daily Activity Entry</h3>
-            <form id="cplActivityForm" class="cpl-form">
-              <label>Client<select id="cplActivityClient" required><option value="">Select client</option></select></label>
-              <label>Activity Date<input id="cplActivityDate" type="date" required></label>
-              <label>Activity Type<select id="cplActivityType"><option>Call</option><option>Chat / Message</option><option>Showroom Visit</option><option>Inquiry</option><option>Follow-up</option><option>Computation Sent</option><option>Requirements</option><option>Other</option></select></label>
-              <label>Client Update<textarea id="cplActivityUpdate" rows="2" placeholder="What happened today?"></textarea></label>
-              <label>Concern<textarea id="cplActivityConcern" rows="2" placeholder="Concern raised today"></textarea></label>
-              <label>Likes<textarea id="cplActivityLikes" rows="2" placeholder="Client preferences / feedback"></textarea></label>
-              <label>Next Step<textarea id="cplActivityNextStep" rows="2" placeholder="Next action"></textarea></label>
-              <label>Follow-up Date<input id="cplFollowupDate" type="date"></label>
-              <div class="cpl-form-actions"><button type="submit">Save Daily Entry</button></div>
-            </form>
-          </div>
-          <div class="cpl-panel">
-            <h3>Saved Clients</h3>
-            <input id="cplSearch" type="search" placeholder="Search client name or phone">
-            <div id="cplClientsList" class="cpl-list"></div>
-          </div>
-          <div class="cpl-panel">
-            <h3>Monthly CPL Report</h3>
-            <div class="cpl-report-controls"><label>Month<input id="cplReportMonth" type="month"></label><button id="cplReportBtn" type="button">Generate Monthly Report</button></div>
-            <p id="cplReportSummary" class="promo-note">Choose a month to compile saved activities.</p>
-            <div id="cplReportTable" class="cpl-report-table"></div>
-          </div>
-          <div id="cplMessage" class="message hidden" aria-live="polite"></div>
+          <div class="cpl-saved-wrap"><h3>Saved CPL Forms</h3><input id="cplSearch" type="search" placeholder="Search consultant or client"><div id="cplClientsList" class="cpl-list"></div></div>
         </section>
+
 
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
@@ -3501,7 +3469,7 @@
         return;
       }
 
-      if (action === "cplGet") { cplData=event.data.cpl||{clients:[],activities:[]};renderCplClients();return; }
+      if (action === "cplGet") { cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};initCplForm();renderCplClients();return; }
       if (action === "cplClientSave" || action === "cplActivitySave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
       if (action === "cplReportGet") { renderCplReport(event.data.cplReport||{rows:[],month:""});return; }
       if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
@@ -5992,49 +5960,23 @@
     $("orgDeleteBtn").addEventListener("click",()=>{if(!confirm("Delete this position? Any direct reports will become top-level positions."))return;submitRequest("orgChartDelete",{payload:JSON.stringify({id:$("orgRecordId").value})}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
 
 
-    // CLIENT PROBING LOG: Super Admin-only daily client logbook.
-    let cplData = {clients:[],activities:[]};
-    const cplToday = () => new Date().toISOString().slice(0,10);
-    function loadCpl(){ if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;} submitRequest("cplGet").catch(err=>setMessage($("cplMessage"),err.message,"error")); }
+    // CLIENT PROBING LOG: form-style CPL, Super Admin only.
+    let cplData={clients:[],variants:[],consultants:[]};
+    const cplToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+    function loadCpl(){if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}submitRequest("cplGet").catch(err=>setMessage($("cplMessage"),err.message,"error"));}
     function cplEsc(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-    function renderCplClients(){
-      const list=$("cplClientsList"), select=$("cplActivityClient"), q=String($("cplSearch").value||"").trim().toLowerCase();
-      list.replaceChildren(); select.replaceChildren(); const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select client";select.appendChild(placeholder);
-      (cplData.clients||[]).forEach(c=>{
-        const name=c["Client Name"]||"",phone=c.Phone||"",id=c["Client ID"]||"";
-        const opt=document.createElement("option");opt.value=id;opt.textContent=name+(phone?" · "+phone:"");select.appendChild(opt);
-        if(q && !(name.toLowerCase().includes(q)||phone.toLowerCase().includes(q)))return;
-        const card=document.createElement("article");card.className="cpl-client-card";
-        card.innerHTML=`<div class="cpl-client-card-head"><strong>${cplEsc(name)}</strong><span>${cplEsc(c.Status||"Active")}</span></div><p>${cplEsc(phone)} · ${cplEsc(c.Source||"")}</p><p>${cplEsc(c["Sales Consultant"]||"")} · ${cplEsc(c.Timeline||"")}</p><p class="cpl-card-detail">${cplEsc(c.Description||"")}</p><button type="button" class="secondary cpl-edit-client" data-cpl-id="${cplEsc(id)}">Edit Client</button>`;
-        list.appendChild(card);
-      });
-      list.querySelectorAll(".cpl-edit-client").forEach(btn=>btn.addEventListener("click",()=>editCplClient(btn.dataset.cplId)));
-    }
-    function editCplClient(id){
-      const c=(cplData.clients||[]).find(x=>String(x["Client ID"])===String(id));if(!c)return;
-      $("cplClientId").value=id;$("cplClientEditorTitle").textContent="Edit Client";
-      const pairs=[["cplSource","Source"],["cplConsultant","Sales Consultant"],["cplName","Client Name"],["cplPhone","Phone"],["cplDealer","Dealer"],["cplType","Client Type"],["cplTimeline","Timeline"],["cplDescription","Description"],["cplLikes","Likes"],["cplConcerns","Concerns"],["cplManager","Manager"],["cplFreeSuggest","Free / Suggest"],["cplStatus","Status"]];
-      pairs.forEach(([element,key])=>$(element).value=c[key]||"");
-      $("cplClientEditor").classList.remove("hidden");$("cplClientEditor").scrollIntoView({behavior:"smooth",block:"start"});
-    }
-    function resetCplClientForm(){ $("cplClientForm").reset();$("cplClientId").value="";$("cplDealer").value="Hyundai Cainta";$("cplClientEditorTitle").textContent="Add Client";$("cplClientEditor").classList.add("hidden");}
-    $("cplTabBtn").addEventListener("click",()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$("appNav").classList.add("hidden");Object.values({pdf:"pdfPage",quote:"quotePage",credit:"creditPage",history:"creditHistoryPage",promo:"promoPage",audit:"auditPage",users:"userManagementPage",org:"orgChartPage"}).forEach(id=>$(id).classList.add("hidden"));$("cplPage").classList.remove("hidden");$("cplActivityDate").value=cplToday();$("cplReportMonth").value=cplToday().slice(0,7);clearLastAppView();loadCpl();});});
-    $("edgeCplBtn").addEventListener("click",()=>{});
-    $("backToMenuFromCpl").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{$("cplPage").classList.add("hidden");$("appNav").classList.remove("hidden");clearLastAppView();}));
-    $("cplAddClientBtn").addEventListener("click",()=>{resetCplClientForm();$("cplClientEditor").classList.remove("hidden");$("cplClientEditor").scrollIntoView({behavior:"smooth",block:"start"});});
-    $("cplClientCancel").addEventListener("click",resetCplClientForm);
-    $("cplRefreshBtn").addEventListener("click",loadCpl);$("cplSearch").addEventListener("input",renderCplClients);
-    $("cplClientForm").addEventListener("submit",e=>{e.preventDefault();const payload={id:$("cplClientId").value,source:$("cplSource").value,salesConsultant:$("cplConsultant").value,clientName:$("cplName").value,phone:$("cplPhone").value,dealer:$("cplDealer").value,clientType:$("cplType").value,timeline:$("cplTimeline").value,description:$("cplDescription").value,likes:$("cplLikes").value,concerns:$("cplConcerns").value,manager:$("cplManager").value,freeSuggest:$("cplFreeSuggest").value,status:$("cplStatus").value};submitRequest("cplClientSave",{payload:JSON.stringify(payload)}).catch(err=>setMessage($("cplMessage"),err.message,"error"));});
-    $("cplActivityForm").addEventListener("submit",e=>{e.preventDefault();const payload={clientId:$("cplActivityClient").value,activityDate:$("cplActivityDate").value,activityType:$("cplActivityType").value,clientUpdate:$("cplActivityUpdate").value,concern:$("cplActivityConcern").value,likes:$("cplActivityLikes").value,nextStep:$("cplActivityNextStep").value,followupDate:$("cplFollowupDate").value};submitRequest("cplActivitySave",{payload:JSON.stringify(payload)}).then(()=>{ $("cplActivityForm").reset();$("cplActivityDate").value=cplToday();}).catch(err=>setMessage($("cplMessage"),err.message,"error"));});
-    $("cplReportBtn").addEventListener("click",()=>submitRequest("cplReportGet",{payload:JSON.stringify({month:$("cplReportMonth").value})}).catch(err=>setMessage($("cplMessage"),err.message,"error")));
-    function renderCplReport(report){
-      const host=$("cplReportTable");host.replaceChildren();$("cplReportSummary").textContent=`${report.count||0} daily activity record(s) for ${report.month||"selected month"}.`;
-      const print=document.createElement("button");print.type="button";print.className="secondary";print.textContent="Print Report";print.addEventListener("click",()=>window.print());host.appendChild(print);
-      const table=document.createElement("table");table.className="cpl-report-grid";const heads=["Date","Source","Consultant","Client Name","Phone","Dealer","Type","Timeline","Description","Likes","Concerns","Manager","Free / Suggest","Activity","Update","Next Step","Follow-up"];
-      const tr=document.createElement("tr");heads.forEach(h=>{const th=document.createElement("th");th.textContent=h;tr.appendChild(th);});table.appendChild(tr);
-      (report.rows||[]).forEach(row=>{const tr=document.createElement("tr");const vals=[row.date,row.source,row.consultant,row.name,row.phone,row.dealer,row.type,row.timeline,row.description,row.likes,row.concerns,row.manager,row.freeSuggest,row.activity,row.update,row.nextStep,row.followup];vals.forEach(v=>{const td=document.createElement("td");td.textContent=v||"";tr.appendChild(td);});table.appendChild(tr);});host.appendChild(table);
-    }
-
+    function addCplEntryRow(data={}){const tr=document.createElement('tr');const fields=[['date','date'],['source','text'],['sc','text'],['clientName','text'],['phone','tel'],['email','email'],['vehicle','select'],['specs','textarea'],['timeline','textarea'],['workProfile','textarea'],['drivingNow','textarea'],['likes','textarea'],['concerns','textarea'],['freqUsage','textarea'],['nextStep','textarea']];fields.forEach(([key,type],i)=>{const td=document.createElement('td');if(type==='select'){const el=document.createElement('select');el.dataset.key=key;el.innerHTML='<option value="">Select vehicle/variant</option>';(cplData.variants||[]).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});el.value=data[key]||'';td.appendChild(el);}else{const el=document.createElement(type==='textarea'?'textarea':'input');if(type!=='textarea')el.type=type;el.dataset.key=key;if(key==='date')el.value=data[key]||cplToday();else el.value=data[key]||'';td.appendChild(el);}tr.appendChild(td);});const td=document.createElement('td');td.style.display='none';const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.className='cpl-remove-row';remove.onclick=()=>tr.remove();td.appendChild(remove);tr.appendChild(td);$('cplEntryRows').appendChild(tr);}
+    function getCplRows(){return Array.from($('cplEntryRows').rows).map(tr=>Object.fromEntries(Array.from(tr.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value])));}
+    function renderCplClients(){const host=$('cplClientsList'),q=String($('cplSearch').value||'').toLowerCase().trim();host.replaceChildren();(cplData.clients||[]).forEach(item=>{if(q&&!JSON.stringify(item).toLowerCase().includes(q))return;const card=document.createElement('article');card.className='cpl-saved-card';const title=document.createElement('strong');title.textContent=`${item.date||''} · ${item.consultant||''}`;card.appendChild(title);const summary=document.createElement('p');summary.textContent=(item.rows||[]).map(r=>r.clientName).filter(Boolean).join(', ');card.appendChild(summary);host.appendChild(card);});}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}}
+    function initCplForm(){ $('cplHeaderDate').value=cplToday();$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='';$('cplEntryRows').replaceChildren();addCplEntryRow();setCplConsultant(); }
+    $('cplTabBtn').addEventListener('click',()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();loadCpl();});});
+    $('edgeCplBtn').addEventListener('click',()=>{});
+    $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
+    $('cplAddRow').addEventListener('click',()=>addCplEntryRow());$('cplSearch').addEventListener('input',renderCplClients);
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){setMessage($('cplMessage'),'Enter at least a client name, phone, or email before saving.','error');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;const payload={date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'',rows};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>{setMessage($('cplMessage'),'CPL saved.','success');loadCpl();}).catch(err=>setMessage($('cplMessage'),err.message,'error'));});
+    $('cplPrintSave').addEventListener('click',()=>window.print());
+    function renderCplPreview(){/* table is the live print preview */}
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
       runPageTransition("Opening User Management...", () => {
@@ -7610,6 +7552,16 @@
     #cplReportTable th,#cplReportTable td{padding:2px}
     @page{size:landscape; margin:.25in}
   }
+
+    .cpl-form-shell{background:#fff;color:#183047;border:1px solid #cbd5e1;border-radius:12px;padding:16px;margin:12px 0;overflow:auto}
+    .cpl-form-heading{text-align:center;border-bottom:2px solid #003b70;padding-bottom:12px;margin-bottom:12px}
+    .cpl-form-heading h2{font-size:20px;letter-spacing:.5px;margin:4px 0 12px;color:#003b70}
+    .cpl-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:8px;text-align:left}
+    .cpl-meta-grid label{font-size:11px;font-weight:700;color:#003b70}.cpl-meta-grid input,.cpl-meta-grid select{width:100%;min-width:0;padding:7px;border:1px solid #b8c5d3;border-radius:4px;background:#f8fafc;color:#1e293b}
+    .cpl-entry-tools,.cpl-form-bottom{display:flex;gap:8px;justify-content:flex-end;margin:12px 0}.cpl-entry-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:10px}.cpl-entry-table th,.cpl-entry-table td{border:1px solid #4b5563;padding:3px;vertical-align:top}.cpl-entry-table th{background:#003b70;color:white;font-size:9px;text-align:center}.cpl-entry-table td input,.cpl-entry-table td select,.cpl-entry-table td textarea{width:100%;min-width:0;box-sizing:border-box;border:0;background:transparent;color:#182b42;font-size:10px;padding:3px;resize:vertical}.cpl-entry-table td textarea{min-height:45px}.cpl-entry-table td:first-child{width:76px}.cpl-entry-table .cpl-remove-row{border:0;background:#fee2e2;color:#991b1b;border-radius:4px;padding:3px 5px}
+    .cpl-brand-footer{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:8px;color:#003b70;font-weight:700}.cpl-brand-footer img{width:40px;height:25px;object-fit:contain}.cpl-saved-wrap{margin-top:18px}.cpl-saved-card{border:1px solid #cbd5e1;border-radius:8px;padding:10px;margin:8px 0;background:#f8fafc}.cpl-saved-card button{margin-top:6px}
+    @media(max-width:700px){.cpl-meta-grid{grid-template-columns:1fr 1fr}.cpl-form-shell{padding:8px}.cpl-entry-table{min-width:1300px}}
+    @media print{body *{visibility:hidden!important}#cplPage,#cplPage *{visibility:visible!important}#cplPage{position:absolute;left:0;top:0;width:100%;background:white!important;color:#111!important}#cplPage>button,#cplPage .section-title,#cplPage .cpl-entry-tools,#cplPage .cpl-form-bottom,#cplPage .cpl-saved-wrap,#cplPage #cplMessage{display:none!important}.cpl-form-shell{border:0;border-radius:0;margin:0;padding:0;overflow:visible}.cpl-form-heading{border-bottom:2px solid #003b70}.cpl-entry-table{font-size:7pt;table-layout:fixed;width:100%;min-width:0}.cpl-entry-table th{font-size:6.5pt;background:#003b70!important;color:white!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.cpl-entry-table td input,.cpl-entry-table td select,.cpl-entry-table td textarea{font-size:6.5pt;color:#111!important}.cpl-entry-table td textarea{min-height:32px}.cpl-entry-table tr{break-inside:avoid;page-break-inside:avoid} @page{size:landscape; margin:0.25in}}
 </style>
 </body>
 </html>
