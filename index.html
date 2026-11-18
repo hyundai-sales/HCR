@@ -1733,12 +1733,6 @@
       #cplPage .cpl-saved-client-card { padding:14px !important; }
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
-
-    /* CPL monthly retrieval contrast hard override for desktop/mobile browsers */
-    #cplPage .cpl-monthly-retrieve label{color:#f5f8ff!important;opacity:1!important;font-size:16px!important;font-weight:850!important;text-shadow:0 1px 2px rgba(0,0,0,.6)!important;}
-    #cplPage .cpl-monthly-retrieve select,#cplPage .cpl-monthly-retrieve select:disabled{background:#eaf2fa!important;color:#122a40!important;-webkit-text-fill-color:#122a40!important;opacity:1!important;font-size:18px!important;font-weight:800!important;text-shadow:none!important;filter:none!important;}
-    #cplPage .cpl-monthly-retrieve select option{background:#eaf2fa!important;color:#122a40!important;-webkit-text-fill-color:#122a40!important;font-weight:700!important;opacity:1!important;}
-    #cplPage #cplMonthlyRetrieve{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;font-size:17px!important;font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.55)!important;}
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -3258,7 +3252,11 @@
 
     async function submitRequest(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
-      const showRequestLoading = extra.silent !== true;
+      const isCplPdfRequest = action === "cplBlankPdf" || action === "cplMonthlyPdf";
+      // CPL PDF requests must not inherit or leave the global 8% loader visible.
+      // A background request may already own that overlay; close it before replacing the bridge nonce.
+      if (isCplPdfRequest) hideLoading();
+      const showRequestLoading = extra.silent !== true && !isCplPdfRequest;
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
@@ -3293,7 +3291,7 @@
         pendingRequestTimeout = null;
         $("tokenField").value = "";
         $("nonceField").value = "";
-        if (showRequestLoading) hideLoading();
+        if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
         if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; } if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
         const message = "Google Apps Script did not return a response within 45 seconds. Please try again. If this continues, contact your TEAM RER administrator.";
         if (action === "authorize") {
@@ -3599,7 +3597,7 @@
         return;
       }
 
-      if (action === "cplGet") { const preserved=cplMonthlyRetrieved;cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};if(preserved){const consultant=preserved.consultant,month=preserved.month,year=preserved.year;initCplMonthlyRetrieval();setCplConsultant();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=month;$('cplMonthlyYear').value=year;$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}else{cplMonthlyRetrieved=null;initCplForm();initCplMonthlyRetrieval();if(isSuperAdminSession()){clearCplDraft();setCplConsultant();if($('cplConsultantSelect'))$('cplConsultantSelect').value='';$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';renderCplConsultantSavedEntries();}else{restoreCplDraft();setCplConsultant();}}attachCplDraftAutosave();renderCplConsultantSavedEntries();renderCplClients();return; }
+      if (action === "cplGet") { const preserved=cplMonthlyRetrieved;cplData=event.data.cpl||{clients:[],variants:[],consultants:[]};if(preserved){const consultant=preserved.consultant,month=preserved.month,year=preserved.year;initCplMonthlyRetrieval();setCplConsultant();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=month;$('cplMonthlyYear').value=year;$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}else{cplMonthlyRetrieved=null;initCplForm();initCplMonthlyRetrieval();restoreCplDraft();setCplConsultant();if(isSuperAdminSession()&&$('cplConsultantSelect')){$('cplConsultantSelect').value='';renderCplConsultantSavedEntries();}}attachCplDraftAutosave();renderCplConsultantSavedEntries();renderCplClients();return; }
       if (action === "cplBlankPdf") {
         const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false;
         const result=event.data.cplBlankPdf||{};
@@ -3623,7 +3621,7 @@
         return;
       }
       if (action === "cplSheetPrint" || action === "cplBlankSheetPrint") { const result=event.data[action]||{}; if(cplPrintWindow&&!cplPrintWindow.closed&&result.url){cplPrintWindow.location.href=result.url;} cplPrintWindow=null; setMessage($("cplMessage"),result.message||"CPL template is ready. Open the sheet to print.","success");return; }
-      if (action === "cplClientSave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;if($("cplEntryRows"))$("cplEntryRows").replaceChildren();if($("cplHeaderDate"))$("cplHeaderDate").value="";if($("cplSaveForm"))$("cplSaveForm").textContent="Save CPL";clearCplDraft();renderCplConsultantSavedEntries();loadCpl();return; }
+      if (action === "cplClientSave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
       if (action === "cplActivitySave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
       if (action === "cplReportGet") { renderCplReport(event.data.cplReport||{rows:[],month:""});return; }
       if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
@@ -6269,9 +6267,9 @@
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
-    function saveCplDraft(){if(!document.getElementById('cplEntryRows'))return;try{const rows=Array.from($('cplEntryRows').children).map(card=>({retrieved:card.dataset.retrieved==='1',data:Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value]))})));if(!rows.length){clearCplDraft();return;}const draft={savedAt:Date.now(),consultant:cplMonthlyRetrieved?.consultant||(isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value),headerDate:$('cplHeaderDate').value,manager:$('cplManagerFixed').value,monthly:cplMonthlyRetrieved?{...cplMonthlyRetrieved}:null,month:$('cplMonthlyMonth')?.value||'',year:$('cplMonthlyYear')?.value||'',monthlyConsultant:$('cplMonthlyConsultant')?.value||'',rows};localStorage.setItem(cplDraftKey(),JSON.stringify(draft));}catch(err){console.warn('CPL draft autosave unavailable:',err);}}
+    function saveCplDraft(){if(!document.getElementById('cplEntryRows'))return;try{const rows=Array.from($('cplEntryRows').children).map(card=>({retrieved:card.dataset.retrieved==='1',data:Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value]))}));const draft={savedAt:Date.now(),consultant:cplMonthlyRetrieved?.consultant||(isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value),headerDate:$('cplHeaderDate').value,manager:$('cplManagerFixed').value,monthly:cplMonthlyRetrieved?{...cplMonthlyRetrieved}:null,month:$('cplMonthlyMonth')?.value||'',year:$('cplMonthlyYear')?.value||'',monthlyConsultant:$('cplMonthlyConsultant')?.value||'',rows};localStorage.setItem(cplDraftKey(),JSON.stringify(draft));}catch(err){console.warn('CPL draft autosave unavailable:',err);}}
     function queueCplDraftSave(){if(cplDraftSaveTimer)clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=setTimeout(saveCplDraft,250);}
-    function clearCplDraft(){if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}try{localStorage.removeItem(cplDraftKey());}catch(_){}}
+    function clearCplDraft(){try{localStorage.removeItem(cplDraftKey());}catch(_){}}
     function restoreCplDraft(){try{const draft=JSON.parse(localStorage.getItem(cplDraftKey())||'null');if(!draft||!Array.isArray(draft.rows)||!draft.rows.length)return false;cplMonthlyRetrieved=draft.monthly||null;$('cplHeaderDate').value=draft.headerDate||'';$('cplManagerFixed').value=draft.manager||'Ralph Edward Rosales';if($('cplMonthlyMonth')&&draft.month!==undefined)$('cplMonthlyMonth').value=draft.month;if($('cplMonthlyYear')&&draft.year!==undefined)$('cplMonthlyYear').value=draft.year;if($('cplMonthlyConsultant')&&draft.monthlyConsultant!==undefined)$('cplMonthlyConsultant').value=draft.monthlyConsultant;if(draft.consultant){$('cplConsultantSelect').value=draft.consultant;if(!$('cplMonthlyConsultant').value)$('cplMonthlyConsultant').value=draft.consultant;} $('cplSaveForm').textContent=cplMonthlyRetrieved?'Save Monthly Changes':'Save CPL';$('cplEntryRows').replaceChildren();draft.rows.forEach(item=>addCplEntryRow(item.data||{}, {retrieved:!!item.retrieved}));setCplConsultant();if(isSuperAdminSession()&&draft.consultant){$('cplConsultantSelect').value=draft.consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=draft.consultant);}return true;}catch(err){console.warn('CPL draft restore failed:',err);return false;}}
     function attachCplDraftAutosave(){if(cplDraftAutosaveAttached)return;cplDraftAutosaveAttached=true;const rows=$('cplEntryRows');rows.addEventListener('input',queueCplDraftSave);rows.addEventListener('change',queueCplDraftSave);$('cplConsultantSelect').addEventListener('change',queueCplDraftSave);$('cplAddRow').addEventListener('click',queueCplDraftSave);$('cplMonthlyConsultant').addEventListener('change',queueCplDraftSave);$('cplMonthlyMonth').addEventListener('change',queueCplDraftSave);$('cplMonthlyYear').addEventListener('change',queueCplDraftSave);new MutationObserver(queueCplDraftSave).observe(rows,{childList:true});}
     function initCplForm(){ $('cplSaveForm').textContent='Save CPL';$('cplHeaderDate').value='';$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';$('cplEntryRows').replaceChildren();setCplConsultant(); }
