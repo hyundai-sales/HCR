@@ -1733,7 +1733,7 @@
       #cplPage .cpl-saved-client-card { padding:14px !important; }
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
-</style>
+  </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
   <!-- TEAM RER iOS-style home screen: presentation only; existing module IDs and handlers are unchanged. -->
@@ -1897,7 +1897,7 @@
         transition: none !important;
       }
     }
-  </style>
+    </style>
 
 
   <style id="team-rer-edge-panel">
@@ -2016,7 +2016,7 @@
     #appSection #backToMenuFromCredit {
       display:none !important;
     }
-</style>
+  </style>
 
 
 
@@ -2073,7 +2073,7 @@
     .admin-lock-footnote { margin-top:17px; color:#8394a3; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
     body.admin-screen-locked { overflow:hidden !important; }
     @media(max-height:700px) { .admin-lock-card { padding:17px 20px; } .admin-lock-time { font-size:46px; margin-top:12px; } .admin-lock-icon { margin-top:13px; } .admin-pin-keypad { gap:7px 12px; } .admin-pin-keypad button,.admin-keypad-spacer { height:48px; } }
-  </style>
+    </style>
 
 <style id="team-rer-permanent-dark-liquid">
   /* Permanent dark appearance: explicit palette overrides the legacy light styles. */
@@ -2254,7 +2254,7 @@
     color:#315875 !important;
   }
 
-</style>
+  </style>
 
 
 <style id="team-rer-fullscreen-gray-frost-lock">
@@ -2305,7 +2305,7 @@
   @media(max-height:700px) {
     #adminLockScreen .admin-lock-card { padding-top:calc(18px + env(safe-area-inset-top)) !important; padding-bottom:calc(18px + env(safe-area-inset-bottom)) !important; }
   }
-</style>
+  </style>
 
 
 <style id="team-rer-lock-more-transparent-frost">
@@ -2330,7 +2330,7 @@
     box-shadow:0 8px 20px rgba(0,0,0,.14),inset 0 1px 0 rgba(235,242,248,.16),inset 0 -1px 0 rgba(235,242,248,.04) !important;
   }
   #adminLockScreen .admin-pin-keypad button:active { background:rgba(130,146,160,.40) !important; }
-</style>
+  </style>
 
 
 <style id="team-rer-lock-hidden-state-fix">
@@ -2339,7 +2339,7 @@
   #adminLockScreen.admin-lock-screen:not(.hidden) { display:grid !important; visibility:visible !important; pointer-events:auto !important; }
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad,
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
-</style>
+  </style>
 
 </head>
 <body>
@@ -6263,7 +6263,7 @@
       $("cplHeaderDate").value=`${year}-${month}-01`;
       showTeamRerDynamicIsland(`Loaded ${rows.length} entries from ${matching.length} saved CPL form(s). Ready to review.`);
     }
-    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(isSuperAdminSession()&&chosen!==previousConsultant){if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();}previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=updateRowSC;updateRowSC();}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};updateRowSC();}
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
@@ -6277,7 +6277,7 @@
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
     $('cplAddRow').addEventListener('click',()=>{if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
-    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{clearCplDraft();saveBtn.disabled=false;if(meta){meta.formCount=rows.length?1:0;meta.rowCount=rows.length;showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
+    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';if(isSuperAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';renderCplConsultantSavedEntries();if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
@@ -6901,7 +6901,7 @@
   @media(max-width:560px) {
     #teamRerEdgeNav .edge-item.is-active::after { font-size:6px; padding:3px 4px; }
   }
-</style>
+  </style>
 
 
 
@@ -6978,7 +6978,7 @@
   html[data-rer-theme="dark"] body #promoOffersPanel .promo-variant-info strong {
     color:#173f60 !important;
   }
-</style>
+  </style>
 
 
 <style id="team-rer-promo-editor-readability-v23">
@@ -7062,7 +7062,7 @@
     -webkit-text-fill-color:#ffffff !important;
     opacity:1 !important;
   }
-</style>
+  </style>
 
 
 <style id="team-rer-promo-editor-readability-v24">
@@ -7079,7 +7079,7 @@
     font-weight:600 !important;
     text-shadow:none !important;
   }
-</style>
+  </style>
 
 
 <style id="team-rer-christmas-main-menu-v26">
@@ -7144,7 +7144,7 @@
     #teamRerSantaPeek.santa-peek { animation:none; transform:translate3d(-5%,0,0); }
     #teamRerChristmasSnow { display:none !important; }
   }
-</style>
+  </style>
 <script id="team-rer-christmas-main-menu-v26-script">
 (function(){
   const app = document.getElementById("appSection");
@@ -7426,7 +7426,7 @@
       }
     }
     @media(prefers-reduced-motion:reduce) { .page-jump-controls button { transition:none; } }
-</style>
+  </style>
 
 <script>
   // Page-jump controls are limited to the two requested modules.
@@ -7618,7 +7618,7 @@
   #orgChartTree .org-person>span{font-size:11px}
   #orgChartTree .org-reporting-label{font-size:9px}
 }
-</style>
+  </style>
 
 <style id="team-rer-org-editor-readable-final">
   /* Organizational Chart editor: enforce readable contrast over global dark-theme rules. */
@@ -7702,7 +7702,7 @@
     outline-offset: 1px !important;
     border-color: #286b9c !important;
   }
-</style>
+  </style>
 
 
 <style id="team-rer-org-card-edit-readable">
@@ -7721,12 +7721,12 @@
     outline: 2px solid #286b9c !important;
     outline-offset: 2px !important;
   }
-</style>
+  </style>
 
 
 <style id="team-rer-org-editor-scroll-position">
   body #orgChartEditor { scroll-margin-top: 22px !important; }
-</style>
+  </style>
 \n
 <style id="team-rer-org-compact-clean-layout">
   /* Keep reporting tiers clear without large decorative headings. */
@@ -7851,7 +7851,7 @@
       font-size: 10.5px !important;
     }
   }
-</style>
+  </style>
 
 <style id="team-rer-cpl-module-style">
   .cpl-toolbar,.cpl-report-controls,.cpl-form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:12px 0}
@@ -8103,6 +8103,14 @@
     #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background:#edf4fb!important;opacity:1!important;font-weight:700!important;text-shadow:none!important;}
     #cplPage .cpl-monthly-retrieve select{border:1.5px solid #9ab9d4!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 9px rgba(0,0,0,.22)!important;}
     #cplPage #cplMonthlyRetrieve{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.45)!important;}
+  
+    /* Final targeted fix: monthly retrieval dropdown text contrast (mobile + desktop) */
+    #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;font-weight:800!important;opacity:1!important;}
+    #cplPage .cpl-monthly-retrieve select,
+    #cplPage .cpl-monthly-retrieve select:focus,
+    #cplPage .cpl-monthly-retrieve select:disabled,
+    #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background-color:#edf4fb!important;opacity:1!important;font-weight:800!important;text-shadow:none!important;}
+    #cplPage .cpl-monthly-retrieve select{font-size:18px!important;line-height:1.4!important;min-height:54px!important;}
 </style>
 </body>
 </html>
