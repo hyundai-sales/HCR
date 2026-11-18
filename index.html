@@ -2297,6 +2297,7 @@
             <button class="edge-item hidden" id="edgeActivityLogsBtn" type="button" data-edge-target="audit"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Activity Logs</span></button>
             <button class="edge-item" type="button" data-edge-target="org"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M5 16.5v-3h14v3M5 13.5h14"/></svg><span>Organizational Chart</span></button>
             <button class="edge-item hidden" id="edgeUserManagementBtn" type="button" data-edge-target="users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 8h5M18.5 5.5v5"/></svg><span>User Management</span></button>
+            <button class="edge-item hidden" id="edgeCplBtn" type="button" data-edge-target="cpl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/></svg><span>Client Probing Log</span></button>
           </nav>
         </aside>
 
@@ -2401,6 +2402,10 @@
               <span class="nav-icon" aria-hidden="true">♙</span>
               <span class="nav-copy"><span class="nav-title">User Management</span><span class="nav-description">Manage TEAM RER accounts and access roles</span></span>
             </button>
+            <button id="cplTabBtn" type="button" class="hidden">
+              <span class="nav-icon" aria-hidden="true">▦</span>
+              <span class="nav-copy"><span class="nav-title">Client Probing Log</span><span class="nav-description">Daily client entries and monthly CPL report</span></span>
+            </button>
           </nav>
           <div class="main-menu-account-actions">
             <button id="logoutBtn" class="secondary" type="button">Sign Out</button>
@@ -2467,6 +2472,62 @@
             </form>
           </div>
           <div id="orgChartMessage" class="message hidden" aria-live="polite"></div>
+        </section>
+
+        <section id="cplPage" class="hidden">
+          <button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title">Client Probing Log</h2>
+          <p class="app-caption">Super Admin only · Daily client records and monthly report compilation</p>
+          <div class="cpl-toolbar">
+            <button id="cplAddClientBtn" type="button">＋ Add Client</button>
+            <button id="cplRefreshBtn" class="secondary" type="button">Refresh</button>
+          </div>
+          <div id="cplClientEditor" class="cpl-panel hidden">
+            <h3 id="cplClientEditorTitle">Add Client</h3>
+            <form id="cplClientForm" class="cpl-form">
+              <input type="hidden" id="cplClientId">
+              <label>Source<input id="cplSource" placeholder="Facebook, referral, walk-in..."></label>
+              <label>Sales Consultant<input id="cplConsultant" placeholder="Sales consultant"></label>
+              <label>Client Name<input id="cplName" required placeholder="Full name"></label>
+              <label>Phone<input id="cplPhone" inputmode="tel" placeholder="Contact number"></label>
+              <label>Dealer<input id="cplDealer" value="Hyundai Cainta"></label>
+              <label>Client Type<input id="cplType" placeholder="Individual, business, etc."></label>
+              <label>Timeline<input id="cplTimeline" placeholder="Immediate, 1 month, etc."></label>
+              <label>Description<textarea id="cplDescription" rows="2" placeholder="Work, income, needs, background"></textarea></label>
+              <label>Likes<textarea id="cplLikes" rows="2" placeholder="Vehicle / offer preferences"></textarea></label>
+              <label>Concerns<textarea id="cplConcerns" rows="2" placeholder="Objections, financing concerns"></textarea></label>
+              <label>Manager<input id="cplManager" placeholder="Assigned manager"></label>
+              <label>Free / Suggest<textarea id="cplFreeSuggest" rows="2" placeholder="Freebies or offer suggestion"></textarea></label>
+              <label>Status<select id="cplStatus"><option>Active</option><option>Converted</option><option>Lost</option><option>On Hold</option></select></label>
+              <div class="cpl-form-actions"><button type="submit">Save Client</button><button id="cplClientCancel" class="secondary" type="button">Cancel</button></div>
+            </form>
+          </div>
+          <div class="cpl-panel">
+            <h3>Daily Activity Entry</h3>
+            <form id="cplActivityForm" class="cpl-form">
+              <label>Client<select id="cplActivityClient" required><option value="">Select client</option></select></label>
+              <label>Activity Date<input id="cplActivityDate" type="date" required></label>
+              <label>Activity Type<select id="cplActivityType"><option>Call</option><option>Chat / Message</option><option>Showroom Visit</option><option>Inquiry</option><option>Follow-up</option><option>Computation Sent</option><option>Requirements</option><option>Other</option></select></label>
+              <label>Client Update<textarea id="cplActivityUpdate" rows="2" placeholder="What happened today?"></textarea></label>
+              <label>Concern<textarea id="cplActivityConcern" rows="2" placeholder="Concern raised today"></textarea></label>
+              <label>Likes<textarea id="cplActivityLikes" rows="2" placeholder="Client preferences / feedback"></textarea></label>
+              <label>Next Step<textarea id="cplActivityNextStep" rows="2" placeholder="Next action"></textarea></label>
+              <label>Follow-up Date<input id="cplFollowupDate" type="date"></label>
+              <div class="cpl-form-actions"><button type="submit">Save Daily Entry</button></div>
+            </form>
+          </div>
+          <div class="cpl-panel">
+            <h3>Saved Clients</h3>
+            <input id="cplSearch" type="search" placeholder="Search client name or phone">
+            <div id="cplClientsList" class="cpl-list"></div>
+          </div>
+          <div class="cpl-panel">
+            <h3>Monthly CPL Report</h3>
+            <div class="cpl-report-controls"><label>Month<input id="cplReportMonth" type="month"></label><button id="cplReportBtn" type="button">Generate Monthly Report</button></div>
+            <p id="cplReportSummary" class="promo-note">Choose a month to compile saved activities.</p>
+            <div id="cplReportTable" class="cpl-report-table"></div>
+          </div>
+          <div id="cplMessage" class="message hidden" aria-live="polite"></div>
         </section>
 
         <section id="promoPage" class="hidden">
@@ -3256,6 +3317,8 @@
           } else if (action === "userManagementGet" || action === "userManagementSave") {
             setMessage($("userManagementMessage"), error, "error");
             $("userManagementSummary").textContent = "Unable to load user records.";
+          } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet"].includes(action)) {
+            setMessage($("cplMessage"), error, "error");
           } else if (["orgChartGet","orgChartSave","orgChartDelete"].includes(action)) {
             setMessage($("orgChartMessage"), error, "error");
           } else if (action === "promoInventoryGet" || action === "promoInventorySave" || action === "srpEditorSave") {
@@ -3312,6 +3375,8 @@
         syncCreditConsultantForRole();
         const superAdminAccess = isSuperAdminSession();
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("cplTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeCplBtn").classList.toggle("hidden", !superAdminAccess);
         const orgAddButton = $("orgAddBtn");
         if (orgAddButton) orgAddButton.classList.toggle("hidden", !isAdminSession());
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
@@ -3366,6 +3431,8 @@
         $("userManagementTabBtn").classList.toggle("hidden", !superAdminAccess);
         $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
         $("edgeUserManagementBtn").classList.toggle("hidden", !superAdminAccess);
+        $("cplTabBtn").classList.toggle("hidden", !superAdminAccess);
+        $("edgeCplBtn").classList.toggle("hidden", !superAdminAccess);
         if (data.isAdmin) {
           $("consultantField").classList.remove("hidden");
           fillSelect($("consultant"), data.consultants || [], "Select consultant");
@@ -3434,6 +3501,9 @@
         return;
       }
 
+      if (action === "cplGet") { cplData=event.data.cpl||{clients:[],activities:[]};renderCplClients();return; }
+      if (action === "cplClientSave" || action === "cplActivitySave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
+      if (action === "cplReportGet") { renderCplReport(event.data.cplReport||{rows:[],month:""});return; }
       if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
       if (action === "orgChartSave" || action === "orgChartDelete") { $("orgChartEditor").classList.add("hidden");setMessage($("orgChartMessage"),action==="orgChartSave"?"Position saved.":"Position deleted.","success");loadOrgChart();return; }
       if (action === "userManagementGet") {
@@ -5921,6 +5991,50 @@
     $("orgEditorForm").addEventListener("submit",e=>{e.preventDefault();const payload={id:$("orgRecordId").value,name:$("orgName").value.trim(),position:$("orgPosition").value.trim(),parentId:$("orgParent").value,imageData:orgImageData};submitRequest("orgChartSave",{payload:JSON.stringify(payload)}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
     $("orgDeleteBtn").addEventListener("click",()=>{if(!confirm("Delete this position? Any direct reports will become top-level positions."))return;submitRequest("orgChartDelete",{payload:JSON.stringify({id:$("orgRecordId").value})}).catch(error=>setMessage($("orgChartMessage"),error.message,"error"));});
 
+
+    // CLIENT PROBING LOG: Super Admin-only daily client logbook.
+    let cplData = {clients:[],activities:[]};
+    const cplToday = () => new Date().toISOString().slice(0,10);
+    function loadCpl(){ if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;} submitRequest("cplGet").catch(err=>setMessage($("cplMessage"),err.message,"error")); }
+    function cplEsc(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+    function renderCplClients(){
+      const list=$("cplClientsList"), select=$("cplActivityClient"), q=String($("cplSearch").value||"").trim().toLowerCase();
+      list.replaceChildren(); select.replaceChildren(); const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select client";select.appendChild(placeholder);
+      (cplData.clients||[]).forEach(c=>{
+        const name=c["Client Name"]||"",phone=c.Phone||"",id=c["Client ID"]||"";
+        const opt=document.createElement("option");opt.value=id;opt.textContent=name+(phone?" · "+phone:"");select.appendChild(opt);
+        if(q && !(name.toLowerCase().includes(q)||phone.toLowerCase().includes(q)))return;
+        const card=document.createElement("article");card.className="cpl-client-card";
+        card.innerHTML=`<div class="cpl-client-card-head"><strong>${cplEsc(name)}</strong><span>${cplEsc(c.Status||"Active")}</span></div><p>${cplEsc(phone)} · ${cplEsc(c.Source||"")}</p><p>${cplEsc(c["Sales Consultant"]||"")} · ${cplEsc(c.Timeline||"")}</p><p class="cpl-card-detail">${cplEsc(c.Description||"")}</p><button type="button" class="secondary cpl-edit-client" data-cpl-id="${cplEsc(id)}">Edit Client</button>`;
+        list.appendChild(card);
+      });
+      list.querySelectorAll(".cpl-edit-client").forEach(btn=>btn.addEventListener("click",()=>editCplClient(btn.dataset.cplId)));
+    }
+    function editCplClient(id){
+      const c=(cplData.clients||[]).find(x=>String(x["Client ID"])===String(id));if(!c)return;
+      $("cplClientId").value=id;$("cplClientEditorTitle").textContent="Edit Client";
+      const pairs=[["cplSource","Source"],["cplConsultant","Sales Consultant"],["cplName","Client Name"],["cplPhone","Phone"],["cplDealer","Dealer"],["cplType","Client Type"],["cplTimeline","Timeline"],["cplDescription","Description"],["cplLikes","Likes"],["cplConcerns","Concerns"],["cplManager","Manager"],["cplFreeSuggest","Free / Suggest"],["cplStatus","Status"]];
+      pairs.forEach(([element,key])=>$(element).value=c[key]||"");
+      $("cplClientEditor").classList.remove("hidden");$("cplClientEditor").scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    function resetCplClientForm(){ $("cplClientForm").reset();$("cplClientId").value="";$("cplDealer").value="Hyundai Cainta";$("cplClientEditorTitle").textContent="Add Client";$("cplClientEditor").classList.add("hidden");}
+    $("cplTabBtn").addEventListener("click",()=>{if(!isSuperAdminSession()){showAccessDenied("Team RER Super Admin Access Only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$("appNav").classList.add("hidden");Object.values({pdf:"pdfPage",quote:"quotePage",credit:"creditPage",history:"creditHistoryPage",promo:"promoPage",audit:"auditPage",users:"userManagementPage",org:"orgChartPage"}).forEach(id=>$(id).classList.add("hidden"));$("cplPage").classList.remove("hidden");$("cplActivityDate").value=cplToday();$("cplReportMonth").value=cplToday().slice(0,7);clearLastAppView();loadCpl();});});
+    $("edgeCplBtn").addEventListener("click",()=>{});
+    $("backToMenuFromCpl").addEventListener("click",()=>runPageTransition("Returning to Main Menu...",()=>{$("cplPage").classList.add("hidden");$("appNav").classList.remove("hidden");clearLastAppView();}));
+    $("cplAddClientBtn").addEventListener("click",()=>{resetCplClientForm();$("cplClientEditor").classList.remove("hidden");$("cplClientEditor").scrollIntoView({behavior:"smooth",block:"start"});});
+    $("cplClientCancel").addEventListener("click",resetCplClientForm);
+    $("cplRefreshBtn").addEventListener("click",loadCpl);$("cplSearch").addEventListener("input",renderCplClients);
+    $("cplClientForm").addEventListener("submit",e=>{e.preventDefault();const payload={id:$("cplClientId").value,source:$("cplSource").value,salesConsultant:$("cplConsultant").value,clientName:$("cplName").value,phone:$("cplPhone").value,dealer:$("cplDealer").value,clientType:$("cplType").value,timeline:$("cplTimeline").value,description:$("cplDescription").value,likes:$("cplLikes").value,concerns:$("cplConcerns").value,manager:$("cplManager").value,freeSuggest:$("cplFreeSuggest").value,status:$("cplStatus").value};submitRequest("cplClientSave",{payload:JSON.stringify(payload)}).catch(err=>setMessage($("cplMessage"),err.message,"error"));});
+    $("cplActivityForm").addEventListener("submit",e=>{e.preventDefault();const payload={clientId:$("cplActivityClient").value,activityDate:$("cplActivityDate").value,activityType:$("cplActivityType").value,clientUpdate:$("cplActivityUpdate").value,concern:$("cplActivityConcern").value,likes:$("cplActivityLikes").value,nextStep:$("cplActivityNextStep").value,followupDate:$("cplFollowupDate").value};submitRequest("cplActivitySave",{payload:JSON.stringify(payload)}).then(()=>{ $("cplActivityForm").reset();$("cplActivityDate").value=cplToday();}).catch(err=>setMessage($("cplMessage"),err.message,"error"));});
+    $("cplReportBtn").addEventListener("click",()=>submitRequest("cplReportGet",{payload:JSON.stringify({month:$("cplReportMonth").value})}).catch(err=>setMessage($("cplMessage"),err.message,"error")));
+    function renderCplReport(report){
+      const host=$("cplReportTable");host.replaceChildren();$("cplReportSummary").textContent=`${report.count||0} daily activity record(s) for ${report.month||"selected month"}.`;
+      const print=document.createElement("button");print.type="button";print.className="secondary";print.textContent="Print Report";print.addEventListener("click",()=>window.print());host.appendChild(print);
+      const table=document.createElement("table");table.className="cpl-report-grid";const heads=["Date","Source","Consultant","Client Name","Phone","Dealer","Type","Timeline","Description","Likes","Concerns","Manager","Free / Suggest","Activity","Update","Next Step","Follow-up"];
+      const tr=document.createElement("tr");heads.forEach(h=>{const th=document.createElement("th");th.textContent=h;tr.appendChild(th);});table.appendChild(tr);
+      (report.rows||[]).forEach(row=>{const tr=document.createElement("tr");const vals=[row.date,row.source,row.consultant,row.name,row.phone,row.dealer,row.type,row.timeline,row.description,row.likes,row.concerns,row.manager,row.freeSuggest,row.activity,row.update,row.nextStep,row.followup];vals.forEach(v=>{const td=document.createElement("td");td.textContent=v||"";tr.appendChild(td);});table.appendChild(tr);});host.appendChild(table);
+    }
+
     $("userManagementTabBtn").addEventListener("click", () => {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
       runPageTransition("Opening User Management...", () => {
@@ -6263,9 +6377,9 @@
       const toggle = document.getElementById("teamRerEdgeToggle");
       const panel = document.getElementById("teamRerEdgePanel");
       if (!edge || !toggle || !panel) return;
-      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", history:"creditHistoryPage", promo:"promoPage", audit:"auditPage", users:"userManagementPage", org:"orgChartPage" };
-      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", audit:"auditTabBtn", users:"userManagementTabBtn", org:"orgChartTabBtn" };
-      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers", org:"backToMenuFromOrg" };
+      const modulePages = { pdf:"pdfPage", quote:"quotePage", credit:"creditPage", history:"creditHistoryPage", promo:"promoPage", audit:"auditPage", users:"userManagementPage", org:"orgChartPage", cpl:"cplPage" };
+      const moduleButtons = { pdf:"pdfTabBtn", quote:"quoteTabBtn", credit:"creditTabBtn", history:"creditHistoryTabBtn", promo:"promoTabBtn", audit:"auditTabBtn", users:"userManagementTabBtn", org:"orgChartTabBtn", cpl:"cplTabBtn" };
+      const backButtons = { pdf:"backToMenuFromPdf", quote:"backToMenuFromQuote", credit:"backToMenuFromCredit", history:"backToMenuFromHistory", promo:"backToMenuFromPromo", audit:"backToMenuFromAudit", users:"backToMenuFromUsers", org:"backToMenuFromOrg", cpl:"backToMenuFromCpl" };
       let activeModule = "";
       const closePanel = () => { edge.classList.remove("is-open"); toggle.setAttribute("aria-expanded","false"); toggle.setAttribute("aria-label","Open quick navigation"); };
       const openPanel = () => { edge.classList.add("is-open"); toggle.setAttribute("aria-expanded","true"); toggle.setAttribute("aria-label","Close quick navigation"); };
@@ -6307,7 +6421,7 @@
         if (!button) return;
         const target = button.dataset.edgeTarget;
         if (target === "home") { goHome(); return; }
-        if (target === "users" && !isSuperAdminSession()) { closePanel(); showAccessDenied("Team RER Super Admin Access Only."); return; }
+        if ((target === "users" || target === "cpl") && !isSuperAdminSession()) { closePanel(); showAccessDenied("Team RER Super Admin Access Only."); return; }
         if (target === "audit" && !isAdminSession()) { closePanel(); showAccessDenied("Team RER Admin Access Only."); return; }
         if (!moduleButtons[target] || target === activeModule) { closePanel(); return; }
         const switchNow = () => goToModule(target);
@@ -6317,12 +6431,12 @@
         } else switchNow();
       });
       document.addEventListener("click",event => {
-        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn,#auditTabBtn,#userManagementTabBtn,#orgChartTabBtn");
+        const clickedId = event.target.closest("#pdfTabBtn,#quoteTabBtn,#creditTabBtn,#creditHistoryTabBtn,#promoTabBtn,#auditTabBtn,#userManagementTabBtn,#orgChartTabBtn,#cplTabBtn");
         if (clickedId) {
           const key = Object.keys(moduleButtons).find(k => moduleButtons[k] === clickedId.id);
           if (key) showEdge(key);
         }
-        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers,#backToMenuFromOrg");
+        const back = event.target.closest("#backToMenuFromPdf,#backToMenuFromQuote,#backToMenuFromCredit,#backToMenuFromHistory,#backToMenuFromPromo,#backToMenuFromAudit,#backToMenuFromUsers,#backToMenuFromOrg,#backToMenuFromCpl");
         if (back && !(back.id === "backToMenuFromCredit" && typeof creditFormHasEntries === "function" && creditFormHasEntries())) hideEdge();
       },true);
       document.addEventListener("click",event => {
@@ -7469,5 +7583,35 @@
   }
 </style>
 
+<style id="team-rer-cpl-module-style">
+  .cpl-toolbar,.cpl-report-controls,.cpl-form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:12px 0}
+  .cpl-panel{background:var(--card-bg,rgba(255,255,255,.06));border:1px solid var(--border-color,rgba(128,150,170,.25));border-radius:15px;padding:14px;margin:14px 0}
+  .cpl-panel h3{margin:0 0 12px}
+  .cpl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cpl-form label,.cpl-report-controls label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
+  .cpl-form input,.cpl-form select,.cpl-form textarea,.cpl-report-controls input{width:100%;box-sizing:border-box;padding:10px;border-radius:9px}
+  .cpl-form-actions{grid-column:1/-1}
+  .cpl-list{display:grid;gap:9px;margin-top:10px}
+  .cpl-client-card{border:1px solid var(--border-color,rgba(128,150,170,.25));border-radius:12px;padding:12px}
+  .cpl-client-card p{margin:5px 0;font-size:13px;opacity:.8}
+  .cpl-client-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cpl-client-card-head span{font-size:11px;border-radius:999px;padding:4px 8px;background:rgba(48,145,93,.13)}
+  .cpl-card-detail{white-space:pre-wrap}
+  .cpl-report-table{overflow:auto;max-width:100%;margin-top:12px}
+  .cpl-report-grid{border-collapse:collapse;font-size:11px;min-width:1100px;width:100%}
+  .cpl-report-grid th,.cpl-report-grid td{border:1px solid #bbb;padding:5px;vertical-align:top;text-align:left}
+  .cpl-report-grid th{background:#e9f0f7;color:#163b5d}
+  @media(max-width:600px){.cpl-form{grid-template-columns:1fr}.cpl-panel{padding:11px}.cpl-report-controls{align-items:stretch}.cpl-report-controls label{flex:1}}
+  @media print{
+    body *{visibility:hidden!important}
+    #cplReportTable,#cplReportTable *{visibility:visible!important}
+    #cplReportTable{position:absolute;left:0;top:0;width:100%;overflow:visible}
+    #cplReportTable .cpl-report-grid{font-size:7pt;min-width:0;width:100%}
+    #cplReportTable th,#cplReportTable td{padding:2px}
+    @page{size:landscape; margin:.25in}
+  }
+</style>
 </body>
 </html>
+
+
