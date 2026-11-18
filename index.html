@@ -122,14 +122,12 @@
     }
     .preview-actions .link { background:#003b70; color:#fff; }
     .preview-close { background:#e2e8f0; color:#173a5e; }
-    #pdfPreview {
-      display:block;
-      flex:1 1 auto;
-      width:100%;
-      height:100%;
-      min-height:0;
-      border:0;
-      background:white;
+    #pdfPages { flex:1 1 auto; min-height:0; overflow:auto; padding:14px; background:#e5e7eb; -webkit-overflow-scrolling:touch; }
+    .pdf-page-canvas { display:block; width:100%; height:auto; max-width:900px; margin:0 auto 14px; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.18); }
+    @media print {
+      html, body { background:#fff !important; background-image:none !important; }
+      body:not(.printing-quote) #previewWrap { display:none !important; }
+      body:not(.printing-quote) #pdfPages, body:not(.printing-quote) #pdfPages * { background:#fff !important; color:#111 !important; box-shadow:none !important; }
     }
     @media(max-width:600px) {
       .preview-wrap { padding:0; }
@@ -2368,65 +2366,17 @@
   #adminLockScreen.admin-lock-screen:not(.hidden) .admin-pin-keypad button { pointer-events:auto !important; }
   </style>
 
-<style id="team-rer-final-navigation-and-quotation-print-fix">
-/* Restore the requested top navigation buttons in these two modules.
-   The floating edge menu remains available as well. */
-#appSection #backToMenuFromPdf,
-#appSection #backToMenuFromQuote {
-  display:inline-flex !important;
-  visibility:visible !important;
-  position:relative !important;
-  z-index:5 !important;
-  margin:0 0 14px !important;
-}
+<style id="teamrer-pricelist-print-cleanup">
 @media print {
-  html,
-  body.printing-quote {
-    background:#fff !important;
-    background-image:none !important;
-  }
-  /* Hide every app decoration, then reveal only the quotation and its
-     structural ancestors. This prevents the dark app/footer strip printing. */
-  body.printing-quote * {
-    visibility:hidden !important;
-    background-image:none !important;
-    box-shadow:none !important;
-  }
-  body.printing-quote #appSection,
-  body.printing-quote #quotePage,
-  body.printing-quote #quotePreviewWrap,
-  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
-  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
-  body.printing-quote #quotePreview,
-  body.printing-quote #quotePreview * {
-    visibility:visible !important;
-  }
-  body.printing-quote #quotePreviewWrap,
-  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
-  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
-  body.printing-quote #quotePreview {
-    background:#fff !important;
-    background-image:none !important;
-    color:#1f2937 !important;
-    border-color:transparent !important;
-  }
-  body.printing-quote #quotePreview * {
-    background-color:transparent !important;
-    background-image:none !important;
-    color:#1f2937 !important;
-  }
-  body.printing-quote #quotePreview::before,
-  body.printing-quote #quotePreview::after,
-  body.printing-quote #quotePreview *::before,
-  body.printing-quote #quotePreview *::after {
-    display:none !important;
-    content:none !important;
-  }
-  body.printing-quote #quotePreviewWrap .quote-preview-head,
-  body.printing-quote #quotePreviewWrap .quote-preview-actions {
-    display:none !important;
-    visibility:hidden !important;
-  }
+  body:not(.printing-quote) #pdfPage,
+  body:not(.printing-quote) #pdfPage * { background:#fff !important; background-image:none !important; color:#111 !important; box-shadow:none !important; }
+  body:not(.printing-quote) #previewWrap,
+  body:not(.printing-quote) .preview-head,
+  body:not(.printing-quote) #backToMenuFromPdf,
+  body:not(.printing-quote) #viewBtn,
+  body:not(.printing-quote) #resultMessage { display:none !important; }
+  body:not(.printing-quote) #pdfPages { display:block !important; overflow:visible !important; }
+  body:not(.printing-quote) .pdf-page-canvas { display:block !important; break-after:page; page-break-after:always; margin:0 auto !important; box-shadow:none !important; }
 }
 </style>
 </head>
@@ -2757,37 +2707,33 @@
 
         <section id="pdfPage" class="hidden">
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
-        <div id="pdfFormFields">
-        <h2 class="section-title">Generate PDF</h2>
-
-        <div class="field">
-          <label for="worksheet">Select worksheet</label>
-          <select id="worksheet"><option value="">Loading worksheets...</option></select>
-        </div>
-        <div class="field hidden" id="consultantField">
-          <label for="consultant">Sales consultant</label>
-          <select id="consultant"><option value="">Select consultant</option></select>
-        </div>
-
-        <div class="message" id="roleNote"></div>
-        <button id="generateBtn" type="button">Generate PDF</button>
-        </div>
-        <div id="resultMessage" class="message hidden" aria-live="polite"></div>
-
-        <button id="viewBtn" class="secondary hidden" type="button">View PDF</button>
-
-        <div id="previewWrap" class="preview-wrap hidden" role="dialog" aria-modal="true" aria-label="PDF Preview">
-          <div class="preview-dialog">
-            <div class="preview-head">
-              <span>PDF Preview</span>
-              <div class="preview-actions">
-                <a id="downloadLink" class="link hidden" rel="noopener">Download PDF</a>
-                <button id="closePreviewBtn" class="preview-close" type="button" aria-label="Close PDF preview">Close ✕</button>
-              </div>
+          <h2 class="section-title">Price List PDF</h2>
+          <div id="pdfFormFields">
+            <div class="field">
+              <label for="worksheet">Select worksheet</label>
+              <select id="worksheet"><option value="">Loading worksheets...</option></select>
             </div>
-            <iframe id="pdfPreview" title="Generated PDF preview"></iframe>
+            <div class="field hidden" id="consultantField">
+              <label for="consultant">Sales consultant</label>
+              <select id="consultant"><option value="">Select consultant</option></select>
+            </div>
+            <div class="message" id="roleNote"></div>
+            <button id="generateBtn" type="button" style="display:none!important" aria-hidden="true" tabindex="-1">Generate PDF</button>
           </div>
-        </div>
+          <div class="message hidden" id="resultMessage" aria-live="polite"></div>
+          <button id="viewBtn" class="secondary" type="button">View PDF</button>
+          <div id="previewWrap" class="preview-wrap hidden" role="dialog" aria-modal="true" aria-label="PDF Preview">
+            <div class="preview-dialog">
+              <div class="preview-head">
+                <span>PDF Preview</span>
+                <div class="preview-actions">
+                  <a id="downloadLink" class="link hidden" rel="noopener">Download PDF</a>
+                  <button id="closePreviewBtn" class="preview-close" type="button" aria-label="Close PDF preview">Close ✕</button>
+                </div>
+              </div>
+              <div id="pdfPages" class="pdf-pages" aria-label="PDF pages"></div>
+            </div>
+          </div>
         </section>
 
         <section id="quotePage" class="hidden">
@@ -3047,6 +2993,10 @@
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
     let pendingPriceListPdfUrl = null;
+    let pendingPriceListPdfBytes = null;
+    let openPriceListPreviewWhenReady = false;
+    let priceListPdfRenderTask = null;
+    let priceListPdfJsPromise = null;
     let promoInventoryLoaded = false;
     let creditModeHistoryRows = [];
     let creditModeHistoryLoaded = false;
@@ -3385,18 +3335,10 @@
       pendingRequestShowsLoading = showRequestLoading;
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
-      // Price List PDF requests use the current Firebase token. getIdToken() refreshes
-      // automatically when needed; forcing a refresh on every tap can leave mobile
-      // browsers waiting at the initial 8% loader before the request is submitted.
+      const tokenPromise = currentUser.getIdToken(true);
       const token = action === "generate"
-        ? await Promise.race([
-            currentUser.getIdToken(),
-            new Promise((_, reject) => window.setTimeout(
-              () => reject(new Error("Secure sign-in is taking too long. Please retry View PDF.")),
-              30000
-            ))
-          ])
-        : await currentUser.getIdToken(true);
+        ? await Promise.race([tokenPromise, new Promise((_, reject) => window.setTimeout(() => reject(new Error("Secure sign-in is taking too long. Please retry View PDF.")), 20000))])
+        : await tokenPromise;
       if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
@@ -3891,6 +3833,7 @@
         }
         if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
         const pdfBytes = Uint8Array.from(atob(result.pdfBase64), c => c.charCodeAt(0));
+        pendingPriceListPdfBytes = pdfBytes;
         const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
         pendingPriceListPdfUrl = URL.createObjectURL(pdfBlob);
         setMessage(
@@ -3901,14 +3844,18 @@
         $("downloadLink").href = pendingPriceListPdfUrl;
         $("downloadLink").download = result.fileName || worksheetFileName;
         $("downloadLink").classList.add("hidden");
-        $("viewBtn").dataset.viewUrl = pendingPriceListPdfUrl;
+        $("viewBtn").dataset.viewUrl = "ready";
         $("viewBtn").classList.remove("hidden");
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
         $("previewWrap").classList.add("hidden");
-        $("pdfPreview").src = "about:blank";
+        $("pdfPages").replaceChildren();
         previewLoadPending = false;
         $("generateBtn").disabled = false;
+        if (openPriceListPreviewWhenReady) {
+          openPriceListPreviewWhenReady = false;
+          openPriceListPdfPreview();
+        }
       }
     });
 
@@ -6636,76 +6583,119 @@
     function closePdfPreview() {
       $("previewWrap").classList.add("hidden");
       previewLoadPending = false;
-      hideLoading();
-      $("pdfPreview").src = "about:blank";
+      if (priceListPdfRenderTask) {
+        try { priceListPdfRenderTask.cancel(); } catch (_) {}
+        priceListPdfRenderTask = null;
+      }
+      $("pdfPages").replaceChildren();
       $("viewBtn").disabled = false;
       $("viewBtn").textContent = "View PDF";
     }
 
-    $("closePreviewBtn").addEventListener("click", closePdfPreview);
-    $("previewWrap").addEventListener("click", event => {
-      if (event.target === $("previewWrap")) closePdfPreview();
-    });
-
-    $("viewBtn").addEventListener("click", () => {
-      const viewUrl = $("viewBtn").dataset.viewUrl || "";
-      if (!viewUrl) return;
-
-      const fileIdMatch = viewUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      const previewUrl = fileIdMatch
-        ? `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`
-        : viewUrl;
-
-      $("downloadLink").classList.add("hidden");
+    async function openPriceListPdfPreview() {
+      if (!pendingPriceListPdfBytes || !pendingPriceListPdfBytes.length) return;
+      $("downloadLink").classList.remove("hidden");
       $("previewWrap").classList.remove("hidden");
       $("viewBtn").disabled = true;
-      $("viewBtn").textContent = "Loading preview...";
-      showLoading("Loading your PDF preview...");
-      previewLoadPending = true;
-      $("pdfPreview").src = previewUrl;
-    });
+      $("viewBtn").textContent = "Preparing preview...";
+      $("pdfPages").replaceChildren();
+      try {
+        if (!priceListPdfJsPromise) {
+          priceListPdfJsPromise = import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs").then(lib => {
+            lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+            return lib;
+          });
+        }
+        const pdfjsLib = await priceListPdfJsPromise;
+        const pdf = await pdfjsLib.getDocument({ data: pendingPriceListPdfBytes.slice(), useSystemFonts:true, isEvalSupported:false }).promise;
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+          const page = await pdf.getPage(pageNumber);
+          const hostWidth = Math.max(280, $("pdfPages").clientWidth - 28);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = Math.min(2, hostWidth / baseViewport.width);
+          const viewport = page.getViewport({ scale: scale * Math.max(1, window.devicePixelRatio || 1) });
+          const canvas = document.createElement("canvas");
+          canvas.className = "pdf-page-canvas";
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          canvas.style.width = Math.ceil(baseViewport.width * scale) + "px";
+          canvas.style.maxWidth = "100%";
+          canvas.style.height = "auto";
+          $("pdfPages").appendChild(canvas);
+          const context = canvas.getContext("2d", { alpha:false });
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          priceListPdfRenderTask = page.render({ canvasContext: context, viewport });
+          await priceListPdfRenderTask.promise;
+          priceListPdfRenderTask = null;
+        }
+        $("viewBtn").disabled = false;
+        $("viewBtn").textContent = "View PDF";
+      } catch (error) {
+        console.error("Price List PDF preview failed:", error);
+        $("pdfPages").innerHTML = '<p style="padding:18px;color:#991b1b;background:#fff">Unable to display this PDF preview. Use Download PDF to open the file, or retry View PDF.</p>';
+        $("viewBtn").disabled = false;
+        $("viewBtn").textContent = "View PDF";
+      }
+    }
 
-    $("pdfPreview").addEventListener("load", () => {
-      if (!previewLoadPending || $("previewWrap").classList.contains("hidden")) return;
-      previewLoadPending = false;
-      hideLoading();
-      $("viewBtn").disabled = false;
-      $("viewBtn").textContent = "Refresh PDF Preview";
-      $("downloadLink").classList.remove("hidden");
-    });
-
-    $("generateBtn").addEventListener("click", async () => {
+    async function requestPriceListPdf() {
       const worksheet = $("worksheet").value;
       if (!worksheet) {
         setMessage($("resultMessage"), "Please select a worksheet.", "error");
         return;
       }
-
-      const downpayment = "20";
-      const bank = "BDO";
       const isAdmin = authorizedUser && ["admin","super admin","superadmin"].includes(String(authorizedUser.role || "").toLowerCase().replace(/[_-]+/g," "));
       const consultant = isAdmin ? $("consultant").value : "";
-
       if (isAdmin && !consultant) {
         setMessage($("resultMessage"), "Please select a sales consultant.", "error");
         return;
       }
-
-      $("generateBtn").disabled = true;
-      $("pdfFormFields").classList.add("hidden");
+      if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
+      pendingPriceListPdfUrl = null;
+      pendingPriceListPdfBytes = null;
       $("downloadLink").classList.add("hidden");
-      $("viewBtn").classList.add("hidden");
-      $("previewWrap").classList.add("hidden");
-      $("pdfPreview").src = "about:blank";
-      previewLoadPending = false;
+      $("viewBtn").disabled = true;
+      $("viewBtn").textContent = "Generating PDF...";
       setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
+      openPriceListPreviewWhenReady = true;
       try {
-        await submitRequest("generate", { worksheet, downpayment, bank, consultant });
+        await submitRequest("generate", { worksheet, downpayment:"20", bank:"BDO", consultant });
       } catch (error) {
-        $("generateBtn").disabled = false;
-        setCplPdfBusy(false);
-        setMessage($("resultMessage"), error.message, "error");
+        openPriceListPreviewWhenReady = false;
+        $("viewBtn").disabled = false;
+        $("viewBtn").textContent = "View PDF";
+        setMessage($("resultMessage"), error.message || "Unable to generate the PDF.", "error");
       }
+    }
+
+    $("viewBtn").addEventListener("click", () => {
+      if (pendingPriceListPdfBytes && pendingPriceListPdfBytes.length) {
+        openPriceListPdfPreview();
+      } else {
+        requestPriceListPdf();
+      }
+    });
+
+    // Retain the legacy button node for existing response handling, but keep it
+    // unavailable in the Price List UI: View PDF is now the single action.
+    $("generateBtn").addEventListener("click", requestPriceListPdf);
+
+    $("worksheet").addEventListener("change", () => {
+      if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
+      pendingPriceListPdfUrl = null;
+      pendingPriceListPdfBytes = null;
+      openPriceListPreviewWhenReady = false;
+      $("downloadLink").classList.add("hidden");
+      $("resultMessage").classList.add("hidden");
+      $("pdfPages").replaceChildren();
+      $("viewBtn").disabled = false;
+      $("viewBtn").textContent = "View PDF";
+    });
+
+    $("closePreviewBtn").addEventListener("click", closePdfPreview);
+    $("previewWrap").addEventListener("click", event => {
+      if (event.target === $("previewWrap")) closePdfPreview();
     });
 
     // Admin-only manual lock and iPhone-style PIN keypad.
