@@ -2985,6 +2985,7 @@
     let previewLoadPending = false;
     let quotationVehicles = [];
     let pendingCreditPdfUrl = null;
+    let pendingPriceListPdfUrl = null;
     let promoInventoryLoaded = false;
     let creditModeHistoryRows = [];
     let creditModeHistoryLoaded = false;
@@ -3813,15 +3814,22 @@
         const result = event.data;
         const worksheetName = String($("worksheet").value || "Price List").trim();
         const worksheetFileName = worksheetName.replace(/[^a-z0-9 _-]/gi, "").replace(/\\s+/g, "-") + ".pdf";
-        setMessage($("resultMessage"), result.message || worksheetName + " PDF generated successfully.", "success");
+        if (!result.pdfBase64) {
+          throw new Error("The PDF was generated, but the download data was not received. Please try again.");
+        }
+        if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
+        const pdfBytes = Uint8Array.from(atob(result.pdfBase64), c => c.charCodeAt(0));
+        const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+        pendingPriceListPdfUrl = URL.createObjectURL(pdfBlob);
         setMessage(
           $("resultMessage"),
-          worksheetName + " PDF generated successfully. Select View PDF to preview or download it.",
+          worksheetName + " PDF generated successfully. Select View PDF to preview or download it. No Google Drive file access is required.",
           "success"
         );
-        $("downloadLink").href = result.downloadUrl;
+        $("downloadLink").href = pendingPriceListPdfUrl;
+        $("downloadLink").download = result.fileName || worksheetFileName;
         $("downloadLink").classList.add("hidden");
-        $("viewBtn").dataset.viewUrl = result.viewUrl;
+        $("viewBtn").dataset.viewUrl = pendingPriceListPdfUrl;
         $("viewBtn").classList.remove("hidden");
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
