@@ -2600,7 +2600,7 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary">Clear Selection &amp; New</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary hidden" hidden aria-hidden="true" style="display:none!important">Clear Selection &amp; New</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
@@ -3034,11 +3034,25 @@
         el.setAttribute("aria-hidden", allowed ? "false" : "true");
         el.style.setProperty("display", allowed ? "" : "none", "important");
       });
+      syncCplClearSelectionNewVisibility();
     }
-    function isCplAdminSession() { return isAdminSession(); }
+    function isCplAdminSession() { return isAdminSession() || normalizedSessionRole() === "super r admin"; }
     function canAccessCplSession() { return isCplAdminSession() || isRegularUserSession(); }
     function isRegularUserSession() {
-      return normalizedSessionRole() === "user";
+      return normalizedSessionRole() === "user" || normalizedSessionRole() === "sales consultant";
+    }
+    function canUseCplClearSelectionNew() {
+      const role = normalizedSessionRole();
+      return role === "admin" || role === "super admin" || role === "superadmin" || role === "super r admin";
+    }
+    function syncCplClearSelectionNewVisibility() {
+      const clearNew = $("cplClearSelectionNew");
+      if (!clearNew) return;
+      const allowed = canUseCplClearSelectionNew();
+      clearNew.classList.toggle("hidden", !allowed);
+      clearNew.hidden = !allowed;
+      clearNew.setAttribute("aria-hidden", allowed ? "false" : "true");
+      clearNew.style.setProperty("display", allowed ? "" : "none", "important");
     }
 
     function syncCreditConsultantForRole() {
@@ -3317,7 +3331,7 @@
         if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
         if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
         if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; } if (action === "cplMonthlyPdf") { const monthlyBtn=$("cplPrintSave"); if(monthlyBtn) monthlyBtn.disabled=false; }
-        const timeoutSeconds = action === "cplMonthlyPdf" ? 150 : 45;
+        const timeoutSeconds = (action === "cplBlankPdf" || action === "cplMonthlyPdf") ? 240 : 45;
         const message = "Google Apps Script did not return a response within " + timeoutSeconds + " seconds. Please try again. If this continues, contact your TEAM RER administrator.";
         if (action === "authorize") {
           authorizationInProgress = false;
@@ -3326,7 +3340,7 @@
           showTeamRerDynamicIsland(message);
           setMessage($("resultMessage"), message, "error");
         }
-      }, action === "cplMonthlyPdf" ? 150000 : 45000);
+      }, (action === "cplBlankPdf" || action === "cplMonthlyPdf") ? 240000 : 45000);
       $("bridgeForm").submit();
     }
 
@@ -3412,6 +3426,7 @@
 
       if (!event.data.success) {
         const error = event.data.error || "Request failed.";
+        if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
         if (action === "authorize") {
           authorizationInProgress = false;
           showLoginError(error);
@@ -3433,6 +3448,8 @@
             setMessage($("userManagementMessage"), error, "error");
             $("userManagementSummary").textContent = "Unable to load user records.";
           } else if (["cplGet","cplClientSave","cplActivitySave","cplReportGet","cplSheetPrint","cplBlankSheetPrint","cplBlankPdf","cplMonthlyPdf"].includes(action)) {
+            // Always release the Heendy overlay when the server rejects or fails a CPL PDF request.
+            if (action === "cplBlankPdf" || action === "cplMonthlyPdf") setCplPdfBusy(false);
             if (action === "cplBlankPdf") { const blankBtn = $("cplPrintBlank"); if (blankBtn) blankBtn.disabled = false; showTeamRerDynamicIsland("Blank CPL PDF failed: " + error); } else if (action === "cplMonthlyPdf") { const printBtn=$("cplPrintSave"); if(printBtn) printBtn.disabled=false; showTeamRerDynamicIsland("Monthly CPL PDF failed: " + error); }
             else if (action === "cplBlankSheetPrint" || action === "cplSheetPrint") {
               if (cplPrintWindow && !cplPrintWindow.closed) cplPrintWindow.close();
@@ -3495,6 +3512,7 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        syncCplClearSelectionNewVisibility();
         syncUserManagementVisibility();
         syncCreditConsultantForRole();
         syncUserManagementVisibility();
@@ -8214,6 +8232,10 @@
     if (clearNew && clearNew.dataset.cplClearBound !== '1') {
       clearNew.dataset.cplClearBound = '1';
       clearNew.addEventListener('click', () => {
+        if (typeof canUseCplClearSelectionNew !== 'function' || !canUseCplClearSelectionNew()) {
+          if (typeof syncCplClearSelectionNewVisibility === 'function') syncCplClearSelectionNewVisibility();
+          return;
+        }
         if (select) select.value = '';
         resetConsultantWorkspace();
         clearNew.textContent = 'Cleared — New CPL';
