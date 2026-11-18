@@ -6531,18 +6531,63 @@
       if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
         showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
       }
+
       updateQuotePreview();
-      const quoteModelName = String($("quoteModel").value || "Vehicle").trim();
-      const quoteVariantName = String($("quoteVariant").value || "").trim();
-      const quoteDescription = [quoteModelName, quoteVariantName].filter(Boolean).join(" - ");
-      window.__teamRerQuoteDescription = quoteDescription;
-      window.__teamRerOriginalDocumentTitle = document.title;
-      document.title = "Vehicle Quotation - " + quoteDescription;
-      const quotePrintButton = $("printQuoteBtn");
-      if (quotePrintButton) quotePrintButton.disabled = true;
-      window.__teamRerQuotePrintPending = true;
-      document.body.classList.add("printing-quote");
-      window.print();
+      const model = String($("quoteModel").value || "Vehicle").trim();
+      const variant = String($("quoteVariant").value || "").trim();
+      const title = ["Vehicle Quotation", model, variant].filter(Boolean).join(" - ");
+      const quoteMarkup = $("quotePreview").innerHTML;
+
+      // Print an isolated document. This deliberately excludes the app shell,
+      // preview modal, seasonal artwork, navigation and any dark theme layers.
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        showTeamRerAlert("Your browser blocked the quotation print window. Allow pop-ups for TEAM RER, then tap Print / Save as PDF again.", "Print window blocked");
+        return;
+      }
+
+      const printStyles = `
+        @page { size:A4 portrait; margin:12mm; }
+        * { box-sizing:border-box !important; }
+        html, body { margin:0 !important; padding:0 !important; width:100% !important; min-height:0 !important; background:#fff !important; color:#1f2937 !important; }
+        body { font-family:Arial,Helvetica,sans-serif !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+        #quoteDocument { width:100% !important; max-width:100% !important; margin:0 auto !important; padding:0 !important; background:#fff !important; color:#1f2937 !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; overflow:visible !important; }
+        #quoteDocument, #quoteDocument * { visibility:visible !important; opacity:1 !important; filter:none !important; text-shadow:none !important; }
+        #quoteDocument * { background-image:none !important; }
+        #quoteDocument > div:first-child img { display:inline-block !important; max-width:76px !important; }
+        #quoteDocument h2 { margin:5px 0 2px !important; text-align:center !important; color:#003b70 !important; font-size:20px !important; }
+        #quoteDocument .quote-sub { text-align:center !important; color:#64748b !important; font-size:10pt !important; margin:0 0 18px !important; }
+        #quoteDocument .quote-date { margin:18px 0 !important; color:#1f2937 !important; }
+        #quoteDocument .quote-line { display:flex !important; justify-content:space-between !important; gap:12px !important; padding:8px 0 !important; border-bottom:1px solid #e2e8f0 !important; color:#1f2937 !important; background:#fff !important; break-inside:avoid !important; }
+        #quoteDocument .quote-line span, #quoteDocument .quote-line strong { color:#1f2937 !important; }
+        #quoteDocument .quote-total { display:flex !important; justify-content:space-between !important; gap:12px !important; padding:10px 12px !important; margin:10px 0 !important; color:#003b70 !important; background:#eef4fa !important; border:1px solid #dbe5ef !important; break-inside:avoid !important; }
+        #quoteDocument .quote-total * { color:#003b70 !important; background:transparent !important; }
+        #quoteDocument .quote-terms { margin-top:15px !important; color:#475569 !important; font-size:9pt !important; line-height:1.5 !important; }
+        #quoteDocument .quote-contact { margin-top:18px !important; padding-top:12px !important; border-top:2px solid #003b70 !important; color:#475569 !important; font-size:10pt !important; line-height:1.55 !important; }
+        #quoteDocument .quote-contact * { color:#475569 !important; }
+        @media screen { body { padding:18px !important; background:#f3f4f6 !important; } #quoteDocument { max-width:800px !important; padding:22px !important; background:#fff !important; box-shadow:0 2px 14px rgba(0,0,0,.12) !important; } }
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(`<!doctype html>
+        <html lang="en"><head><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>${escapeHtml(title)}</title><style>${printStyles}</style>
+        </head><body><main id="quoteDocument">${quoteMarkup}</main>
+        <script>
+          (function(){
+            function printWhenReady(){
+              var images=Array.prototype.slice.call(document.images);
+              Promise.all(images.map(function(img){
+                if(img.complete)return Promise.resolve();
+                return new Promise(function(resolve){img.onload=resolve;img.onerror=resolve;setTimeout(resolve,2500);});
+              })).then(function(){setTimeout(function(){window.focus();window.print();},250);});
+            }
+            if(document.readyState==='complete')printWhenReady();
+            else window.addEventListener('load',printWhenReady,{once:true});
+          })();
+        <\/script></body></html>`);
+      printWindow.document.close();
     });
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("printing-quote");
