@@ -5983,27 +5983,30 @@
     $('cplAddRow').addEventListener('click',()=>addCplEntryRow());$('cplSearch').addEventListener('input',renderCplClients);
     $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;const payload={date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'',rows};submitRequest('cplClientSave',{payload:JSON.stringify(payload)}).then(()=>{setMessage($('cplMessage'),'CPL saved.','success');loadCpl();}).catch(err=>showTeamRerAlert(err.message,'CPL Error'));});
     $('cplPrintBlank').addEventListener('click',()=>{
-      const consultant=isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value;
+      const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before printing the blank CPL form.','CPL Validation');return;}
       const dateText=new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});
       const escPrint=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      const cols=[2,5,4,9,6,6,9,8,8,8,8,8,8,8,9];
       const headers=['#','SOURCE','SC','CLIENT NAME','PHONE','EMAIL','VEH. OF INTEREST','SPECS','TIMELINE','WORK PROFILE?','DRIVING NOW?','LIKES?','CONCERNS?','FREQ. USAGE?','NEXT STEP'];
+      const widths=[2.8,4.8,4.5,8.5,7.6,6.6,8.3,6.7,8.5,9.2,8.4,6.6,6.7,7.2,8.5];const widthTotal=widths.reduce((a,b)=>a+b,0);
       const blankRows=Array.from({length:8},(_,i)=>`<tr class="entry"><td class="num">${i+1}</td>${headers.slice(1).map(()=>'<td></td>').join('')}</tr>`).join('');
       const printHtml=`<!doctype html><html><head><meta charset="utf-8"><title>Blank CPL Form</title><style>
         @page{size:13in 8.5in landscape;margin:0}
-        *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}
-        .page{width:13in;height:8.5in;padding:.22in .23in .12in;overflow:hidden;position:relative}
-        table{width:100%;height:7.03in;border-collapse:collapse;table-layout:fixed;border:1px solid #555}
+        *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        html,body{width:13in;height:8.5in;margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}
+        .page{width:13in;height:8.5in;padding:.15in .12in .12in;overflow:hidden;position:relative}
+        table{width:100%;height:6.85in;border-collapse:collapse;table-layout:fixed;border:1px solid #555}
         colgroup col{width:auto}td,th{border:1px solid #777;padding:1px 2px;overflow:hidden}
-        .meta{height:.44in;font-size:7pt;vertical-align:top;font-weight:bold}.meta small{display:block;font-size:6.3pt;font-weight:bold}.meta span{display:block;text-align:center;font-size:7pt;font-weight:normal;margin-top:2px}
-        .title{font-size:9pt;font-weight:bold;vertical-align:middle}.hdr{height:.23in;font-size:5.8pt;font-weight:bold;text-align:center;vertical-align:middle;white-space:normal}
-        .hdr.blue{background:#063b70;color:#fff}.entry{height:.78in}.entry td{vertical-align:top;font-size:6pt}.num{width:2%;font-weight:bold;text-align:left}
-        .footer{position:absolute;bottom:.1in;right:.23in;font-size:16pt;font-weight:bold;color:#003b70;letter-spacing:.5px}
-        @media screen{body{background:#ddd}.page{margin:12px auto;box-shadow:0 0 8px #999}}
-        </style></head><body><div class="page"><table><colgroup>${cols.map(w=>`<col style="width:${(w/cols.reduce((a,b)=>a+b,0))*100}%">`).join('')}</colgroup><tr>
+        .meta{height:.38in;font-size:7pt;vertical-align:top;font-weight:bold}.meta span{display:block;text-align:center;font-size:7pt;font-weight:normal;margin-top:2px}
+        .title{font-size:9pt;font-weight:bold;vertical-align:middle}.hdr{height:.30in;font-size:6.5pt;font-weight:bold;text-align:center;vertical-align:middle;white-space:normal}
+        .hdr.blue{background:#063b70;color:#fff}.entry{height:.77in}.entry td{vertical-align:top;font-size:6.5pt}.num{font-weight:bold;text-align:left}
+        .footer{position:absolute;bottom:.12in;right:.23in;display:flex;align-items:center;gap:5px;color:#003b70;font-size:14pt;font-weight:bold;letter-spacing:.4px}
+        .footer img{width:28px;height:23px;object-fit:contain}.footer-mark{display:none}
+        @media screen{html,body{height:auto}.page{margin:12px auto;background:white;box-shadow:0 0 8px #999}}
+        @media print{html,body,.page{width:13in!important;height:8.5in!important;margin:0!important;padding:0!important}.page{padding:.15in .12in .12in!important;box-shadow:none!important}table{height:6.85in!important}.footer{bottom:.12in!important;right:.23in!important}}
+        </style></head><body><div class="page"><table><colgroup>${widths.map(w=>`<col style="width:${(w/widthTotal*100).toFixed(3)}%">`).join('')}</colgroup><tr>
         <td class="meta title" colspan="3">CLIENT PROBING LOG (CPL)</td><td class="meta" colspan="2">DEALER:<span>HCR</span></td><td class="meta" colspan="2">TYPE:<span>FIELD</span></td><td class="meta" colspan="2">DESC:<span>${escPrint(consultant)}</span></td><td class="meta" colspan="2">DATE:<span>${dateText}</span></td><td class="meta" colspan="3">MANAGER:<span>Ralph Edward Rosales</span></td></tr>
-        <tr>${headers.map((h,i)=>`<th class="hdr${i>=9&&i<=13?' blue':''}">${h}</th>`).join('')}</tr>${blankRows}</table><div class="footer">HYUNDAI</div></div><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250)};<\/script></body></html>`;
+        <tr>${headers.map((h,i)=>`<th class="hdr${i>=9&&i<=13?' blue':''}">${h}</th>`).join('')}</tr>${blankRows}</table><div class="footer"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai"><span>HYUNDAI</span></div></div><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250)};<\/script></body></html>`;
       const w=window.open('','_blank');
       if(!w){showTeamRerAlert('Allow pop-ups for TEAM RER to print the blank CPL form.','Print Error');return;}
       w.document.open();w.document.write(printHtml);w.document.close();
