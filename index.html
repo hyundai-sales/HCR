@@ -6935,11 +6935,12 @@
 
   .org-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px}
 .org-head .section-title{margin-bottom:4px}
-/* Keep the complete reporting structure inside the screen instead of making
-   sibling cards run off the right and left edges on phones. */
-.org-tree{width:100%;max-width:100%;overflow-x:hidden;box-sizing:border-box;padding:18px 4px 28px;text-align:center}
-.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:0 4px}
-.org-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),190px));justify-content:center;align-items:start;gap:24px 12px;position:relative;padding:28px 0 0;margin-top:8px;width:100%;max-width:100%;box-sizing:border-box}
+/* Each reporting level spans the available chart width. This prevents a
+   manager's child list from being constrained to the width of that manager's
+   own card, which previously forced every consultant into a vertical stack. */
+.org-tree{display:flex;flex-direction:column;align-items:center;width:100%;max-width:100%;overflow-x:hidden;box-sizing:border-box;padding:18px 4px 28px;text-align:center}
+.org-branch{display:flex;flex-direction:column;align-items:center;position:relative;width:190px;max-width:100%;min-width:0;box-sizing:border-box;padding:0 2px}
+.org-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,190px));justify-content:center;align-items:start;gap:24px 12px;position:relative;padding:28px 0 0;margin-top:8px;width:min(1100px,calc(100vw - 110px));max-width:calc(100vw - 110px);box-sizing:border-box;left:50%;transform:translateX(-50%)}
 .org-children:before{content:"";position:absolute;top:0;left:50%;height:14px;border-left:2px solid #9bb4c9}
 .org-children>.org-branch:before{content:"";position:absolute;top:0;height:14px;border-left:2px solid #9bb4c9}
 .org-person{width:100%;max-width:190px;min-width:0;min-height:175px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 12px;border:1px solid #c8d8e6;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(24,65,99,.09);color:#173f60}
@@ -6959,6 +6960,13 @@
 .org-editor-actions .hidden{display:none!important}
 @media(max-width:600px){
   .org-tree{padding-left:2px;padding-right:2px}
+  .org-branch{width:160px}
+  .org-children{width:calc(100vw - 44px);max-width:calc(100vw - 44px);grid-template-columns:repeat(auto-fit,minmax(140px,160px));gap:22px 8px}
+  .org-person{max-width:160px;padding:11px 8px}
+  .org-avatar{width:56px;height:56px}
+  .org-person strong{font-size:13px}
+  .org-person>span{font-size:11px}
+}
   .org-children{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),170px));gap:22px 8px}
   .org-person{max-width:170px;padding:11px 8px}
   .org-avatar{width:56px;height:56px}
