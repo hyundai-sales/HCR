@@ -6259,7 +6259,7 @@
       $("cplHeaderDate").value=`${year}-${month}-01`;
       showTeamRerDynamicIsland(`Loaded ${rows.length} entries from ${matching.length} saved CPL form(s). Ready to review.`);
     }
-    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}const updateRowSC=()=>{const chosen=isSuperAdminSession()?select.value:name;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=updateRowSC;updateRowSC();}
+    function setCplConsultant(){const role=String(authorizedUser?.role||authorizedUser?.userRole||'').toLowerCase();const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isSuperAdminSession());input.classList.toggle('hidden',isSuperAdminSession());input.value=name;if(isSuperAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}let previousConsultant=isSuperAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const chosen=isSuperAdminSession()?String(select.value||''):name;if(isSuperAdminSession()&&chosen!==previousConsultant){if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';clearCplDraft();}previousConsultant=chosen;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=chosen);renderCplConsultantSavedEntries();};select.onchange=updateRowSC;updateRowSC();}
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
@@ -8091,6 +8091,14 @@
     @keyframes cplHyundaiLogoFloatBlue{0%,100%{transform:translateY(0) rotateY(-3deg);filter:drop-shadow(0 0 4px rgba(64,165,255,.55))}50%{transform:translateY(-1px) rotateY(3deg);filter:drop-shadow(0 0 10px rgba(110,202,255,.95))}}
     @keyframes cplHyundaiSweepBlue{0%{transform:translateX(-30px) rotate(22deg);opacity:0}18%{opacity:.8}60%{opacity:.6}100%{transform:translateX(125px) rotate(22deg);opacity:0}}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:none!important}}
+
+    /* CPL retrieval controls: force readable contrast on every device/browser */
+    #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.55)!important;font-weight:800!important;}
+    #cplPage .cpl-monthly-retrieve select,
+    #cplPage .cpl-monthly-retrieve select:disabled,
+    #cplPage .cpl-monthly-retrieve select option{color:#10243a!important;-webkit-text-fill-color:#10243a!important;background:#edf4fb!important;opacity:1!important;font-weight:700!important;text-shadow:none!important;}
+    #cplPage .cpl-monthly-retrieve select{border:1.5px solid #9ab9d4!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 9px rgba(0,0,0,.22)!important;}
+    #cplPage #cplMonthlyRetrieve{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.45)!important;}
 </style>
 </body>
 </html>
