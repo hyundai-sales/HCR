@@ -8478,6 +8478,78 @@
   }
   @media(prefers-reduced-motion:reduce){#appSection .teamrer-xmas-countdown{scroll-behavior:auto}}
 </style>
+
+<style id="teamrer-vehicle-quotation-print-visibility-fix">
+@media print {
+  html, body {
+    background:#ffffff !important;
+    color:#1f2937 !important;
+    color-scheme:light !important;
+  }
+  body.printing-quote .wrap,
+  body.printing-quote .wrap > .card,
+  body.printing-quote #appSection,
+  body.printing-quote #quotePage,
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote #quotePreviewWrap *,
+  body.printing-quote #quotePreview,
+  body.printing-quote #quotePreview * {
+    visibility:visible !important;
+  }
+  body.printing-quote #quotePage,
+  body.printing-quote #quotePreviewWrap,
+  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-quote #quotePreview {
+    display:block !important;
+    opacity:1 !important;
+    background:#ffffff !important;
+    color:#1f2937 !important;
+    filter:none !important;
+    transform:none !important;
+  }
+  body.printing-quote #quotePreviewWrap {
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    max-width:none !important;
+    overflow:visible !important;
+    padding:0 !important;
+    margin:0 !important;
+  }
+  body.printing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-quote #quotePreview {
+    width:100% !important;
+    max-width:none !important;
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    box-shadow:none !important;
+    border:0 !important;
+  }
+  body.printing-quote #quotePreviewWrap .quote-preview-head,
+  body.printing-quote #quotePreviewWrap .quote-preview-actions {
+    display:none !important;
+  }
+  body.printing-quote #quotePreview,
+  body.printing-quote #quotePreview * {
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  body.printing-quote #quotePreview h2,
+  body.printing-quote #quotePreview p,
+  body.printing-quote #quotePreview span,
+  body.printing-quote #quotePreview strong,
+  body.printing-quote #quotePreview div,
+  body.printing-quote #quotePreview .quote-line,
+  body.printing-quote #quotePreview .quote-terms,
+  body.printing-quote #quotePreview .quote-contact {
+    color:#1f2937 !important;
+  }
+}
+</style>
+
 <script id="teamrer-christmas-countdown-script">
 (function(){
   if(window.__teamRerChristmasCountdown2026)return;
