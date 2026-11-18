@@ -6487,51 +6487,17 @@
       const quotePrintButton = $("printQuoteBtn");
       if (quotePrintButton) quotePrintButton.disabled = true;
       window.__teamRerQuotePrintPending = true;
-      beginCplPdfGeneration("Preparing Vehicle Quotation PDF…");
       document.body.classList.add("printing-quote");
-      // iOS Home Screen web apps may not reliably return an afterprint event.
-      // Use a safety cleanup so the normal app view is not left in print mode.
-      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
       window.print();
-      window.__teamRerPrintCleanupTimer = setTimeout(() => {
-        document.body.classList.remove("printing-quote");
-        window.__teamRerPrintCleanupTimer = null;
-        if (window.__teamRerQuotePrintPending) {
-          window.__teamRerQuotePrintPending = false;
-          setCplPdfBusy(false);
-          if (window.__teamRerOriginalDocumentTitle) document.title = window.__teamRerOriginalDocumentTitle;
-          window.__teamRerOriginalDocumentTitle = "";
-          if (quotePrintButton) quotePrintButton.disabled = false;
-          showTeamRerDynamicIsland("The print window did not report completion. If the PDF was not saved, try Print / Save as PDF again.");
-        }
-      }, 15000);
-      // iPhone/iPad users get a practical fallback if the native print sheet is not shown.
-      const ua = navigator.userAgent || "";
-      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      const isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-      if (isIOS && isStandalone) {
-        showTeamRerDynamicIsland("If the print options do not appear, open TEAM RER in Safari and try Print / Save as PDF again.");
-      }
     });
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("printing-quote");
-      if (window.__teamRerPrintCleanupTimer) clearTimeout(window.__teamRerPrintCleanupTimer);
-      window.__teamRerPrintCleanupTimer = null;
-      // The browser does not expose whether the user saved or cancelled the PDF.
       if (window.__teamRerQuotePrintPending) {
         window.__teamRerQuotePrintPending = false;
         if (window.__teamRerOriginalDocumentTitle) document.title = window.__teamRerOriginalDocumentTitle;
         window.__teamRerOriginalDocumentTitle = "";
         if ($("printQuoteBtn")) $("printQuoteBtn").disabled = false;
-        showCplPdfNotification(
-          "",
-          "",
-          "Vehicle Quotation Print Complete",
-          "The print dialog has closed for " + (window.__teamRerQuoteDescription || "your selected vehicle") + ". If you selected Save as PDF, check your chosen PDF destination."
-        );
         window.__teamRerQuoteDescription = "";
-      } else {
-        showTeamRerDynamicIsland("Print options closed. Check your PDF destination.");
       }
     });
 
