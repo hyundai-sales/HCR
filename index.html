@@ -2971,8 +2971,9 @@
               </div>
             </div>
           </div>
-          <div id="creditFormFields"></div>
-          <button id="generateCreditBtn" type="button">Generate Application PDF</button>
+          <div id="creditFormFields" class="hidden"></div>
+          <button id="saveCreditBtn" class="hidden" type="button">Save</button>
+          <button id="generateCreditBtn" class="hidden" type="button">Generate Application PDF</button>
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
           </div>
         </section>
@@ -3667,6 +3668,10 @@
                 promoSubmit.textContent = "Save Variant Promotions";
               }
             }
+          } else if (action === "creditHistorySave") {
+            const saveBtn = $("saveCreditBtn");
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Save"; }
+            setMessage($("creditMessage"), error, "error");
           } else if (action === "creditApplication" || action === "creditVariants") {
             if(action === "creditApplication") setCplPdfBusy(false);
             setMessage($("creditMessage"), error, "error");
@@ -3915,8 +3920,11 @@
         return;
       }
       if (action === "creditHistorySave") {
+        const saved = event.data.creditHistorySave || {};
+        if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
+        setCreditEditorStage("generate");
+        setMessage($("creditMessage"),"Application saved. You can now generate the PDF.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
-        loadCreditHistory();
         return;
       }
 
@@ -4629,7 +4637,7 @@
     });
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); syncCreditConsultantForRole(); buildCreditForm();
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -4944,6 +4952,19 @@
       $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.remove("hidden");
     });
 
+    function setCreditEditorStage(stage) {
+      const fields = $("creditFormFields");
+      const saveBtn = $("saveCreditBtn");
+      const generateBtn = $("generateCreditBtn");
+      fields.classList.toggle("hidden", stage === "closed");
+      saveBtn.classList.toggle("hidden", stage !== "save");
+      generateBtn.classList.toggle("hidden", stage !== "generate");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save";
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate Application PDF";
+    }
+
     function resetCreditApplicationForNew() {
       currentCreditApplicationId = "";
       buildCreditForm();
@@ -4963,8 +4984,8 @@
         if (typeof updateCreditColorDropdown === "function") updateCreditColorDropdown();
       }
       if ($("creditPreviousApplication")) $("creditPreviousApplication").value = "";
-      $("generateCreditBtn").textContent = "Generate Application PDF";
-      setMessage($("creditMessage"), "New application selected. Complete the form to generate a new PDF.", "success");
+      setCreditEditorStage("save");
+      setMessage($("creditMessage"), "New application selected. Complete the form, then save before generating the PDF.", "success");
     }
 
     function fillPreviousApplicationDropdown() {
@@ -5015,6 +5036,8 @@
       const editing = $("creditApplicationMode").value === "edit";
       $("creditPreviousApplicationWrap").classList.toggle("hidden", !editing);
       if (editing) {
+        setCreditEditorStage("closed");
+        currentCreditApplicationId = "";
         if (creditModeHistoryLoaded) fillPreviousApplicationDropdown();
         else loadCreditApplicationsForEdit();
       } else {
@@ -5102,6 +5125,7 @@
       $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden");
       $("creditPage").classList.remove("hidden");
       buildCreditForm();
+      setCreditEditorStage("save");
       const consultant=$("creditConsultant");
       if(consultant && data.consultant) {
         if(!Array.from(consultant.options).some(o=>o.value===data.consultant)){const o=document.createElement("option");o.value=data.consultant;o.textContent=data.consultant;consultant.appendChild(o);}
@@ -5128,6 +5152,28 @@
       setMessage($("creditMessage"),"Application "+currentCreditApplicationId+" loaded. Review the details, make edits, then generate the updated PDF."+(revisionSummary ? " Revision history: "+revisionSummary : ""),"success");
       window.scrollTo({top:0,behavior:"smooth"});
     }
+
+    $("saveCreditBtn").addEventListener("click", async () => {
+      const data = collectCreditApplication();
+      if (!data.consultant) {
+        setMessage($("creditMessage"), "Please select a Sales Consultant before saving.", "error");
+        return;
+      }
+      const saveBtn = $("saveCreditBtn");
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+      setMessage($("creditMessage"), "Saving application details...", "success");
+      try {
+        await submitRequest("creditHistorySave", {
+          applicationData: data,
+          applicationId: currentCreditApplicationId
+        });
+      } catch (error) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save";
+        setMessage($("creditMessage"), error.message || "Unable to save application.", "error");
+      }
+    });
 
     $("generateCreditBtn").addEventListener("click",async()=>{
       const data=collectCreditApplication();
