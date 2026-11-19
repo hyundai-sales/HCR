@@ -3161,6 +3161,10 @@
     overflow:hidden!important;background:radial-gradient(ellipse at 50% 50%,#062b55 0%,#03152d 48%,#010711 100%)!important;
     opacity:1;visibility:visible;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
+  /* Keep the branded overlay mounted for its fade, but let the hidden state win. */
+  #loadingOverlay.loading-overlay.hidden{
+    opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+  }
   #loadingOverlay .loading-content{
     position:relative!important;width:min(100%,1240px)!important;max-width:1240px!important;
     padding:clamp(8px,2vw,24px)!important;text-align:center!important;
