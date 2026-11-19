@@ -6738,10 +6738,26 @@
         const requestMs = priceListRequestPerfRoundTripMs;
         const timingParts = [];
         if (serverMs != null) timingParts.push("Server " + (serverMs / 1000).toFixed(1) + "s");
+        if (priceListBackendPerf) {
+          const stageLabels = [
+            ["PDF export", "pdfExportMs"],
+            ["Promo lookup", "promoLookupMs"],
+            ["Promo prep", "promoCellPreparationMs"],
+            ["Formula flush", "formulaFlushMs"],
+            ["PDF encode", "base64EncodingMs"],
+            ["Restore", "restorePromoCellsMs"]
+          ];
+          stageLabels.forEach(([label, key]) => {
+            const value = Number(priceListBackendPerf[key]);
+            if (Number.isFinite(value) && value >= 0) {
+              timingParts.push(label + " " + (value / 1000).toFixed(1) + "s");
+            }
+          });
+        }
         if (requestMs != null) timingParts.push("Request " + (requestMs / 1000).toFixed(1) + "s");
         timingParts.push("Preview " + (previewRenderMs / 1000).toFixed(1) + "s");
         setMessage($("resultMessage"),
-          String($("worksheet").value || "Price List") + " PDF ready. Baseline timing: " + timingParts.join(" · "),
+          String($("worksheet").value || "Price List") + " PDF ready. Timing: " + timingParts.join(" · "),
           "success"
         );
         // Rendering can change the modal's dimensions; re-focus its toolbar afterward.
