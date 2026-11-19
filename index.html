@@ -3207,9 +3207,10 @@
   #loadingOverlay .loading-progress-fill{width:8%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#0875e8,#24caff,#b3f2ff);transition:width .32s ease;box-shadow:0 0 12px rgba(25,175,255,.85)}
   #loadingOverlay .loading-progress-note{display:none!important}
   @keyframes hyundaiDashboardSpin{to{transform:rotate(360deg)}}
-  @keyframes hyundaiRevBarOne{0%,100%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))} }
-  @keyframes hyundaiRevBarTwo{0%,32.9%{opacity:0}33%,100%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))}}
-  @keyframes hyundaiRevBarThree{0%,65.9%{opacity:0}66%,100%{opacity:1;filter:drop-shadow(0 0 9px #19baff) drop-shadow(0 0 22px rgba(0,150,255,1))}}
+  /* Rev sequence: one arc, then two, then three, then back to one. */
+  @keyframes hyundaiRevBarOne{0%,32.9%,100%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))}33%,99.9%{opacity:0}}
+  @keyframes hyundaiRevBarTwo{0%,32.9%,66%,100%{opacity:0}33%,65.9%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))}}
+  @keyframes hyundaiRevBarThree{0%,65.9%,100%{opacity:0}66%,99.9%{opacity:1;filter:drop-shadow(0 0 9px #19baff) drop-shadow(0 0 22px rgba(0,150,255,1))}}
   @media(max-width:600px){
     #loadingOverlay .loading-content{width:100%!important;padding:4px!important}
     #loadingOverlay .loading-cluster-frame{min-height:clamp(300px,70vw,390px);padding:24px clamp(48px,11vw,72px) 22px;border-radius:clamp(38px,9vw,64px)}
