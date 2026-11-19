@@ -7145,21 +7145,13 @@
         <html lang="en"><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>${escapeHtml(title)}</title><style>${printStyles}</style>
-        </head><body><main id="quoteDocument">${quoteMarkup}</main>
-        <script>
-          (function(){
-            function printWhenReady(){
-              var images=Array.prototype.slice.call(document.images);
-              Promise.all(images.map(function(img){
-                if(img.complete)return Promise.resolve();
-                return new Promise(function(resolve){img.onload=resolve;img.onerror=resolve;setTimeout(resolve,2500);});
-              })).then(function(){setTimeout(function(){window.focus();window.print();},250);});
-            }
-            if(document.readyState==='complete')printWhenReady();
-            else window.addEventListener('load',printWhenReady,{once:true});
-          })();
-        <\/script></body></html>`);
+        </head><body><main id="quoteDocument">${quoteMarkup}</main></body></html>`);
       printWindow.document.close();
+      // Launch the native print dialog directly inside the original button
+      // click gesture. Delayed timers/image promises can lose Android's
+      // transient user activation and leave the about:blank tab on screen.
+      printWindow.focus();
+      printWindow.print();
     });
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("printing-quote");
