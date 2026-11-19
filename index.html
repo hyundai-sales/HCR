@@ -2880,7 +2880,7 @@
             <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary hidden" hidden aria-hidden="true" style="display:none!important">Clear Selection &amp; New</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
-            <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button><button id="cplPrintSave" type="button">PRINT / SAVE PDF</button></div>
+            <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button></div>
             <div id="cplMessage" class="message hidden" aria-live="polite"></div>
           </div>
           <div class="cpl-saved-wrap">
@@ -2889,6 +2889,7 @@
               <label>Month<select id="cplMonthlyMonth"></select></label>
               <label>Year<select id="cplMonthlyYear"></select></label>
               <button type="button" id="cplMonthlyRetrieve">Retrieve Monthly CPL Entries</button>
+              <button type="button" id="cplPrintSave" class="hidden" hidden>PRINT / SAVE PDF</button>
             </div>
           </div>
         </section>
@@ -3985,6 +3986,7 @@
         if(!result.pdfBase64) throw new Error("Monthly CPL PDF data was not returned.");
         const bytes=Uint8Array.from(atob(result.pdfBase64),c=>c.charCodeAt(0));
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+        setCplMonthlyActionMode(false);
         clearCplSelectionsAfterPdf();
         setMessage($("cplMessage"),result.message||"Monthly CPL PDF generated successfully.","success");
         showCplPdfNotification(url,result.fileName,"Monthly CPL PDF is ready","Your retrieved monthly CPL records have been compiled. Download to print or save.");
@@ -6811,6 +6813,15 @@
     let cplData={clients:[],variants:[],consultants:[]};
     let cplMonthlyRetrieved=null;
     let cplPrintWindow=null;
+    function setCplMonthlyActionMode(showPdf){
+      const retrieveBtn=$('cplMonthlyRetrieve'),printBtn=$('cplPrintSave');
+      if(!retrieveBtn||!printBtn)return;
+      retrieveBtn.classList.toggle('hidden',!!showPdf);
+      retrieveBtn.hidden=!!showPdf;
+      printBtn.classList.toggle('hidden',!showPdf);
+      printBtn.hidden=!showPdf;
+      if(!showPdf)printBtn.disabled=false;
+    }
     const cplToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
     function loadCpl(){if(!canAccessCplSession()){showAccessDenied("TEAM RER CPL access only.");return;}submitRequest("cplGet").catch(err=>showTeamRerAlert(err.message,"CPL Error"));}
     function cplEsc(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -6877,6 +6888,7 @@
       if($('cplEntryRows'))$('cplEntryRows').replaceChildren();
       if($('cplConsultantSavedEntries'))$('cplConsultantSavedEntries').replaceChildren();
       cplMonthlyRetrieved=null;
+      setCplMonthlyActionMode(false);
       if($('cplSaveForm'))$('cplSaveForm').textContent='Save CPL';
       clearCplDraft();
     }
@@ -6886,10 +6898,10 @@
       if(!consultant){showTeamRerDynamicIsland("Select a Sales Consultant first.");return;}
       const prefix=`${year}-${month}`;
       const matching=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant&&String(f.date||'').slice(0,7)===prefix);
-      if(!matching.length){cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();setCplConsultant();if(isCplAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
+      if(!matching.length){cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();setCplConsultant();if(isCplAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const rows=[];
       matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.sc=consultant;rows.push(copy);}));
-      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};$('cplSaveForm').textContent='Save Monthly Changes';$('cplConsultantSavedEntries').classList.add('hidden');
+      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};setCplMonthlyActionMode(true);$('cplSaveForm').textContent='Save Monthly Changes';$('cplConsultantSavedEntries').classList.add('hidden');
       $("cplEntryRows").replaceChildren();rows.forEach(r=>addCplEntryRow(r,{retrieved:true}));
       setCplConsultant();
       if(isCplAdminSession()){$("cplConsultantSelect").value=consultant;Array.from($("cplEntryRows").querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}
