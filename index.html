@@ -2409,6 +2409,62 @@
 }
 </style>
 
+
+<style id="credit-application-floating-legend-frame">
+  /* Credit Application: floating legend frame around the module content. */
+  #creditPage .credit-module-frame{
+    position:relative;
+    margin:28px 0 18px;
+    padding:25px clamp(13px,2.5vw,26px) 24px;
+    border:1.5px solid rgba(76,151,218,.78);
+    border-radius:27px;
+    background:linear-gradient(145deg,rgba(7,31,57,.82),rgba(5,23,44,.72));
+    box-shadow:0 14px 36px rgba(0,15,34,.22),inset 0 1px 0 rgba(176,216,255,.13);
+    -webkit-backdrop-filter:blur(12px) saturate(135%);
+    backdrop-filter:blur(12px) saturate(135%);
+  }
+  #creditPage .credit-module-frame::before{
+    content:"Hyundai Sales Tools";
+    position:absolute;
+    top:-16px;
+    left:50%;
+    transform:translateX(-50%);
+    max-width:calc(100% - 34px);
+    padding:3px 17px 4px;
+    border:1px solid rgba(76,151,218,.52);
+    border-radius:999px;
+    background:#071d35;
+    color:#dceeff;
+    font-size:clamp(12px,2.8vw,15px);
+    font-weight:700;
+    letter-spacing:.045em;
+    line-height:1.35;
+    white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,12,28,.24);
+    pointer-events:none;
+  }
+  #creditPage .credit-instructions{
+    position:relative;
+    margin:8px 0 20px;
+    padding:0 0 17px;
+    border-bottom:1px solid rgba(104,174,232,.62);
+    box-shadow:0 1px 0 rgba(255,255,255,.055);
+    line-height:1.55;
+  }
+  /* These controls remain in normal document flow and scroll away with the form. */
+  #creditPage .credit-consultant-section{
+    position:static !important;
+    inset:auto !important;
+    z-index:auto !important;
+    margin-top:0;
+  }
+  @media(max-width:560px){
+    #creditPage .credit-module-frame{margin-top:25px;padding:22px 12px 18px;border-radius:22px}
+    #creditPage .credit-module-frame::before{top:-14px;padding:3px 13px;font-size:12px}
+    #creditPage .credit-instructions{padding-bottom:14px;margin-bottom:16px}
+  }
+</style>
+
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -2834,11 +2890,12 @@
         </section>
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
+          <div class="credit-module-frame">
           <h2 class="section-title">Credit Application</h2>
           <div id="creditHeendyBuddy" aria-hidden="true">
             <img id="creditHeendyBuddyImage" alt="">
           </div>
-          <p class="app-caption">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
+          <p class="app-caption credit-instructions">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
               <div class="credit-field full" id="creditConsultantSelectWrap">
@@ -2874,6 +2931,7 @@
           <div id="creditFormFields"></div>
           <button id="generateCreditBtn" type="button">Generate Application PDF</button>
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
+          </div>
         </section>
         <section id="creditHistoryPage" class="hidden">
           <button id="backToMenuFromHistory" class="secondary" type="button">Back to Menu</button>
