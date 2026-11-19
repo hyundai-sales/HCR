@@ -4086,7 +4086,7 @@
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
         clearCplSelectionsAfterPdf();
         setMessage($("cplMessage"),result.message||"Blank CPL PDF generated successfully.","success");
-        showCplPdfNotification(url,result.fileName,"CPL PDF is ready","Your CPL PDF is ready to print or save.",true);
+        showCplPdfNotification(url,result.fileName,"CPL PDF is ready","Your CPL PDF is ready to print or save.",true,false,restoreCplUserMonthlyConsultant);
         return;
       }
       if (action === "cplMonthlyPdf") {
@@ -4098,7 +4098,7 @@
         setCplMonthlyActionMode(false);
         clearCplSelectionsAfterPdf();
         setMessage($("cplMessage"),result.message||"Monthly CPL PDF generated successfully.","success");
-        showCplPdfNotification(url,result.fileName,"Monthly CPL PDF is ready","Your retrieved monthly CPL records have been compiled. Print or save your PDF.",true);
+        showCplPdfNotification(url,result.fileName,"Monthly CPL PDF is ready","Your retrieved monthly CPL records have been compiled. Print or save your PDF.",true,false,restoreCplUserMonthlyConsultant);
         return;
       }
       if (action === "cplSheetPrint" || action === "cplBlankSheetPrint") { const result=event.data[action]||{}; if(cplPrintWindow&&!cplPrintWindow.closed&&result.url){cplPrintWindow.location.href=result.url;} cplPrintWindow=null; setMessage($("cplMessage"),result.message||"CPL template is ready. Open the sheet to print.","success");return; }
@@ -4148,7 +4148,7 @@
         const bytes=Uint8Array.from(atob(pdfData.pdfBase64),c=>c.charCodeAt(0));
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
         setMessage($("creditHistoryMessage"),"Saved PDF is ready.", "success");
-        showCplPdfNotification(url,pdfData.fileName||"Hyundai-Credit-Application.pdf","Credit Application History PDF Ready!","Your saved application PDF is ready to download.");
+        showCplPdfNotification(url,pdfData.fileName||"Hyundai-Credit-Application.pdf","Credit Application History PDF Ready!","Your saved application PDF is ready to print or save.",true,true);
         return;
       }
       if (action === "creditHistorySave") {
@@ -4215,7 +4215,7 @@
         pendingCreditPdfUrl = URL.createObjectURL(blob);
 
         setMessage($("creditMessage"), "Application PDF generated successfully. Your entered details are still here if you need to review or edit them.", "success");
-        showCplPdfNotification(pendingCreditPdfUrl, result.fileName||"Hyundai-Credit-Application.pdf","Credit Application PDF Ready!","Your credit application PDF is ready to download.",true);
+        showCplPdfNotification(pendingCreditPdfUrl, result.fileName||"Hyundai-Credit-Application.pdf","Credit Application PDF Ready!","Your credit application PDF is ready to print or save.",true,true);
         $("generateCreditBtn").disabled = false;
         return;
       }
@@ -5104,26 +5104,54 @@
     }
     function setCplPdfReadyOverlay() { /* success handled by Heendy CPL modal */ }
     function beginCplPdfGeneration(message) { setCplPdfBusy(true,message||'Preparing your CPL PDF'); }
-    function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction) {
-      const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your CPL PDF');
+    function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction, directPrintPreview, afterPrintOrClose) {
+      const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your PDF');
       const active=document.getElementById('cplPdfBusyOverlay'); if(!active) return;
       if(cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
       updateCplHeendyProgress(100);
       const loading=active.querySelector('.cpl-heendy-loading'); const successCard=active.querySelector('.cpl-heendy-success');
       if(loading) loading.hidden=true; if(successCard) successCard.hidden=false;
-      const successTitle=active.querySelector('.cpl-heendy-success h2'); if(successTitle) { successTitle.textContent=titleText || 'CPL PDF Ready!'; successTitle.setAttribute('data-module-success-title','true'); }
+      const successTitle=active.querySelector('.cpl-heendy-success h2'); if(successTitle) { successTitle.textContent=titleText || 'PDF Ready!'; successTitle.setAttribute('data-module-success-title','true'); }
       const successText=active.querySelector('#cplHeendySuccessText'); if(successText) successText.textContent=copyText||'Your document has been generated successfully.';
       const download=active.querySelector('.cpl-heendy-download'); const close=active.querySelector('.cpl-heendy-close');
       const printSave=active.querySelector('.cpl-heendy-print-save');
+      if(printSave) printSave.disabled=false;
+      // For the two Credit Application modules, preload the PDF in a hidden same-page
+      // frame. The user gesture then invokes that frame's native print preview directly.
+      let printFrame=null, printFrameReady=false;
+      if(directPrintPreview && downloadUrl) {
+        const oldFrame=document.getElementById('teamRerCreditPrintFrame');
+        if(oldFrame) oldFrame.remove();
+        printFrame=document.createElement('iframe');
+        printFrame.id='teamRerCreditPrintFrame';
+        printFrame.title='PDF print preview';
+        printFrame.setAttribute('aria-hidden','true');
+        printFrame.tabIndex=-1;
+        printFrame.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+        printFrame.addEventListener('load',()=>{printFrameReady=true;if(printSave)printSave.disabled=false;},{once:true});
+        document.body.appendChild(printFrame);
+        if(printSave) printSave.disabled=true;
+        printFrame.src=downloadUrl;
+      }
       if(printSave) {
         printSave.hidden=!showPrintSaveAction || !downloadUrl;
-        printSave.onclick=()=>{if(!downloadUrl)return;const opened=window.open(downloadUrl,'_blank','noopener');if(!opened){const a=document.createElement('a');a.href=downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}};
+        printSave.onclick=()=>{
+          if(!downloadUrl)return;
+          if(directPrintPreview) {
+            if(!printFrame || !printFrameReady || !printFrame.contentWindow) { showTeamRerDynamicIsland('Preparing printer preview. Please tap Print / Save PDF again in a moment.'); return; }
+            try { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); } catch(err) { showTeamRerDynamicIsland('Unable to open printer preview in this browser.'); return; }
+          } else {
+            const opened=window.open(downloadUrl,'_blank','noopener');
+            if(!opened){const a=document.createElement('a');a.href=downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
+          }
+          if(typeof afterPrintOrClose==='function') afterPrintOrClose('print');
+        };
       }
       if(download) {
         download.hidden=!downloadUrl;
         download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'TEAM-RER.pdf';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';};
       }
-      if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
+      if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof afterPrintOrClose==='function') afterPrintOrClose('close');if(printFrame){printFrame.remove();printFrame=null;}if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
       active.setAttribute('role','dialog'); active.setAttribute('aria-modal','true');
     }
     function showCreditSuccessNotification(downloadUrl, fileName) {
@@ -6984,6 +7012,13 @@
         const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';edit.addEventListener('click',()=>{const date=String(form.date||'');const match=date.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});});
         actions.append(view,edit);item.append(header,actions,details);host.appendChild(item);
       });});
+    }
+    function restoreCplUserMonthlyConsultant(){
+      if(!isRegularUserSession())return;
+      const own=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'').trim();
+      const monthly=$('cplMonthlyConsultant');
+      if(monthly){if(own&&!Array.from(monthly.options).some(o=>o.value===own)){const option=document.createElement('option');option.value=own;option.textContent=own;monthly.appendChild(option);}monthly.value=own;monthly.disabled=true;}
+      const fixed=$('cplConsultantFixed');if(fixed)fixed.value=own;
     }
     function clearCplSelectionsAfterPdf(){
       // Reset the CPL workspace after a successful PDF, including the actual entry cards.
