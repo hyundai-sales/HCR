@@ -2696,10 +2696,10 @@
         <div class="loading-orbit" aria-hidden="true"></div>
         <h2 class="loading-title">Initializing System...</h2>
         <p id="loadingMessage" class="loading-message">Please wait while we load the application.</p>
+        <div class="loading-progress-meta" aria-hidden="true"><span id="loadingProgressLabel">Preparing request</span><strong id="loadingProgressPercent">8%</strong></div>
+        <div class="loading-track" role="progressbar" aria-label="Estimated request progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8" id="loadingProgressTrack"><div id="loadingProgressFill" class="loading-progress-fill"></div></div>
+        <p class="loading-progress-note">Please wait while we complete your request.</p>
       </div>
-      <div class="loading-progress-meta" aria-hidden="true"><span id="loadingProgressLabel">Preparing request</span><strong id="loadingProgressPercent">8%</strong></div>
-      <div class="loading-track" role="progressbar" aria-label="Estimated request progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8" id="loadingProgressTrack"><div id="loadingProgressFill" class="loading-progress-fill"></div></div>
-      <p class="loading-progress-note">Progress estimate · Please wait while we complete your request.</p>
     </div>
   </div>
 
@@ -3157,21 +3157,21 @@
 <style id="team-rer-hyundai-dashboard-loading-v2">
   #loadingOverlay.loading-overlay{
     position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;
-    align-items:center!important;justify-content:center!important;padding:clamp(12px,3vw,34px)!important;
-    overflow:hidden!important;background:radial-gradient(ellipse at 50% 48%,#062b55 0%,#03152d 46%,#010711 100%)!important;
+    align-items:center!important;justify-content:center!important;padding:clamp(10px,2.5vw,28px)!important;
+    overflow:hidden!important;background:radial-gradient(ellipse at 50% 50%,#062b55 0%,#03152d 48%,#010711 100%)!important;
     opacity:1;visibility:visible;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
   #loadingOverlay .loading-content{
-    position:relative!important;width:min(100%,1120px)!important;max-width:1120px!important;
-    padding:clamp(26px,5vw,62px) clamp(16px,5vw,54px)!important;text-align:center!important;
+    position:relative!important;width:min(100%,1240px)!important;max-width:1240px!important;
+    padding:clamp(8px,2vw,24px)!important;text-align:center!important;
     border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
     backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
   #loadingOverlay .loading-cluster-frame{
-    position:relative;box-sizing:border-box;width:100%;min-height:clamp(390px,57vw,560px);
-    padding:clamp(36px,5vw,58px) clamp(12px,5vw,62px) 36px;overflow:hidden;
-    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-    border:2px solid rgba(32,111,204,.42);border-radius:clamp(42px,8vw,100px);
+    position:relative;box-sizing:border-box;width:100%;min-height:clamp(300px,43vw,510px);
+    padding:clamp(22px,4vw,46px) clamp(58px,10vw,132px) clamp(22px,3vw,38px);overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:2px solid rgba(32,111,204,.42);border-radius:clamp(54px,9vw,120px);
     background:linear-gradient(160deg,rgba(2,16,37,.92),rgba(1,11,27,.96));
     box-shadow:0 0 22px rgba(0,104,255,.10),inset 0 0 35px rgba(0,72,168,.12),0 26px 70px rgba(0,0,0,.42);
   }
@@ -3179,38 +3179,44 @@
     content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
     background:linear-gradient(180deg,rgba(31,116,218,.08),transparent 34%,transparent 75%,rgba(0,105,255,.08));
   }
-  #loadingOverlay .loading-brand{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin:0 auto 28px;color:#f2f8ff;text-shadow:0 0 18px rgba(87,164,255,.25)}
-  #loadingOverlay .loading-logo{display:block;width:clamp(74px,10vw,112px);height:clamp(58px,8vw,88px);object-fit:contain;filter:drop-shadow(0 0 12px rgba(165,211,255,.42))}
-  #loadingOverlay .loading-brand-name{margin-top:2px;font-size:clamp(25px,4.2vw,42px);font-weight:850;letter-spacing:.13em;line-height:1.1}
-  #loadingOverlay .loading-brand-sub{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:9px;font-size:clamp(13px,2.1vw,22px);font-weight:500;letter-spacing:.22em;color:#d9eaff}
-  #loadingOverlay .loading-brand-sub span{display:block;width:clamp(35px,10vw,115px);height:1px;background:linear-gradient(90deg,transparent,rgba(205,229,255,.85))}
+  #loadingOverlay .loading-brand{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin:0 auto clamp(12px,2vw,24px);color:#f2f8ff;text-shadow:0 0 18px rgba(87,164,255,.25)}
+  #loadingOverlay .loading-logo{display:block;width:clamp(58px,8vw,100px);height:clamp(44px,6.5vw,78px);object-fit:contain;filter:drop-shadow(0 0 12px rgba(165,211,255,.42))}
+  #loadingOverlay .loading-brand-name{margin-top:2px;font-size:clamp(22px,3.5vw,38px);font-weight:850;letter-spacing:.13em;line-height:1.1}
+  #loadingOverlay .loading-brand-sub{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:7px;font-size:clamp(12px,1.8vw,19px);font-weight:500;letter-spacing:.22em;color:#d9eaff}
+  #loadingOverlay .loading-brand-sub span{display:block;width:clamp(28px,8vw,100px);height:1px;background:linear-gradient(90deg,transparent,rgba(205,229,255,.85))}
   #loadingOverlay .loading-brand-sub span:last-child{transform:rotate(180deg)}
-  #loadingOverlay .loading-orbit{position:relative;z-index:2;width:58px;height:58px;margin:4px auto 18px;border:5px dotted rgba(34,153,255,.42);border-top-color:#32baff;border-right-color:#a9e6ff;border-bottom-color:#1268d8;border-left-color:#1c8eea;border-radius:50%;animation:hyundaiDashboardSpin .95s linear infinite;box-shadow:0 0 18px rgba(0,136,255,.18)}
+  #loadingOverlay .loading-orbit{position:relative;z-index:2;width:clamp(42px,5vw,58px);height:clamp(42px,5vw,58px);margin:0 auto 12px;border:5px dotted rgba(34,153,255,.42);border-top-color:#32baff;border-right-color:#a9e6ff;border-bottom-color:#1268d8;border-left-color:#1c8eea;border-radius:50%;animation:hyundaiDashboardSpin .95s linear infinite;box-shadow:0 0 18px rgba(0,136,255,.18)}
   #loadingOverlay .loading-orbit::after{content:none}
-  #loadingOverlay .loading-title{position:relative;z-index:2;margin:0;color:#f3f8ff;font-size:clamp(19px,3vw,28px);font-weight:650;letter-spacing:.02em;text-shadow:0 0 14px rgba(74,160,255,.24)}
-  #loadingOverlay .loading-message{position:relative;z-index:2;min-height:0;margin:9px 0 0;color:#c4d9f3;font-size:clamp(12px,1.8vw,17px);line-height:1.5}
-  #loadingOverlay .loading-light-bars{position:absolute;z-index:1;top:16%;bottom:16%;width:clamp(42px,8vw,98px);pointer-events:none;display:flex;align-items:center;justify-content:center}
-  #loadingOverlay .loading-light-bars-left{left:1.2%}
-  #loadingOverlay .loading-light-bars-right{right:1.2%;transform:scaleX(-1)}
-  #loadingOverlay .loading-light-bars span{position:absolute;top:50%;transform:translateY(-50%);display:block;height:78%;border-left:clamp(4px,.7vw,8px) solid #16aaff;border-top:clamp(4px,.7vw,8px) solid #078bff;border-bottom:clamp(4px,.7vw,8px) solid #078bff;border-radius:90px 0 0 90px;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85));opacity:.8;animation:hyundaiRevPulse 1.25s ease-in-out infinite}
-  #loadingOverlay .loading-light-bars span:nth-child(1){width:48%;height:62%;left:5%;animation-delay:0s}
-  #loadingOverlay .loading-light-bars span:nth-child(2){width:68%;height:76%;left:17%;animation-delay:0s;opacity:.88}
-  #loadingOverlay .loading-light-bars span:nth-child(3){width:88%;height:90%;left:29%;animation-delay:0s;opacity:.96}
+  #loadingOverlay .loading-title{position:relative;z-index:2;margin:0;color:#f3f8ff;font-size:clamp(18px,2.7vw,27px);font-weight:650;letter-spacing:.02em;text-shadow:0 0 14px rgba(74,160,255,.24)}
+  #loadingOverlay .loading-message{position:relative;z-index:2;min-height:0;margin:7px 0 0;color:#c4d9f3;font-size:clamp(11px,1.55vw,16px);line-height:1.45}
+  #loadingOverlay .loading-light-bars{position:absolute;z-index:1;top:15%;bottom:15%;width:clamp(54px,11vw,132px);pointer-events:none;display:flex;align-items:center;justify-content:center}
+  #loadingOverlay .loading-light-bars-left{left:1.1%}
+  #loadingOverlay .loading-light-bars-right{right:1.1%;transform:scaleX(-1)}
+  #loadingOverlay .loading-light-bars span{position:absolute;top:50%;transform:translateY(-50%);display:block;height:78%;border-left:clamp(4px,.65vw,8px) solid #16aaff;border-top:clamp(4px,.65vw,8px) solid #078bff;border-bottom:clamp(4px,.65vw,8px) solid #078bff;border-radius:90px 0 0 90px;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85));opacity:0;}
+  #loadingOverlay .loading-light-bars span:nth-child(1){width:48%;height:62%;left:5%;animation:hyundaiRevBarOne 1.8s steps(1,end) infinite}
+  #loadingOverlay .loading-light-bars span:nth-child(2){width:68%;height:76%;left:17%;animation:hyundaiRevBarTwo 1.8s steps(1,end) infinite}
+  #loadingOverlay .loading-light-bars span:nth-child(3){width:88%;height:90%;left:29%;animation:hyundaiRevBarThree 1.8s steps(1,end) infinite}
   #loadingOverlay .loading-light-bars-right span{border-left-color:#16aaff;border-top-color:#078bff;border-bottom-color:#078bff}
-  #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track,#loadingOverlay .loading-progress-note{display:none!important}
+  #loadingOverlay .loading-progress-meta{position:relative;z-index:2;display:flex!important;align-items:center;justify-content:space-between;gap:12px;width:min(72%,540px);margin:clamp(14px,2vw,22px) auto 7px;color:#c4d9f3;font-size:clamp(10px,1.25vw,13px);text-align:left}
+  #loadingOverlay .loading-progress-meta strong{color:#e8f6ff;font-size:clamp(12px,1.5vw,15px);font-variant-numeric:tabular-nums}
+  #loadingOverlay .loading-track{position:relative;z-index:2;display:block!important;width:min(72%,540px);height:clamp(8px,1vw,11px);margin:0 auto;overflow:hidden;border:1px solid rgba(77,174,255,.65);border-radius:99px;background:rgba(0,13,34,.9);box-shadow:inset 0 1px 4px rgba(0,0,0,.55),0 0 12px rgba(0,125,255,.16)}
+  #loadingOverlay .loading-progress-fill{width:8%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#0875e8,#24caff,#b3f2ff);transition:width .32s ease;box-shadow:0 0 12px rgba(25,175,255,.85)}
+  #loadingOverlay .loading-progress-note{display:none!important}
   @keyframes hyundaiDashboardSpin{to{transform:rotate(360deg)}}
-  @keyframes hyundaiRevPulse{0%,100%{opacity:.48;filter:drop-shadow(0 0 3px #078bff) drop-shadow(0 0 8px rgba(0,150,255,.42));}50%{opacity:1;filter:drop-shadow(0 0 9px #19baff) drop-shadow(0 0 24px rgba(0,150,255,1));}}
+  @keyframes hyundaiRevBarOne{0%,100%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))} }
+  @keyframes hyundaiRevBarTwo{0%,32.9%{opacity:0}33%,100%{opacity:1;filter:drop-shadow(0 0 7px #078bff) drop-shadow(0 0 16px rgba(0,150,255,.85))}}
+  @keyframes hyundaiRevBarThree{0%,65.9%{opacity:0}66%,100%{opacity:1;filter:drop-shadow(0 0 9px #19baff) drop-shadow(0 0 22px rgba(0,150,255,1))}}
   @media(max-width:600px){
-    #loadingOverlay .loading-content{padding:14px 0!important}
-    #loadingOverlay .loading-cluster-frame{min-height:clamp(360px,72vh,520px);padding:clamp(28px,7vh,48px) 12px 28px;border-radius:42px}
-    #loadingOverlay .loading-brand{margin-bottom:clamp(34px,8vh,66px)}
-    #loadingOverlay .loading-light-bars{top:20%;bottom:20%;width:clamp(27px,9vw,48px)}
+    #loadingOverlay .loading-content{width:100%!important;padding:4px!important}
+    #loadingOverlay .loading-cluster-frame{min-height:clamp(300px,70vw,390px);padding:24px clamp(48px,11vw,72px) 22px;border-radius:clamp(38px,9vw,64px)}
+    #loadingOverlay .loading-brand{margin-bottom:clamp(10px,3vw,18px)}
+    #loadingOverlay .loading-light-bars{top:18%;bottom:18%;width:clamp(42px,10vw,60px)}
     #loadingOverlay .loading-light-bars-left{left:0}
     #loadingOverlay .loading-light-bars-right{right:0}
     #loadingOverlay .loading-light-bars span{border-left-width:4px;border-top-width:4px;border-bottom-width:4px}
-    #loadingOverlay .loading-orbit{width:48px;height:48px;margin-bottom:15px}
+    #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track{width:86%}
   }
-  @media(prefers-reduced-motion:reduce){#loadingOverlay .loading-orbit,#loadingOverlay .loading-light-bars span{animation-duration:3s}}
+  @media(prefers-reduced-motion:reduce){#loadingOverlay .loading-orbit{animation-duration:3s}#loadingOverlay .loading-light-bars span{animation-duration:5.4s}}
 </style>
 
 <script type="module">
