@@ -2621,94 +2621,109 @@
 
 
 <style id="team-rer-approved-loading-screen-v1">
-  /* Loading screen only: clean responsive arcs with no raster/GIF edge artifacts. */
+  /* Restore the original iOS-style frosted-glass loading screen. */
   #loadingOverlay.loading-overlay{
-    position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;
-    align-items:center!important;justify-content:center!important;overflow:hidden!important;
-    padding:clamp(10px,2.5vw,28px)!important;
-    background:radial-gradient(ellipse at 50% 48%,#06264b 0%,#03152d 48%,#010711 100%)!important;
-    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    position:fixed!important;inset:0!important;z-index:99999!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    box-sizing:border-box!important;overflow:hidden!important;padding:18px!important;
+    background:rgba(225,239,251,.30)!important;
+    backdrop-filter:blur(12px) saturate(155%)!important;
+    -webkit-backdrop-filter:blur(12px) saturate(155%)!important;
   }
   #loadingOverlay.loading-overlay.hidden{display:none!important;}
   #loadingOverlay .loading-content{
-    position:relative!important;isolation:isolate;box-sizing:border-box;width:min(100%,1120px)!important;
-    min-height:clamp(340px,42vw,470px)!important;padding:clamp(24px,4vw,48px) 12px 22px!important;
-    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-    text-align:center!important;border:0!important;border-radius:0!important;background:transparent!important;
-    box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible!important;
+    position:relative!important;isolation:isolate;box-sizing:border-box;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    justify-content:center!important;text-align:center!important;
+    width:min(100%,420px)!important;min-height:0!important;
+    padding:clamp(28px,5vh,42px) clamp(22px,5vw,34px)!important;
+    border:1px solid rgba(255,255,255,.82)!important;border-radius:28px!important;
+    background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(239,247,253,.58))!important;
+    box-shadow:0 24px 76px rgba(0,35,70,.20),inset 0 1px 0 rgba(255,255,255,.98)!important;
+    backdrop-filter:blur(18px) saturate(170%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(170%)!important;
+    overflow:hidden!important;
   }
-  #loadingOverlay .loading-content::before,#loadingOverlay .loading-content::after{
-    content:none!important;display:none!important;border:0!important;background:none!important;box-shadow:none!important;
+  #loadingOverlay .loading-content::before{
+    content:""!important;position:absolute!important;inset:0 0 auto!important;height:48%!important;
+    pointer-events:none!important;
+    background:linear-gradient(180deg,rgba(255,255,255,.42),transparent)!important;
   }
-  #loadingOverlay .loading-arcs{
-    position:absolute!important;z-index:0!important;inset:0!important;width:100%!important;height:100%!important;
-    overflow:hidden!important;pointer-events:none!important;display:block!important;
-  }
-  /* A single clean vector stroke per side: no glow copy, dash fragments, or raster image. */
-  #loadingOverlay .loading-arc-glow{display:none!important;}
-  #loadingOverlay .loading-arc{
-    fill:none!important;stroke:#08aaff!important;stroke-width:12!important;
-    stroke-linecap:round!important;stroke-linejoin:round!important;
-    stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important;
-    filter:none!important;vector-effect:non-scaling-stroke!important;
-    shape-rendering:geometricPrecision!important;
-    animation:teamRerArcBreath 8s ease-in-out infinite!important;
-  }
-  #loadingOverlay .loading-arc:nth-of-type(2){animation-delay:-4s!important;}
+  #loadingOverlay .loading-content>*{position:relative!important;z-index:1!important;}
+  #loadingOverlay .loading-arcs{display:none!important;}
   #loadingOverlay .loading-brand{
-    position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;
-    align-items:center!important;margin:0 auto clamp(18px,2.5vw,28px)!important;color:#f4f8ff!important;
-    text-shadow:0 0 18px rgba(88,166,255,.28)!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    margin:0 auto 22px!important;color:#003b70!important;text-shadow:none!important;
   }
   #loadingOverlay .loading-logo{
-    display:block!important;width:clamp(68px,8vw,96px)!important;height:clamp(54px,6vw,76px)!important;
-    object-fit:contain!important;filter:brightness(0) invert(1) drop-shadow(0 0 10px rgba(170,215,255,.5))!important;
+    display:block!important;width:clamp(76px,18vw,104px)!important;
+    height:clamp(58px,14vw,78px)!important;object-fit:contain!important;
+    filter:drop-shadow(0 5px 9px rgba(0,59,112,.13))!important;
   }
-  #loadingOverlay .loading-brand-name{margin-top:7px!important;font-size:clamp(24px,3.6vw,42px)!important;
-    font-weight:800!important;letter-spacing:.12em!important;line-height:1.12!important;}
-  #loadingOverlay .loading-brand-sub{display:flex!important;align-items:center!important;justify-content:center!important;
-    gap:18px!important;margin-top:9px!important;color:#dcecff!important;font-size:clamp(13px,1.8vw,20px)!important;
-    font-weight:500!important;letter-spacing:.25em!important;}
-  #loadingOverlay .loading-brand-sub span{display:block!important;width:clamp(38px,9vw,112px)!important;height:1px!important;
-    background:linear-gradient(90deg,transparent,rgba(210,233,255,.9))!important;}
+  #loadingOverlay .loading-brand-name{
+    margin-top:7px!important;color:#003b70!important;
+    font-size:clamp(22px,5vw,29px)!important;font-weight:800!important;
+    letter-spacing:.10em!important;line-height:1.15!important;
+  }
+  #loadingOverlay .loading-brand-sub{
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    gap:14px!important;margin-top:9px!important;color:#456782!important;
+    font-size:clamp(12px,3vw,15px)!important;font-weight:600!important;letter-spacing:.24em!important;
+  }
+  #loadingOverlay .loading-brand-sub span{
+    display:block!important;width:clamp(28px,8vw,48px)!important;height:1px!important;
+    background:linear-gradient(90deg,transparent,rgba(0,59,112,.48))!important;
+  }
   #loadingOverlay .loading-brand-sub span:last-child{transform:rotate(180deg);}
-  #loadingOverlay .loading-orbit{position:relative!important;z-index:2!important;width:clamp(48px,5.5vw,64px)!important;
-    height:clamp(48px,5.5vw,64px)!important;margin:0 auto 14px!important;border:7px dotted rgba(35,151,255,.72)!important;
-    border-top-color:#36baff!important;border-right-color:#b3ecff!important;border-bottom-color:#0875e8!important;
-    border-left-color:#188fe9!important;border-radius:50%!important;animation:teamRerLoadingSpin .95s linear infinite!important;
-    filter:none!important;}
-  #loadingOverlay .loading-title{position:relative!important;z-index:2!important;margin:0!important;color:#f5f9ff!important;
-    font-size:clamp(21px,2.8vw,31px)!important;font-weight:650!important;letter-spacing:.01em!important;
-    text-shadow:0 0 14px rgba(74,160,255,.22)!important;}
-  #loadingOverlay .loading-message{position:relative!important;z-index:2!important;min-height:1.45em!important;
-    margin:8px 0 0!important;color:#c8dcf5!important;font-size:clamp(13px,1.7vw,18px)!important;line-height:1.45!important;}
-  #loadingOverlay .loading-progress-meta{position:relative!important;z-index:2!important;display:flex!important;
-    align-items:center!important;justify-content:space-between!important;gap:12px!important;width:min(46%,520px)!important;
-    min-width:250px!important;margin:clamp(18px,2.5vw,28px) auto 8px!important;color:#c8dcf5!important;
-    font-size:clamp(11px,1.3vw,15px)!important;text-align:left!important;}
-  #loadingOverlay .loading-progress-meta strong{color:#f0f8ff!important;font-size:clamp(14px,1.7vw,19px)!important;
-    font-variant-numeric:tabular-nums!important;}
-  #loadingOverlay .loading-track{position:relative!important;z-index:2!important;display:block!important;
-    width:min(46%,520px)!important;min-width:250px!important;height:12px!important;margin:0 auto!important;overflow:hidden!important;
-    border:1px solid rgba(93,185,255,.85)!important;border-radius:99px!important;background:rgba(0,14,36,.9)!important;
-    box-shadow:inset 0 1px 4px rgba(0,0,0,.6),0 0 14px rgba(0,133,255,.24)!important;}
-  #loadingOverlay .loading-progress-fill{width:8%;height:100%;border-radius:inherit;
-    background:linear-gradient(90deg,#0875e8 0%,#18aaff 58%,#b4f2ff 100%);transition:width .32s ease;
-    box-shadow:0 0 12px rgba(25,175,255,.9);}
+  #loadingOverlay .loading-orbit{
+    position:relative!important;width:48px!important;height:48px!important;
+    margin:0 auto 17px!important;border:3px solid rgba(0,59,112,.13)!important;
+    border-top-color:#003b70!important;border-right-color:#2b83bd!important;
+    border-radius:50%!important;animation:hyundaiSpin .9s linear infinite!important;
+    filter:none!important;
+  }
+  #loadingOverlay .loading-orbit::after{
+    content:""!important;position:absolute!important;width:7px!important;height:7px!important;
+    top:-4px!important;left:7px!important;border-radius:50%!important;
+    background:#78b9e3!important;box-shadow:0 0 12px rgba(43,131,189,.75)!important;
+  }
+  #loadingOverlay .loading-title{
+    margin:0!important;color:#003b70!important;font-size:19px!important;
+    font-weight:700!important;letter-spacing:.2px!important;text-shadow:none!important;
+  }
+  #loadingOverlay .loading-message{
+    min-height:20px!important;margin:8px 0 0!important;color:#587087!important;
+    font-size:13px!important;line-height:1.5!important;
+  }
+  #loadingOverlay .loading-progress-meta{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    gap:12px!important;width:100%!important;min-width:0!important;
+    margin:20px 4px 8px!important;color:#587087!important;font-size:11px!important;text-align:left!important;
+  }
+  #loadingOverlay .loading-progress-meta strong{
+    color:#003b70!important;font-size:13px!important;font-variant-numeric:tabular-nums!important;
+  }
+  #loadingOverlay .loading-track{
+    display:block!important;width:100%!important;min-width:0!important;height:7px!important;
+    margin:0 4px!important;overflow:hidden!important;border:0!important;border-radius:99px!important;
+    background:#dce7f0!important;box-shadow:inset 0 1px 2px rgba(0,39,75,.08)!important;
+  }
+  #loadingOverlay .loading-progress-fill{
+    height:100%!important;border-radius:inherit!important;
+    background:linear-gradient(90deg,#003b70,#3c9bd2)!important;
+    transition:width .32s ease!important;box-shadow:0 0 10px rgba(43,131,189,.24)!important;
+  }
   #loadingOverlay .loading-progress-note{display:none!important;}
-  @keyframes teamRerLoadingSpin{to{transform:rotate(360deg);}}
-  @keyframes teamRerArcBreath{0%,100%{opacity:.88}50%{opacity:1}}
+  @keyframes hyundaiSpin{to{transform:rotate(360deg);}}
   @media(max-width:600px){
-    #loadingOverlay.loading-overlay{padding:8px!important;}
-    #loadingOverlay .loading-content{width:100%!important;min-height:clamp(340px,58vh,440px)!important;
-      padding:24px 4px 20px!important;}
-    #loadingOverlay .loading-arcs{inset:0!important;width:100%!important;height:100%!important;}
-    #loadingOverlay .loading-arc{stroke-width:9!important;}
-    #loadingOverlay .loading-brand{margin-bottom:clamp(16px,3vh,24px)!important;}
-    #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track{width:min(68%,390px)!important;min-width:220px!important;}
+    #loadingOverlay.loading-overlay{padding:16px!important;}
+    #loadingOverlay .loading-content{
+      width:min(100%,390px)!important;padding:28px 22px 26px!important;
+      border-radius:26px!important;
+    }
   }
   @media(prefers-reduced-motion:reduce){
-    #loadingOverlay .loading-orbit,#loadingOverlay .loading-arc{animation:none!important;}
+    #loadingOverlay .loading-orbit{animation-duration:3s!important;}
   }
 </style>
 
@@ -2778,14 +2793,8 @@
 
   <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="false">
     <div class="loading-content">
-      <svg class="loading-arcs" viewBox="0 0 1000 470" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-        <path class="loading-arc-glow" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
-        <path class="loading-arc-glow" d="M670 62 C810 72 888 139 888 235 C888 331 810 398 670 408" />
-        <path class="loading-arc" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
-        <path class="loading-arc" d="M670 62 C810 72 888 139 888 235 C888 331 810 398 670 408" />
-      </svg>
       <div class="loading-brand">
-        <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/ffffff" alt="Hyundai">
+        <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai">
         <div class="loading-brand-name">HYUNDAI CAINTA</div>
         <div class="loading-brand-sub"><span></span>TEAM RER<span></span></div>
       </div>
