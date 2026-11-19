@@ -3370,17 +3370,118 @@
     let promoInventoryLoaded = false;
     let creditModeHistoryRows = [];
     let creditModeHistoryLoaded = false;
-    const LAST_APP_VIEW_KEY = "TEAM_RER_LAST_APP_VIEW_V1";
+    const LAST_APP_VIEW_KEY = "TEAM_RER_LAST_APP_VIEW_V2";
+    const APP_VIEW_PAGES = ["pdfPage","quotePage","creditPage","creditHistoryPage","promoPage","auditPage","userManagementPage","orgChartPage","cplPage"];
 
+    function appViewStorageKey() {
+      const email = String(authorizedUser?.email || "anonymous").trim().toLowerCase();
+      return LAST_APP_VIEW_KEY + "_" + email.replace(/[^a-z0-9._-]/g,"_");
+    }
     function saveLastAppView(view) {
-      try { localStorage.setItem(LAST_APP_VIEW_KEY, JSON.stringify(view)); } catch (_) {}
+      try {
+        const current = readLastAppView() || {};
+        localStorage.setItem(appViewStorageKey(), JSON.stringify({...current,...view,updatedAt:Date.now()}));
+      } catch (_) {}
     }
     function readLastAppView() {
-      try { return JSON.parse(localStorage.getItem(LAST_APP_VIEW_KEY) || "null"); } catch (_) { return null; }
+      try { return JSON.parse(localStorage.getItem(appViewStorageKey()) || "null"); } catch (_) { return null; }
     }
     function clearLastAppView() {
-      try { localStorage.removeItem(LAST_APP_VIEW_KEY); } catch (_) {}
+      try { localStorage.removeItem(appViewStorageKey()); } catch (_) {}
     }
+    function getVisibleAppPage() {
+      return APP_VIEW_PAGES.find(id => {
+        const el = $(id);
+        return el && !el.classList.contains("hidden") && getComputedStyle(el).display !== "none";
+      }) || "";
+    }
+    let appViewSaveQueued = false;
+    function captureLastAppView() {
+      if (!authorizedUser?.email) return;
+      const page = getVisibleAppPage();
+      if (!page) return;
+      const scrolls = {};
+      document.querySelectorAll("[id]").forEach(el => {
+        if (el.scrollHeight > el.clientHeight + 8 && el.clientHeight > 0) {
+          scrolls[el.id] = {top:el.scrollTop,left:el.scrollLeft};
+        }
+      });
+      saveLastAppView({
+        page,
+        tab: page === "promoPage" ? (promoActiveView || "promos") : "",
+        windowX: window.scrollX || 0,
+        windowY: window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0,
+        scrolls
+      });
+    }
+    function queueLastAppViewCapture() {
+      if (appViewSaveQueued) return;
+      appViewSaveQueued = true;
+      setTimeout(() => { appViewSaveQueued = false; captureLastAppView(); }, 180);
+    }
+    function restoreLastAppView() {
+      const view = readLastAppView();
+      if (!view || !APP_VIEW_PAGES.includes(view.page)) return false;
+      const role = String(authorizedUser?.role || "").toLowerCase();
+      if (view.page === "cplPage" && !canAccessCplSession()) return false;
+      if (view.page === "userManagementPage" && !isSuperAdminSession()) return false;
+      if (view.page === "auditPage" && !isAdminSession()) return false;
+      if (view.page === "orgChartPage" && !isSuperAdminSession()) return false;
+
+      $("appNav").classList.add("hidden");
+      APP_VIEW_PAGES.forEach(id => $(id).classList.toggle("hidden",id !== view.page));
+      if (view.page === "promoPage") {
+        setPromoView(["promos","stock","banks","srp"].includes(view.tab) ? view.tab : "promos");
+        submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"),error.message,"error"));
+      } else if (view.page === "cplPage") {
+        loadCpl();
+      } else if (view.page === "auditPage") {
+        loadAuditLogs();
+      } else if (view.page === "userManagementPage") {
+        $("userEditorWrap").classList.add("hidden");
+        submitRequest("userManagementGet").catch(error => setMessage($("userManagementMessage"),error.message,"error"));
+      } else if (view.page === "orgChartPage") {
+        loadOrgChart();
+      } else if (view.page === "creditHistoryPage") {
+        loadCreditHistory();
+      } else if (view.page === "creditPage") {
+        syncCreditConsultantForRole();
+        buildCreditForm();
+      } else if (view.page === "quotePage" || view.page === "pdfPage") {
+        if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to reload module data:",error));
+        if (view.page === "quotePage") updateQuotePreview();
+      }
+      const restoreScroll = () => {
+        window.scrollTo(Number(view.windowX)||0,Number(view.windowY)||0);
+        Object.entries(view.scrolls || {}).forEach(([id,pos]) => {
+          const el = $(id);
+          if (el) { el.scrollTop = Number(pos?.top)||0; el.scrollLeft = Number(pos?.left)||0; }
+        });
+      };
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
+      setTimeout(restoreScroll, 500);
+      setTimeout(restoreScroll, 1200);
+      return true;
+    }
+    window.addEventListener("scroll",queueLastAppViewCapture,{passive:true});
+    document.addEventListener("scroll",queueLastAppViewCapture,true);
+    document.addEventListener("click",event => {
+      if (event.target.closest("[id^='backToMenu']")) {
+        clearLastAppView();
+        return;
+      }
+      if (event.target.closest("#logoutBtn")) {
+        clearLastAppView();
+        return;
+      }
+      if (event.target.closest("#appNav button,[id$='TabBtn']")) {
+        setTimeout(queueLastAppViewCapture,80);
+      }
+    },true);
+    const appViewObserver = new MutationObserver(queueLastAppViewCapture);
+    APP_VIEW_PAGES.forEach(id => { const el=$(id); if(el) appViewObserver.observe(el,{attributes:true,attributeFilter:["class"]}); });
+    const appNavForViewObserver=$("appNav");
+    if(appNavForViewObserver) appViewObserver.observe(appNavForViewObserver,{attributes:true,attributeFilter:["class"]});
 
     // TEAM RER session policy:
     // Admins keep their Google sign-in indefinitely and are locally locked
@@ -3982,7 +4083,8 @@
             roleLabel.textContent = "";
           }
         }
-        const firstName = String(authorizedUser.name || "").trim().split(/\\s+/)[0] || "there";
+        const greetingName = String(authorizedUser.nickname || authorizedUser.name || "").trim();
+        const firstName = greetingName || "there";
         const localHour = new Date().getHours();
         const greeting = localHour < 12 ? "Good morning" : localHour < 18 ? "Good afternoon" : "Good evening";
         $("userDetails").textContent = `${greeting}, ${firstName}!`;
@@ -4027,15 +4129,8 @@
           updateCreditColorDropdown();
         }
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
-        const lastView = readLastAppView();
-        if (!(lastView && lastView.page === "promos")) loadApplicationsDashboard(applicationsDashboardPeriod);
-        if (lastView && lastView.page === "promos") {
-          $("appNav").classList.add("hidden");
-          ["pdfPage","quotePage","creditPage"].forEach(id => $(id).classList.add("hidden"));
-          $("promoPage").classList.remove("hidden");
-          setPromoView(["promos","stock","banks","srp"].includes(lastView.tab) ? lastView.tab : "promos");
-          submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"), error.message, "error"));
-        }
+        const restoredLastView = restoreLastAppView();
+        if (!restoredLastView) loadApplicationsDashboard(applicationsDashboardPeriod);
         return;
       }
 
@@ -4869,7 +4964,7 @@
     });
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; clearLastAppView(); syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId="";  syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -7107,7 +7202,6 @@
         ["pdfPage","quotePage","creditPage","promoPage","auditPage"].forEach(id => $(id).classList.add("hidden"));
         $("userManagementPage").classList.remove("hidden");
         $("userEditorWrap").classList.add("hidden");
-        clearLastAppView();
         submitRequest("userManagementGet").catch(error => setMessage($("userManagementMessage"), error.message, "error"));
       });
     });
@@ -7122,7 +7216,6 @@
         $("appNav").classList.add("hidden");
         ["pdfPage","quotePage","creditPage","promoPage"].forEach(id => $(id).classList.add("hidden"));
         $("auditPage").classList.remove("hidden");
-        clearLastAppView();
         loadAuditLogs();
       });
     });
@@ -7159,7 +7252,7 @@
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
       $("auditPage").classList.add("hidden");
-      clearLastAppView();
+      
       if (!promoInventoryLoaded) {
         submitRequest("promoInventoryGet").catch(error => setMessage($("resultMessage"), "Unable to load active partner banks: " + error.message, "error"));
       } else {
@@ -7173,7 +7266,7 @@
       $("creditPage").classList.add("hidden");
       $("promoPage").classList.add("hidden");
       $("auditPage").classList.add("hidden");
-      clearLastAppView();
+      
       if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to load promotion matching data:", error));
       updateQuotePreview();
     }));
