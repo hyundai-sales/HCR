@@ -6665,7 +6665,28 @@
     async function openPriceListPdfPreview() {
       if (!pendingPriceListPdfBytes || !pendingPriceListPdfBytes.length) return;
       $("downloadLink").classList.remove("hidden");
-      $("previewWrap").classList.remove("hidden");
+      const previewWrap = $("previewWrap");
+      previewWrap.classList.remove("hidden");
+
+      // Bring the PDF Preview toolbar (title, Download PDF, Close) into view.
+      // Reset both the page and modal scroll positions for mobile and desktop.
+      const focusPdfPreviewToolbar = () => {
+        const previewHead = previewWrap.querySelector(".preview-head");
+        previewWrap.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        if (previewHead) {
+          previewHead.scrollIntoView({ block: "start", inline: "nearest", behavior: "instant" });
+        }
+        requestAnimationFrame(() => {
+          previewWrap.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          window.scrollTo(0, 0);
+        });
+      };
+      focusPdfPreviewToolbar();
       $("viewBtn").disabled = true;
       $("viewBtn").textContent = "Preparing preview...";
       $("pdfPages").replaceChildren();
@@ -6701,6 +6722,8 @@
         }
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
+        // Rendering can change the modal's dimensions; re-focus its toolbar afterward.
+        focusPdfPreviewToolbar();
       } catch (error) {
         console.error("Price List PDF preview failed:", error);
         $("pdfPages").innerHTML = '<p style="padding:18px;color:#991b1b;background:#fff">Unable to display this PDF preview. Use Download PDF to open the file, or retry View PDF.</p>';
