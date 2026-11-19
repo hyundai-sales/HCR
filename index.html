@@ -2621,53 +2621,75 @@
 
 
 <style id="team-rer-approved-loading-screen-v1">
-  /* Loading screen only: clean Hyundai Cainta arcs, with no surrounding card/frame. */
+  /* Loading screen only: match the agreed wide Hyundai capsule/arc reference. */
   #loadingOverlay.loading-overlay{
     position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;
     align-items:center!important;justify-content:center!important;overflow:hidden!important;
-    padding:clamp(12px,3vw,34px)!important;
+    padding:clamp(10px,2.5vw,28px)!important;
     background:radial-gradient(ellipse at 50% 48%,#06264b 0%,#03152d 48%,#010711 100%)!important;
     backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
   #loadingOverlay.loading-overlay.hidden{display:none!important;}
   #loadingOverlay .loading-content{
     position:relative!important;isolation:isolate;box-sizing:border-box;width:min(100%,1120px)!important;
-    min-height:clamp(390px,52vw,570px);padding:clamp(30px,5vw,62px) 12px 24px!important;
-    display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-    border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
-    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible!important;
+    min-height:clamp(340px,42vw,470px)!important;padding:clamp(24px,4vw,48px) 12px 22px!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    text-align:center!important;border:0!important;border-radius:0!important;background:transparent!important;
+    box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible!important;
   }
-  #loadingOverlay .loading-arcs{position:absolute;z-index:0;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
-  #loadingOverlay .loading-arc{fill:none;stroke:#078eff;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;
-    stroke-dasharray:24 10;opacity:0;filter:drop-shadow(0 0 5px #078bff) drop-shadow(0 0 13px rgba(0,145,255,.9));}
-  #loadingOverlay .arc-one{opacity:1;stroke:#079eff;}
-  #loadingOverlay .arc-two{animation:teamRerArcTwo 1.8s steps(1,end) infinite;stroke:#078fff;}
-  #loadingOverlay .arc-three{animation:teamRerArcThree 1.8s steps(1,end) infinite;stroke:#08aaff;}
+  #loadingOverlay .loading-content::before,#loadingOverlay .loading-content::after{
+    content:none!important;display:none!important;border:0!important;background:none!important;box-shadow:none!important;
+  }
+  #loadingOverlay .loading-arcs{
+    position:absolute!important;z-index:0!important;inset:0!important;width:100%!important;height:100%!important;
+    overflow:visible!important;pointer-events:none!important;
+  }
+  #loadingOverlay .loading-arc{
+    fill:none!important;stroke:#078eff!important;stroke-width:12!important;stroke-linecap:round!important;
+    stroke-linejoin:round!important;stroke-dasharray:24 10!important;opacity:0!important;
+    filter:drop-shadow(0 0 5px #078bff) drop-shadow(0 0 13px rgba(0,145,255,.9))!important;
+  }
+  #loadingOverlay .arc-one{opacity:1!important;stroke:#079eff!important;}
+  #loadingOverlay .arc-two{animation:teamRerArcTwo 1.8s steps(1,end) infinite!important;stroke:#078fff!important;}
+  #loadingOverlay .arc-three{animation:teamRerArcThree 1.8s steps(1,end) infinite!important;stroke:#08aaff!important;}
   #loadingOverlay .loading-arc-stage-right{transform-origin:500px 235px;}
-  #loadingOverlay .loading-brand{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
-    margin:0 auto clamp(22px,3vw,34px);color:#f4f8ff;text-shadow:0 0 18px rgba(88,166,255,.28);}
-  #loadingOverlay .loading-logo{display:block;width:clamp(68px,8vw,96px);height:clamp(54px,6vw,76px);object-fit:contain;
-    filter:brightness(0) invert(1) drop-shadow(0 0 10px rgba(170,215,255,.5));}
-  #loadingOverlay .loading-brand-name{margin-top:7px;font-size:clamp(25px,3.6vw,42px);font-weight:800;letter-spacing:.12em;line-height:1.12;}
-  #loadingOverlay .loading-brand-sub{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:9px;
-    color:#dcecff;font-size:clamp(13px,1.8vw,20px);font-weight:500;letter-spacing:.25em;}
-  #loadingOverlay .loading-brand-sub span{display:block;width:clamp(38px,9vw,112px);height:1px;background:linear-gradient(90deg,transparent,rgba(210,233,255,.9));}
+  #loadingOverlay .loading-brand{
+    position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;
+    align-items:center!important;margin:0 auto clamp(18px,2.5vw,28px)!important;color:#f4f8ff!important;
+    text-shadow:0 0 18px rgba(88,166,255,.28)!important;
+  }
+  #loadingOverlay .loading-logo{
+    display:block!important;width:clamp(68px,8vw,96px)!important;height:clamp(54px,6vw,76px)!important;
+    object-fit:contain!important;filter:brightness(0) invert(1) drop-shadow(0 0 10px rgba(170,215,255,.5))!important;
+  }
+  #loadingOverlay .loading-brand-name{margin-top:7px!important;font-size:clamp(24px,3.6vw,42px)!important;
+    font-weight:800!important;letter-spacing:.12em!important;line-height:1.12!important;}
+  #loadingOverlay .loading-brand-sub{display:flex!important;align-items:center!important;justify-content:center!important;
+    gap:18px!important;margin-top:9px!important;color:#dcecff!important;font-size:clamp(13px,1.8vw,20px)!important;
+    font-weight:500!important;letter-spacing:.25em!important;}
+  #loadingOverlay .loading-brand-sub span{display:block!important;width:clamp(38px,9vw,112px)!important;height:1px!important;
+    background:linear-gradient(90deg,transparent,rgba(210,233,255,.9))!important;}
   #loadingOverlay .loading-brand-sub span:last-child{transform:rotate(180deg);}
-  #loadingOverlay .loading-orbit{position:relative;z-index:2;width:clamp(48px,5.5vw,64px);height:clamp(48px,5.5vw,64px);
-    margin:0 auto 16px;border:7px dotted rgba(35,151,255,.72);border-top-color:#36baff;border-right-color:#b3ecff;
-    border-bottom-color:#0875e8;border-left-color:#188fe9;border-radius:50%;animation:teamRerLoadingSpin .95s linear infinite;
-    filter:drop-shadow(0 0 8px rgba(0,145,255,.5));}
-  #loadingOverlay .loading-title{position:relative;z-index:2;margin:0;color:#f5f9ff;font-size:clamp(21px,2.8vw,31px);
-    font-weight:650;letter-spacing:.01em;text-shadow:0 0 14px rgba(74,160,255,.22);}
-  #loadingOverlay .loading-message{position:relative;z-index:2;min-height:1.45em;margin:8px 0 0;color:#c8dcf5;
-    font-size:clamp(13px,1.7vw,18px);line-height:1.45;}
-  #loadingOverlay .loading-progress-meta{position:relative;z-index:2;display:flex!important;align-items:center;justify-content:space-between;
-    gap:12px;width:min(46%,520px);min-width:250px;margin:clamp(22px,3vw,34px) auto 8px;color:#c8dcf5;
-    font-size:clamp(11px,1.3vw,15px);text-align:left;}
-  #loadingOverlay .loading-progress-meta strong{color:#f0f8ff;font-size:clamp(14px,1.7vw,19px);font-variant-numeric:tabular-nums;}
-  #loadingOverlay .loading-track{position:relative;z-index:2;display:block!important;width:min(46%,520px);min-width:250px;height:12px;
-    margin:0 auto;overflow:hidden;border:1px solid rgba(93,185,255,.85);border-radius:99px;
-    background:rgba(0,14,36,.9);box-shadow:inset 0 1px 4px rgba(0,0,0,.6),0 0 14px rgba(0,133,255,.24);}
+  #loadingOverlay .loading-orbit{position:relative!important;z-index:2!important;width:clamp(48px,5.5vw,64px)!important;
+    height:clamp(48px,5.5vw,64px)!important;margin:0 auto 14px!important;border:7px dotted rgba(35,151,255,.72)!important;
+    border-top-color:#36baff!important;border-right-color:#b3ecff!important;border-bottom-color:#0875e8!important;
+    border-left-color:#188fe9!important;border-radius:50%!important;animation:teamRerLoadingSpin .95s linear infinite!important;
+    filter:drop-shadow(0 0 8px rgba(0,145,255,.5))!important;}
+  #loadingOverlay .loading-title{position:relative!important;z-index:2!important;margin:0!important;color:#f5f9ff!important;
+    font-size:clamp(21px,2.8vw,31px)!important;font-weight:650!important;letter-spacing:.01em!important;
+    text-shadow:0 0 14px rgba(74,160,255,.22)!important;}
+  #loadingOverlay .loading-message{position:relative!important;z-index:2!important;min-height:1.45em!important;
+    margin:8px 0 0!important;color:#c8dcf5!important;font-size:clamp(13px,1.7vw,18px)!important;line-height:1.45!important;}
+  #loadingOverlay .loading-progress-meta{position:relative!important;z-index:2!important;display:flex!important;
+    align-items:center!important;justify-content:space-between!important;gap:12px!important;width:min(46%,520px)!important;
+    min-width:250px!important;margin:clamp(18px,2.5vw,28px) auto 8px!important;color:#c8dcf5!important;
+    font-size:clamp(11px,1.3vw,15px)!important;text-align:left!important;}
+  #loadingOverlay .loading-progress-meta strong{color:#f0f8ff!important;font-size:clamp(14px,1.7vw,19px)!important;
+    font-variant-numeric:tabular-nums!important;}
+  #loadingOverlay .loading-track{position:relative!important;z-index:2!important;display:block!important;
+    width:min(46%,520px)!important;min-width:250px!important;height:12px!important;margin:0 auto!important;overflow:hidden!important;
+    border:1px solid rgba(93,185,255,.85)!important;border-radius:99px!important;background:rgba(0,14,36,.9)!important;
+    box-shadow:inset 0 1px 4px rgba(0,0,0,.6),0 0 14px rgba(0,133,255,.24)!important;}
   #loadingOverlay .loading-progress-fill{width:8%;height:100%;border-radius:inherit;
     background:linear-gradient(90deg,#0875e8 0%,#18aaff 58%,#b4f2ff 100%);transition:width .32s ease;
     box-shadow:0 0 12px rgba(25,175,255,.9);}
@@ -2676,12 +2698,13 @@
   @keyframes teamRerArcTwo{0%,32.99%{opacity:0}33%,100%{opacity:1}}
   @keyframes teamRerArcThree{0%,65.99%{opacity:0}66%,100%{opacity:1}}
   @media(max-width:600px){
-    #loadingOverlay{padding:8px!important;}
-    #loadingOverlay .loading-content{width:100%!important;min-height:clamp(380px,70vh,540px);padding:28px 4px 22px!important;}
-    #loadingOverlay .loading-arcs{inset:4% -4%;width:108%;height:92%;}
-    #loadingOverlay .loading-arc{stroke-width:13;stroke-dasharray:20 9;}
-    #loadingOverlay .loading-brand{margin-bottom:clamp(20px,4vh,30px);}
-    #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track{width:min(68%,390px);min-width:220px;}
+    #loadingOverlay.loading-overlay{padding:8px!important;}
+    #loadingOverlay .loading-content{width:100%!important;min-height:clamp(340px,58vh,440px)!important;
+      padding:24px 4px 20px!important;}
+    #loadingOverlay .loading-arcs{inset:0!important;width:100%!important;height:100%!important;}
+    #loadingOverlay .loading-arc{stroke-width:12!important;stroke-dasharray:20 9!important;}
+    #loadingOverlay .loading-brand{margin-bottom:clamp(16px,3vh,24px)!important;}
+    #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track{width:min(68%,390px)!important;min-width:220px!important;}
   }
   @media(prefers-reduced-motion:reduce){
     #loadingOverlay .loading-orbit{animation:none!important;}
@@ -2756,7 +2779,7 @@
 
   <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="false">
     <div class="loading-content">
-      <svg class="loading-arcs" viewBox="0 0 1000 470" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="loading-arcs" viewBox="0 0 1000 470" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <g class="loading-arc-stage">
           <path class="loading-arc arc-one" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
           <path class="loading-arc arc-two" d="M300 42 C150 57 78 137 78 235 C78 333 150 413 300 428" />
