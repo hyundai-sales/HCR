@@ -2995,6 +2995,10 @@
     let pendingPriceListPdfUrl = null;
     let pendingPriceListPdfBytes = null;
     let openPriceListPreviewWhenReady = false;
+    // Temporary baseline timing values; these do not affect PDF generation.
+    let priceListRequestPerfStartedAt = 0;
+    let priceListRequestPerfRoundTripMs = null;
+    let priceListBackendPerf = null;
     let priceListPdfRenderTask = null;
     let priceListPdfJsPromise = null;
     let promoInventoryLoaded = false;
@@ -3826,6 +3830,11 @@
 
       if (action === "generate") {
         const result = event.data;
+        priceListRequestPerfRoundTripMs = priceListRequestPerfStartedAt
+          ? Math.round(performance.now() - priceListRequestPerfStartedAt) : null;
+        priceListBackendPerf = result.performanceMs || null;
+        console.info("[PRICE_LIST_PERF] Server stages:", priceListBackendPerf);
+        console.info("[PRICE_LIST_PERF] Browser request round-trip ms:", priceListRequestPerfRoundTripMs);
         const worksheetName = String($("worksheet").value || "Price List").trim();
         const worksheetFileName = worksheetName.replace(/[^a-z0-9 _-]/gi, "").replace(/\\s+/g, "-") + ".pdf";
         if (!result.pdfBase64) {
@@ -6664,6 +6673,7 @@
 
     async function openPriceListPdfPreview() {
       if (!pendingPriceListPdfBytes || !pendingPriceListPdfBytes.length) return;
+      const previewPerfStart = performance.now();
       $("downloadLink").classList.remove("hidden");
       const previewWrap = $("previewWrap");
       previewWrap.classList.remove("hidden");
@@ -6722,6 +6732,18 @@
         }
         $("viewBtn").disabled = false;
         $("viewBtn").textContent = "View PDF";
+        const previewRenderMs = Math.round(performance.now() - previewPerfStart);
+        console.info("[PRICE_LIST_PERF] Browser preview render ms:", previewRenderMs);
+        const serverMs = priceListBackendPerf && priceListBackendPerf.backendTotalMs;
+        const requestMs = priceListRequestPerfRoundTripMs;
+        const timingParts = [];
+        if (serverMs != null) timingParts.push("Server " + (serverMs / 1000).toFixed(1) + "s");
+        if (requestMs != null) timingParts.push("Request " + (requestMs / 1000).toFixed(1) + "s");
+        timingParts.push("Preview " + (previewRenderMs / 1000).toFixed(1) + "s");
+        setMessage($("resultMessage"),
+          String($("worksheet").value || "Price List") + " PDF ready. Baseline timing: " + timingParts.join(" · "),
+          "success"
+        );
         // Rendering can change the modal's dimensions; re-focus its toolbar afterward.
         focusPdfPreviewToolbar();
       } catch (error) {
@@ -6752,6 +6774,9 @@
       $("viewBtn").textContent = "Generating PDF...";
       setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
       openPriceListPreviewWhenReady = true;
+      priceListRequestPerfStartedAt = performance.now();
+      priceListRequestPerfRoundTripMs = null;
+      priceListBackendPerf = null;
       try {
         await submitRequest("generate", { worksheet, downpayment:"20", bank:"BDO", consultant });
       } catch (error) {
