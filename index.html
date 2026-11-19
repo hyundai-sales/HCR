@@ -2897,7 +2897,6 @@
         <section id="promoPage" class="hidden">
           <button id="backToMenuFromPromo" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Promos and Vehicle Info</h2>
-          <button id="batchPromoBtn" class="secondary hidden" type="button">Batch Edit</button>
           <p class="app-caption">Manage promotions, vehicle availability, partner banks and vehicle SRPs in one place.</p>
           <div class="promo-tabs" role="tablist" aria-label="Promotions, vehicle information, partner banks and SRP editor">
             <button id="promoOffersTab" class="active" type="button" role="tab" aria-selected="true">Promotions</button>
@@ -2906,6 +2905,7 @@
             <button id="promoBanksTab" type="button" role="tab" aria-selected="false">Partner Banks</button>
           </div>
           <div id="promoOffersPanel">
+            <button id="batchPromoBtn" class="secondary hidden" type="button">Batch Edit</button>
             <div class="promo-tools">
               <select id="promoVehicleSelect" aria-label="Select vehicle for promotions"><option value="">Select vehicle model and variant...</option></select>
               <button id="addPromoBtn" class="promo-add hidden" type="button">＋ Add Promo</button>
@@ -7714,7 +7714,7 @@
 <style id="team-rer-promo-variant-card-contrast-v22">
   /* Promotions: make model/variant selector cards readable in either theme.
      These cards intentionally use a light glass surface with dark typography. */
-    #promoPage > #batchPromoBtn { margin: 8px 0 14px; min-width: 150px; }
+    #promoOffersPanel > #batchPromoBtn { margin: 8px 0 14px; min-width: 150px; }
     .batch-target-grid .field { background: rgba(28,67,99,.07); border: 1px solid rgba(28,67,99,.16); border-radius: 12px; padding: 12px; }
     .batch-target-grid .field > label { display:flex; align-items:center; gap:8px; font-weight:750; color:#173f60 !important; }
     .batch-target-grid input[type="checkbox"] { width:18px; height:18px; accent-color:#087acb; }
@@ -9521,3 +9521,115 @@
 #appSection #appNav #auditTabBtn.hidden,
 #teamRerEdgeNav #edgeActivityLogsBtn.hidden { display:none !important; visibility:hidden !important; pointer-events:none !important; }
 </style>
+
+
+<style id="teamrer-uniform-module-back-to-menu">
+/* Uniform Back to Menu control across all module pages.
+   Scoped to active modules; hidden module pages and print layouts remain untouched. */
+#appSection #auditPage:not(.hidden) > #backToMenuFromAudit,
+#appSection #userManagementPage:not(.hidden) > #backToMenuFromUsers,
+#appSection #orgChartPage:not(.hidden) > #backToMenuFromOrg,
+#appSection #cplPage:not(.hidden) > #backToMenuFromCpl,
+#appSection #promoPage:not(.hidden) > #backToMenuFromPromo,
+#appSection #pdfPage:not(.hidden) > #backToMenuFromPdf,
+#appSection #quotePage:not(.hidden) > #backToMenuFromQuote,
+#appSection #creditPage:not(.hidden) > #backToMenuFromCredit,
+#appSection #creditHistoryPage:not(.hidden) > #backToMenuFromHistory {
+  display:inline-flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:9px !important;
+  width:auto !important;
+  min-width:142px !important;
+  min-height:42px !important;
+  margin:2px 0 16px !important;
+  padding:8px 17px 8px 12px !important;
+  border:1px solid rgba(112,169,211,.78) !important;
+  border-radius:999px !important;
+  color:#EAF4FF !important;
+  background:linear-gradient(145deg,rgba(35,75,108,.88),rgba(16,39,62,.94)) !important;
+  box-shadow:0 5px 16px rgba(0,12,28,.24),inset 0 1px 0 rgba(255,255,255,.16) !important;
+  font-size:14px !important;
+  font-weight:650 !important;
+  line-height:1.2 !important;
+  letter-spacing:.1px !important;
+  text-align:center !important;
+  cursor:pointer !important;
+  z-index:20 !important;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#appSection #auditPage:not(.hidden) > #backToMenuFromAudit::before,
+#appSection #userManagementPage:not(.hidden) > #backToMenuFromUsers::before,
+#appSection #orgChartPage:not(.hidden) > #backToMenuFromOrg::before,
+#appSection #cplPage:not(.hidden) > #backToMenuFromCpl::before,
+#appSection #promoPage:not(.hidden) > #backToMenuFromPromo::before,
+#appSection #pdfPage:not(.hidden) > #backToMenuFromPdf::before,
+#appSection #quotePage:not(.hidden) > #backToMenuFromQuote::before,
+#appSection #creditPage:not(.hidden) > #backToMenuFromCredit::before,
+#appSection #creditHistoryPage:not(.hidden) > #backToMenuFromHistory::before {
+  content:"‹";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 23px;
+  width:23px;
+  height:23px;
+  border-radius:50%;
+  color:#DCEEFF;
+  background:rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.16);
+  font-family:Arial,sans-serif;
+  font-size:26px;
+  font-weight:400;
+  line-height:18px;
+  padding-bottom:3px;
+}
+#appSection #auditPage:not(.hidden) > #backToMenuFromAudit:hover,
+#appSection #userManagementPage:not(.hidden) > #backToMenuFromUsers:hover,
+#appSection #orgChartPage:not(.hidden) > #backToMenuFromOrg:hover,
+#appSection #cplPage:not(.hidden) > #backToMenuFromCpl:hover,
+#appSection #promoPage:not(.hidden) > #backToMenuFromPromo:hover,
+#appSection #pdfPage:not(.hidden) > #backToMenuFromPdf:hover,
+#appSection #quotePage:not(.hidden) > #backToMenuFromQuote:hover,
+#appSection #creditPage:not(.hidden) > #backToMenuFromCredit:hover,
+#appSection #creditHistoryPage:not(.hidden) > #backToMenuFromHistory:hover {
+  border-color:rgba(151,204,242,.95) !important;
+  background:linear-gradient(145deg,rgba(47,99,140,.96),rgba(21,51,78,.98)) !important;
+  transform:translateY(-1px);
+}
+#appSection #auditPage:not(.hidden) > #backToMenuFromAudit:active,
+#appSection #userManagementPage:not(.hidden) > #backToMenuFromUsers:active,
+#appSection #orgChartPage:not(.hidden) > #backToMenuFromOrg:active,
+#appSection #cplPage:not(.hidden) > #backToMenuFromCpl:active,
+#appSection #promoPage:not(.hidden) > #backToMenuFromPromo:active,
+#appSection #pdfPage:not(.hidden) > #backToMenuFromPdf:active,
+#appSection #quotePage:not(.hidden) > #backToMenuFromQuote:active,
+#appSection #creditPage:not(.hidden) > #backToMenuFromCredit:active,
+#appSection #creditHistoryPage:not(.hidden) > #backToMenuFromHistory:active {
+  transform:scale(.985);
+}
+@media(max-width:560px) {
+  #appSection #auditPage:not(.hidden) > #backToMenuFromAudit,
+  #appSection #userManagementPage:not(.hidden) > #backToMenuFromUsers,
+  #appSection #orgChartPage:not(.hidden) > #backToMenuFromOrg,
+  #appSection #cplPage:not(.hidden) > #backToMenuFromCpl,
+  #appSection #promoPage:not(.hidden) > #backToMenuFromPromo,
+  #appSection #pdfPage:not(.hidden) > #backToMenuFromPdf,
+  #appSection #quotePage:not(.hidden) > #backToMenuFromQuote,
+  #appSection #creditPage:not(.hidden) > #backToMenuFromCredit,
+  #appSection #creditHistoryPage:not(.hidden) > #backToMenuFromHistory {
+    min-height:40px !important;
+    min-width:136px !important;
+    margin-bottom:14px !important;
+    font-size:14px !important;
+  }
+}
+@media print {
+  #appSection [id^="backToMenuFrom"] { display:none !important; }
+}
+</style>
+
