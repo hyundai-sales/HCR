@@ -5115,43 +5115,36 @@
       const successText=active.querySelector('#cplHeendySuccessText'); if(successText) successText.textContent=copyText||'Your document has been generated successfully.';
       const download=active.querySelector('.cpl-heendy-download'); const close=active.querySelector('.cpl-heendy-close');
       const printSave=active.querySelector('.cpl-heendy-print-save');
-      if(printSave) printSave.disabled=false;
-      // For the two Credit Application modules, preload the PDF in a hidden same-page
-      // frame. The user gesture then invokes that frame's native print preview directly.
-      let printFrame=null, printFrameReady=false;
-      if(directPrintPreview && downloadUrl) {
+      // The CPL, Credit Application, and Credit Application History modules download directly.
+      // Other modules retain their existing PDF notice behavior.
+      if(showPrintSaveAction && printSave) { printSave.hidden=true; printSave.disabled=false; }
+      if(showPrintSaveAction && directPrintPreview) {
         const oldFrame=document.getElementById('teamRerCreditPrintFrame');
         if(oldFrame) oldFrame.remove();
-        printFrame=document.createElement('iframe');
-        printFrame.id='teamRerCreditPrintFrame';
-        printFrame.title='PDF print preview';
-        printFrame.setAttribute('aria-hidden','true');
-        printFrame.tabIndex=-1;
-        printFrame.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
-        printFrame.addEventListener('load',()=>{printFrameReady=true;if(printSave)printSave.disabled=false;},{once:true});
-        document.body.appendChild(printFrame);
-        if(printSave) printSave.disabled=true;
-        printFrame.src=downloadUrl;
-      }
-      if(printSave) {
-        printSave.hidden=!showPrintSaveAction || !downloadUrl;
-        printSave.onclick=()=>{
-          if(!downloadUrl)return;
-          if(directPrintPreview) {
-            if(!printFrame || !printFrameReady || !printFrame.contentWindow) { showTeamRerDynamicIsland('Preparing printer preview. Please tap Print / Save PDF again in a moment.'); return; }
-            try { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); } catch(err) { showTeamRerDynamicIsland('Unable to open printer preview in this browser.'); return; }
-          } else {
-            const opened=window.open(downloadUrl,'_blank','noopener');
-            if(!opened){const a=document.createElement('a');a.href=downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
-          }
-          if(typeof afterPrintOrClose==='function') afterPrintOrClose('print');
-        };
       }
       if(download) {
         download.hidden=!downloadUrl;
-        download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'TEAM-RER.pdf';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';};
+        if(showPrintSaveAction) {
+          download.textContent='Download PDF';
+          download.disabled=false;
+          download.onclick=()=>{
+            if(!downloadUrl)return;
+            const a=document.createElement('a');
+            a.href=downloadUrl;
+            a.download=fileName||'TEAM-RER.pdf';
+            a.style.display='none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            download.textContent='Download started';
+            download.disabled=true;
+            if(typeof afterPrintOrClose==='function') afterPrintOrClose('print');
+          };
+        } else {
+          download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'TEAM-RER.pdf';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';};
+        }
       }
-      if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof afterPrintOrClose==='function') afterPrintOrClose('close');if(printFrame){printFrame.remove();printFrame=null;}if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
+      if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof afterPrintOrClose==='function') afterPrintOrClose('close');if(showPrintSaveAction && directPrintPreview){const frame=document.getElementById('teamRerCreditPrintFrame');if(frame)frame.remove();}if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
       active.setAttribute('role','dialog'); active.setAttribute('aria-modal','true');
     }
     function showCreditSuccessNotification(downloadUrl, fileName) {
