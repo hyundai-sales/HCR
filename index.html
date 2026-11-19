@@ -6969,7 +6969,9 @@
         if(isSuperAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';
         if($('cplConsultantFixed'))$('cplConsultantFixed').value='';
       }
-      if($('cplMonthlyConsultant'))$('cplMonthlyConsultant').value='';
+      // Regular Users / Sales Consultants retain their assigned monthly consultant name.
+      // Admin and Super Admin sessions continue to reset the consultant selection after PDF generation.
+      if(isCplAdminSession()&&$('cplMonthlyConsultant'))$('cplMonthlyConsultant').value='';
       if($('cplMonthlyMonth'))$('cplMonthlyMonth').value='';
       if($('cplMonthlyYear'))$('cplMonthlyYear').value='';
       if($('cplHeaderDate'))$('cplHeaderDate').value='';
