@@ -6515,10 +6515,32 @@
         showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
       }
       updateQuotePreview();
-      $("quotePreviewWrap").classList.remove("hidden");
-      // Always start the quotation preview at its top so the document title is immediately visible.
-      const quoteScroll = $("quotePreviewWrap").querySelector(".quote-preview-scroll");
-      if (quoteScroll) quoteScroll.scrollTop = 0;
+      const quoteWrap = $("quotePreviewWrap");
+      quoteWrap.classList.remove("hidden");
+
+      // Reset every relevant scroll position so the modal header
+      // ("VEHICLE QUOTATION" / "Close") is always visible first.
+      const resetQuotationPreviewPosition = () => {
+        const quoteScroll = quoteWrap.querySelector(".quote-preview-scroll");
+        const quoteDialog = quoteWrap.querySelector(".quote-preview-dialog");
+        quoteWrap.scrollTop = 0;
+        if (quoteScroll) quoteScroll.scrollTop = 0;
+        if (quoteDialog) quoteDialog.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        const quoteHeader = quoteWrap.querySelector(".quote-preview-head");
+        if (quoteHeader) quoteHeader.scrollIntoView({ block: "start", inline: "nearest", behavior: "instant" });
+        // Reassert after the browser finishes laying out the newly opened modal.
+        requestAnimationFrame(() => {
+          quoteWrap.scrollTop = 0;
+          if (quoteScroll) quoteScroll.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          window.scrollTo(0, 0);
+        });
+      };
+      resetQuotationPreviewPosition();
     });
     $("closeQuotePreviewBtn").addEventListener("click", closeQuotePreview);
     $("quotePreviewWrap").addEventListener("click", event => {
