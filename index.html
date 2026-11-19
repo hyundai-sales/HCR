@@ -4063,7 +4063,7 @@
         const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
         clearCplSelectionsAfterPdf();
         setMessage($("cplMessage"),result.message||"Blank CPL PDF generated successfully.","success");
-        showCplPdfNotification(url,result.fileName,"CPL PDF is ready","Your CPL PDF is ready to print or save.",true);
+        showCplPdfNotification(url,result.fileName,"CPL PDF is ready","Your CPL PDF is ready to print or save.",true,true);
         return;
       }
       if (action === "cplMonthlyPdf") {
@@ -4075,7 +4075,7 @@
         setCplMonthlyActionMode(false);
         clearCplSelectionsAfterPdf();
         setMessage($("cplMessage"),result.message||"Monthly CPL PDF generated successfully.","success");
-        showCplPdfNotification(url,result.fileName,"Monthly CPL PDF is ready","Your retrieved monthly CPL records have been compiled. Print or save your PDF.",true);
+        showCplPdfNotification(url,result.fileName,"Monthly CPL PDF is ready","Your retrieved monthly CPL records have been compiled. Print or save your PDF.",true,true);
         return;
       }
       if (action === "cplSheetPrint" || action === "cplBlankSheetPrint") { const result=event.data[action]||{}; if(cplPrintWindow&&!cplPrintWindow.closed&&result.url){cplPrintWindow.location.href=result.url;} cplPrintWindow=null; setMessage($("cplMessage"),result.message||"CPL template is ready. Open the sheet to print.","success");return; }
@@ -5081,7 +5081,7 @@
     }
     function setCplPdfReadyOverlay() { /* success handled by Heendy CPL modal */ }
     function beginCplPdfGeneration(message) { setCplPdfBusy(true,message||'Preparing your CPL PDF'); }
-    function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction) {
+    function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction, directPrintAction) {
       const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your CPL PDF');
       const active=document.getElementById('cplPdfBusyOverlay'); if(!active) return;
       if(cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
@@ -5094,7 +5094,45 @@
       const printSave=active.querySelector('.cpl-heendy-print-save');
       if(printSave) {
         printSave.hidden=!showPrintSaveAction || !downloadUrl;
-        printSave.onclick=()=>{if(!downloadUrl)return;const opened=window.open(downloadUrl,'_blank','noopener');if(!opened){const a=document.createElement('a');a.href=downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}};
+        printSave.onclick=()=>{
+          if(!downloadUrl)return;
+          if(directPrintAction){
+            // Print the generated CPL PDF in a hidden frame so the browser opens
+            // its native print dialog without navigating or opening another tab.
+            const frame=document.createElement('iframe');
+            frame.setAttribute('aria-hidden','true');
+            frame.style.position='fixed';
+            frame.style.width='1px';
+            frame.style.height='1px';
+            frame.style.right='0';
+            frame.style.bottom='0';
+            frame.style.border='0';
+            frame.style.opacity='0';
+            frame.src=downloadUrl;
+            frame.onload=()=>{
+              setTimeout(()=>{
+                try{
+                  frame.contentWindow.focus();
+                  frame.contentWindow.print();
+                }catch(err){showTeamRerDynamicIsland('Unable to open printer preview. Please use Download PDF.');}
+              },350);
+            };
+            document.body.appendChild(frame);
+            return;
+          }
+          // Keep the existing PDF-viewer behavior for non-CPL callers.
+          let opened=null;
+          try{opened=window.open(downloadUrl,'_blank');}catch(_){}
+          if(!opened){
+            const a=document.createElement('a');
+            a.href=downloadUrl;
+            a.target='_blank';
+            a.type='application/pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }
+        };
       }
       if(download) {
         download.hidden=!downloadUrl;
