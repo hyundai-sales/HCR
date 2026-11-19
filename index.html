@@ -3064,6 +3064,21 @@
     function isAdminSession() {
       return ["admin","super admin","superadmin"].includes(normalizedSessionRole());
     }
+    function syncActivityLogsVisibility() {
+      // Keep Activity Logs hidden for regular Users/Sales Consultants in both
+      // navigation surfaces. Super R Admin is also treated as an administrator.
+      const role = normalizedSessionRole();
+      const allowed = ["admin","super admin","superadmin","super r admin"].includes(role);
+      const mainButton = $("auditTabBtn");
+      const quickButton = $("edgeActivityLogsBtn");
+      [mainButton, quickButton].forEach(el => {
+        if (!el) return;
+        el.classList.toggle("hidden", !allowed);
+        el.setAttribute("aria-hidden", allowed ? "false" : "true");
+        if (!allowed) el.setAttribute("tabindex", "-1");
+        else el.removeAttribute("tabindex");
+      });
+    }
     function isSuperAdminSession() {
       return ["super admin","superadmin","super r admin"].includes(normalizedSessionRole());
     }
@@ -3561,6 +3576,7 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        syncActivityLogsVisibility();
         syncCplClearSelectionNewVisibility();
         syncUserManagementVisibility();
         syncCreditConsultantForRole();
@@ -3615,11 +3631,8 @@
         const data = event.data.appData;
         syncUserManagementVisibility();
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
-        // Activity Logs is restricted by the signed-in session role, not the
-        // broader appData flag. Only Admin and Super Admin may see its icons.
-        const canViewActivityLogs = isAdminSession();
-        $("auditTabBtn").classList.toggle("hidden", !canViewActivityLogs);
-        $("edgeActivityLogsBtn")?.classList.toggle("hidden", !canViewActivityLogs);
+        // Re-apply role-based visibility after app data loads.
+        syncActivityLogsVisibility();
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
         syncUserManagementVisibility();
         $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
@@ -8888,3 +8901,8 @@
 
 </body>
 </html>
+
+<style id="team-rer-activity-logs-role-visibility-guard">
+#appSection #appNav #auditTabBtn.hidden,
+#teamRerEdgeNav #edgeActivityLogsBtn.hidden { display:none !important; visibility:hidden !important; pointer-events:none !important; }
+</style>
