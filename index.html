@@ -163,6 +163,11 @@
     .credit-choice { display:flex; flex-wrap:wrap; gap:12px; font-size:13px; }
     .credit-choice label { display:flex; align-items:center; gap:5px; font-weight:normal; margin:0; }
     .credit-choice input { width:auto; min-height:0; }
+    .quote-type-switches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .quote-type-switch { min-height:44px; padding:10px 6px; border:1px solid #b8c9d9; border-radius:10px; background:#edf3f8; color:#244866; font-size:12px; font-weight:800; letter-spacing:.25px; cursor:pointer; transition:background .15s,border-color .15s,box-shadow .15s; }
+    .quote-type-switch.active { background:linear-gradient(145deg,#07528d,#003b70); border-color:#003b70; color:#fff; box-shadow:0 3px 10px rgba(0,59,112,.22), inset 0 1px 0 rgba(255,255,255,.18); }
+    @media(max-width:420px){ .quote-type-switches{gap:5px}.quote-type-switch{font-size:10px;padding:9px 3px;} }
+
     @media(max-width:420px){ .credit-grid{grid-template-columns:1fr;} .credit-field.full{grid-column:auto;} }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
 
@@ -2424,7 +2429,7 @@
     backdrop-filter:blur(12px) saturate(135%);
   }
   #creditPage .credit-module-frame::before{
-    content:"Hyundai Sales Tools";
+    content:"Credit Application";
     position:absolute;
     top:-16px;
     left:50%;
@@ -2443,11 +2448,24 @@
     box-shadow:0 4px 14px rgba(0,12,28,.24);
     pointer-events:none;
   }
+  /* Excel-style frozen pane: title, instructions and divider remain visible
+     while the consultant controls and application fields scroll underneath. */
+  #creditPage .credit-freeze-pane{
+    position:sticky;
+    top:0;
+    z-index:80;
+    margin: -25px calc(-1 * clamp(13px,2.5vw,26px)) 0;
+    padding: 18px clamp(13px,2.5vw,26px) 0;
+    background:linear-gradient(180deg,rgba(7,29,53,.99) 0%,rgba(7,29,53,.98) 88%,rgba(7,29,53,.94) 100%);
+    border-radius:25px 25px 0 0;
+    box-shadow:0 12px 18px rgba(0,12,28,.20);
+    isolation:isolate;
+  }
   #creditPage .credit-instructions{
     position:relative;
-    margin:8px 0 20px;
+    margin:8px 0 0;
     padding:0 0 17px;
-    border-bottom:1px solid rgba(104,174,232,.62);
+    border-bottom:2px solid rgba(104,174,232,.78);
     box-shadow:0 1px 0 rgba(255,255,255,.055);
     line-height:1.55;
   }
@@ -2461,7 +2479,8 @@
   @media(max-width:560px){
     #creditPage .credit-module-frame{margin-top:25px;padding:22px 12px 18px;border-radius:22px}
     #creditPage .credit-module-frame::before{top:-14px;padding:3px 13px;font-size:12px}
-    #creditPage .credit-instructions{padding-bottom:14px;margin-bottom:16px}
+    #creditPage .credit-freeze-pane{margin:-22px -12px 0;padding:16px 12px 0;border-radius:20px 20px 0 0}
+    #creditPage .credit-instructions{padding-bottom:14px;margin-bottom:0}
   }
 </style>
 
@@ -2835,8 +2854,17 @@
               <select id="quoteVariant"><option value="">Select variant</option></select>
             </div>
             <div class="field">
-              <label for="quoteType">Quotation type</label>
-              <select id="quoteType"><option value="cash">CASH</option><option value="bankpo">BANK PO</option><option value="financing">BANK FINANCING</option></select>
+              <label for="quoteColor">Vehicle color</label>
+              <select id="quoteColor"><option value="">Select variant first</option></select>
+            </div>
+            <div class="field">
+              <label>Quotation type</label>
+              <div class="quote-type-switches" role="group" aria-label="Quotation type">
+                <button class="quote-type-switch active" type="button" data-quote-type="cash" aria-pressed="true">CASH</button>
+                <button class="quote-type-switch" type="button" data-quote-type="bankpo" aria-pressed="false">BANK PO</button>
+                <button class="quote-type-switch" type="button" data-quote-type="financing" aria-pressed="false">BANK FINANCING</button>
+              </div>
+              <select id="quoteType" class="hidden" aria-hidden="true" tabindex="-1"><option value="cash">CASH</option><option value="bankpo">BANK PO</option><option value="financing">BANK FINANCING</option></select>
             </div>
             <div class="field" id="quoteDpField">
               <label for="quoteDownpayment">Downpayment</label>
@@ -2891,11 +2919,12 @@
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
           <div class="credit-module-frame">
-          <h2 class="section-title">Credit Application</h2>
+          <div class="credit-freeze-pane">
+            <p class="app-caption credit-instructions">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
+          </div>
           <div id="creditHeendyBuddy" aria-hidden="true">
             <img id="creditHeendyBuddyImage" alt="">
           </div>
-          <p class="app-caption credit-instructions">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
               <div class="credit-field full" id="creditConsultantSelectWrap">
@@ -4014,7 +4043,30 @@
       const model = $("quoteModel").value;
       const variants = quotationVehicles.filter(v => v.model === model).map(v => v.variant);
       fillSelect($("quoteVariant"), variants, "Choose variant");
+      refreshQuoteColorDropdown();
       refreshQuotePartnerBanks();
+      updateQuotePreview();
+    }
+
+    function refreshQuoteColorDropdown() {
+      const model = $("quoteModel").value;
+      const variant = $("quoteVariant").value;
+      const match = quotationVehicles.find(v => v.model === model && v.variant === variant);
+      const colors = match && Array.isArray(match.colors) ? match.colors : [];
+      const colorSelect = $("quoteColor");
+      const previous = colorSelect.value;
+      fillSelect(colorSelect, colors, colors.length ? "Choose color" : "Select a variant first");
+      if (colors.includes(previous)) colorSelect.value = previous;
+    }
+
+    function setQuoteType(type) {
+      if (!["cash","bankpo","financing"].includes(type)) return;
+      $("quoteType").value = type;
+      document.querySelectorAll(".quote-type-switch[data-quote-type]").forEach(button => {
+        const active = button.dataset.quoteType === type;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
       updateQuotePreview();
     }
 
@@ -4162,6 +4214,8 @@
       const generatedDate = new Date().toLocaleDateString("en-PH", { year:"numeric", month:"long", day:"numeric" });
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
+      const selectedColor = String($("quoteColor").value || "").trim();
+      if (selectedColor) rows.push(`<div class="quote-line"><span>Vehicle Color</span><strong>${escapeHtml(selectedColor)}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
       if (!financing) {
         rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
@@ -6781,10 +6835,11 @@
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
-    ["quoteVariant","quoteType","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    ["quoteVariant","quoteType","quoteColor","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
-    $("quoteVariant").addEventListener("change", refreshQuotePartnerBanks);
+    $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
+    document.querySelectorAll(".quote-type-switch[data-quote-type]").forEach(button => button.addEventListener("click", () => setQuoteType(button.dataset.quoteType)));
     function closeQuotePreview() {
       $("quotePreviewWrap").classList.add("hidden");
     }
