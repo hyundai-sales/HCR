@@ -5117,32 +5117,36 @@
       const printSave=active.querySelector('.cpl-heendy-print-save');
       // The CPL, Credit Application, and Credit Application History modules download directly.
       // Other modules retain their existing PDF notice behavior.
-      if(showPrintSaveAction && printSave) { printSave.hidden=true; printSave.disabled=false; }
-      if(showPrintSaveAction && directPrintPreview) {
-        const oldFrame=document.getElementById('teamRerCreditPrintFrame');
-        if(oldFrame) oldFrame.remove();
-      }
+      // Reset both action controls on every success notification. The direct-download
+      // button is enabled only for the three modules that explicitly request it.
+      if(printSave) { printSave.hidden=true; printSave.disabled=false; }
       if(download) {
-        download.hidden=!downloadUrl;
-        if(showPrintSaveAction) {
-          download.textContent='Download PDF';
-          download.disabled=false;
+        download.classList.toggle('is-visible',!!(showPrintSaveAction && downloadUrl));
+        download.hidden=!(showPrintSaveAction && downloadUrl);
+        download.disabled=false;
+        download.textContent='Download PDF';
+        download.onclick=null;
+        if(showPrintSaveAction && downloadUrl) {
           download.onclick=()=>{
-            if(!downloadUrl)return;
+            if(!downloadUrl || download.disabled)return;
             const a=document.createElement('a');
             a.href=downloadUrl;
             a.download=fileName||'TEAM-RER.pdf';
-            a.style.display='none';
+            a.setAttribute('download',fileName||'TEAM-RER.pdf');
+            a.style.position='fixed';
+            a.style.left='-9999px';
             document.body.appendChild(a);
             a.click();
             a.remove();
             download.textContent='Download started';
             download.disabled=true;
-            if(typeof afterPrintOrClose==='function') afterPrintOrClose('print');
+            if(typeof afterPrintOrClose==='function') afterPrintOrClose('download');
           };
-        } else {
-          download.onclick=()=>{if(!downloadUrl)return;const a=document.createElement('a');a.href=downloadUrl;a.download=fileName||'TEAM-RER.pdf';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();download.textContent='Download started';};
         }
+      }
+      if(showPrintSaveAction && directPrintPreview) {
+        const oldFrame=document.getElementById('teamRerCreditPrintFrame');
+        if(oldFrame) oldFrame.remove();
       }
       if(close) { close.onclick=()=>{setCplPdfBusy(false);if(typeof afterPrintOrClose==='function') afterPrintOrClose('close');if(showPrintSaveAction && directPrintPreview){const frame=document.getElementById('teamRerCreditPrintFrame');if(frame)frame.remove();}if(typeof downloadUrl==='string'&&downloadUrl.indexOf('blob:')===0){try{URL.revokeObjectURL(downloadUrl);}catch(_){}}}; }
       active.setAttribute('role','dialog'); active.setAttribute('aria-modal','true');
@@ -9303,6 +9307,7 @@
 #cplPdfBusyOverlay .cpl-heendy-actions{display:flex!important;gap:10px!important;margin-top:17px!important;}
 #cplPdfBusyOverlay .cpl-heendy-actions button{flex:1!important;min-height:48px!important;border-radius:14px!important;font:800 14px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif!important;cursor:pointer!important;border:1px solid rgba(255,255,255,.32)!important;}
 #cplPdfBusyOverlay .cpl-heendy-download{display:none!important;background:linear-gradient(145deg,#1494ff,#0758b5)!important;color:#fff!important;box-shadow:0 5px 15px rgba(0,87,200,.35),inset 0 1px 0 rgba(255,255,255,.3)!important;}
+ #cplPdfBusyOverlay .cpl-heendy-download.is-visible{display:inline-flex!important;align-items:center!important;justify-content:center!important;}
 #cplPdfBusyOverlay .cpl-heendy-print-save{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:linear-gradient(145deg,#1494ff,#0758b5)!important;color:#fff!important;box-shadow:0 5px 15px rgba(0,87,200,.35),inset 0 1px 0 rgba(255,255,255,.3)!important;}
 #cplPdfBusyOverlay .cpl-heendy-print-save[hidden]{display:none!important;}
 #cplPdfBusyOverlay .cpl-heendy-close{background:linear-gradient(145deg,#33485e,#182b40)!important;color:#f1f8ff!important;}
