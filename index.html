@@ -3883,14 +3883,20 @@
           pendingPriceListPdfUrl,
           result.fileName || worksheetFileName,
           worksheetName + " PDF Ready!",
-          worksheetName + " has been generated successfully. Close this notice to open the PDF preview, or download the PDF now."
+          worksheetName + " has been generated successfully. Tap OK to open the PDF preview."
         );
-        const heendyClose = document.querySelector("#cplPdfBusyOverlay .cpl-heendy-close");
-        if (heendyClose && shouldOpenPreviewAfterHeendy) {
-          const originalClose = heendyClose.onclick;
+        const heendyOverlay = document.querySelector("#cplPdfBusyOverlay");
+        const heendyDownload = heendyOverlay?.querySelector(".cpl-heendy-download");
+        const heendyClose = heendyOverlay?.querySelector(".cpl-heendy-close");
+        // Price List has only one user-facing action: View PDF.
+        // The Heendy success notice therefore uses a single OK button.
+        if (heendyDownload) heendyDownload.hidden = true;
+        if (heendyClose) {
+          heendyClose.textContent = "OK";
           heendyClose.onclick = () => {
-            if (typeof originalClose === "function") originalClose();
-            openPriceListPdfPreview();
+            setCplPdfBusy(false);
+            hideTeamRerDynamicIsland();
+            if (shouldOpenPreviewAfterHeendy) openPriceListPdfPreview();
           };
         }
       }
