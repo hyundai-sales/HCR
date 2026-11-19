@@ -2498,6 +2498,127 @@
   }
 </style>
 
+
+<style id="team-rer-unified-module-frames">
+/*
+ * TEAM RER unified module frame — frontend only.
+ * Screen-only rules: no form logic, element IDs, PDF export, or print layouts changed.
+ */
+@media screen {
+  #auditPage,
+  #userManagementPage,
+  #orgChartPage,
+  #cplPage,
+  #promoPage,
+  #pdfPage,
+  #quotePage,
+  #creditHistoryPage {
+    position:relative;
+    box-sizing:border-box;
+    margin:34px 0 26px;
+    padding:44px clamp(14px,2.6vw,26px) 26px;
+    border:1.5px solid rgba(76,151,218,.78);
+    border-radius:27px;
+    background:linear-gradient(145deg,rgba(7,31,57,.82),rgba(5,23,44,.72));
+    box-shadow:0 14px 36px rgba(0,15,34,.22),inset 0 1px 0 rgba(176,216,255,.13);
+    -webkit-backdrop-filter:blur(12px) saturate(135%);
+    backdrop-filter:blur(12px) saturate(135%);
+  }
+
+  #auditPage > .section-title,
+  #userManagementPage > .section-title,
+  #orgChartPage > .org-head .section-title,
+  #cplPage > .section-title,
+  #promoPage > .section-title,
+  #pdfPage > .section-title,
+  #quotePage > .section-title,
+  #creditHistoryPage > .section-title {
+    position:absolute;
+    top:-21px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:8;
+    display:block;
+    width:max-content;
+    max-width:calc(100% - 28px);
+    box-sizing:border-box;
+    margin:0;
+    padding:8px clamp(20px,4vw,30px);
+    border:1.5px solid rgba(91,169,231,.82);
+    border-radius:999px;
+    background:#071d35;
+    color:#e8f4ff;
+    font-size:clamp(16px,2.7vw,20px);
+    font-weight:750;
+    letter-spacing:.015em;
+    line-height:1.25;
+    text-align:center;
+    white-space:normal;
+    text-wrap:balance;
+    box-shadow:0 4px 14px rgba(0,12,28,.28),inset 0 1px 0 rgba(255,255,255,.12);
+  }
+
+  #orgChartPage .org-head {
+    position:static;
+  }
+
+  /* Match the existing Credit Application title oval to the same overlapping treatment. */
+  #creditPage .credit-freeze-pane {
+    padding-top:44px;
+  }
+  #creditPage .credit-freeze-pane::before {
+    position:absolute;
+    top:-18px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:4;
+    margin:0;
+    width:max-content;
+    max-width:calc(100% - 28px);
+    box-sizing:border-box;
+    padding:8px clamp(20px,4vw,30px);
+    font-size:clamp(16px,2.7vw,20px);
+    line-height:1.25;
+  }
+}
+
+@media screen and (max-width:560px) {
+  #auditPage,
+  #userManagementPage,
+  #orgChartPage,
+  #cplPage,
+  #promoPage,
+  #pdfPage,
+  #quotePage,
+  #creditHistoryPage {
+    margin:30px 0 22px;
+    padding:40px 12px 20px;
+    border-radius:22px;
+  }
+  #auditPage > .section-title,
+  #userManagementPage > .section-title,
+  #orgChartPage > .org-head .section-title,
+  #cplPage > .section-title,
+  #promoPage > .section-title,
+  #pdfPage > .section-title,
+  #quotePage > .section-title,
+  #creditHistoryPage > .section-title {
+    top:-19px;
+    max-width:calc(100% - 20px);
+    padding:7px 18px;
+    font-size:16px;
+  }
+  #creditPage .credit-freeze-pane {
+    padding-top:42px;
+  }
+  #creditPage .credit-freeze-pane::before {
+    top:-17px;
+    padding:7px 18px;
+    font-size:16px;
+  }
+}
+</style>
+
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
