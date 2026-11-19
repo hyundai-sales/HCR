@@ -2621,7 +2621,7 @@
 
 
 <style id="team-rer-approved-loading-screen-v1">
-  /* Loading screen only: match the agreed wide Hyundai capsule/arc reference. */
+  /* Loading screen only: clean responsive arcs with no raster/GIF edge artifacts. */
   #loadingOverlay.loading-overlay{
     position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;
     align-items:center!important;justify-content:center!important;overflow:hidden!important;
@@ -2642,18 +2642,19 @@
   }
   #loadingOverlay .loading-arcs{
     position:absolute!important;z-index:0!important;inset:0!important;width:100%!important;height:100%!important;
-    overflow:visible!important;pointer-events:none!important;
+    overflow:hidden!important;pointer-events:none!important;display:block!important;
   }
+  /* A single clean vector stroke per side: no glow copy, dash fragments, or raster image. */
+  #loadingOverlay .loading-arc-glow{display:none!important;}
   #loadingOverlay .loading-arc{
-    fill:none!important;stroke:#078eff!important;stroke-width:12!important;stroke-linecap:round!important;
-    stroke-linejoin:round!important;stroke-dasharray:24 10!important;opacity:0!important;
-    /* Avoid Android SVG filter/compositing artifacts at the arc endpoints. */
-    filter:none!important;shape-rendering:geometricPrecision!important;
+    fill:none!important;stroke:#08aaff!important;stroke-width:12!important;
+    stroke-linecap:round!important;stroke-linejoin:round!important;
+    stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important;
+    filter:none!important;vector-effect:non-scaling-stroke!important;
+    shape-rendering:geometricPrecision!important;
+    animation:teamRerArcBreath 8s ease-in-out infinite!important;
   }
-  #loadingOverlay .arc-one{opacity:1!important;stroke:#079eff!important;}
-  #loadingOverlay .arc-two{animation:teamRerArcTwo 1.8s steps(1,end) infinite!important;stroke:#078fff!important;}
-  #loadingOverlay .arc-three{animation:teamRerArcThree 1.8s steps(1,end) infinite!important;stroke:#08aaff!important;}
-  #loadingOverlay .loading-arc-stage-right{transform-origin:500px 235px;}
+  #loadingOverlay .loading-arc:nth-of-type(2){animation-delay:-4s!important;}
   #loadingOverlay .loading-brand{
     position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;
     align-items:center!important;margin:0 auto clamp(18px,2.5vw,28px)!important;color:#f4f8ff!important;
@@ -2675,7 +2676,7 @@
     height:clamp(48px,5.5vw,64px)!important;margin:0 auto 14px!important;border:7px dotted rgba(35,151,255,.72)!important;
     border-top-color:#36baff!important;border-right-color:#b3ecff!important;border-bottom-color:#0875e8!important;
     border-left-color:#188fe9!important;border-radius:50%!important;animation:teamRerLoadingSpin .95s linear infinite!important;
-    filter:drop-shadow(0 0 8px rgba(0,145,255,.5))!important;}
+    filter:none!important;}
   #loadingOverlay .loading-title{position:relative!important;z-index:2!important;margin:0!important;color:#f5f9ff!important;
     font-size:clamp(21px,2.8vw,31px)!important;font-weight:650!important;letter-spacing:.01em!important;
     text-shadow:0 0 14px rgba(74,160,255,.22)!important;}
@@ -2696,21 +2697,18 @@
     box-shadow:0 0 12px rgba(25,175,255,.9);}
   #loadingOverlay .loading-progress-note{display:none!important;}
   @keyframes teamRerLoadingSpin{to{transform:rotate(360deg);}}
-  @keyframes teamRerArcTwo{0%,32.99%{opacity:0}33%,100%{opacity:1}}
-  @keyframes teamRerArcThree{0%,65.99%{opacity:0}66%,100%{opacity:1}}
+  @keyframes teamRerArcBreath{0%,100%{opacity:.88}50%{opacity:1}}
   @media(max-width:600px){
     #loadingOverlay.loading-overlay{padding:8px!important;}
     #loadingOverlay .loading-content{width:100%!important;min-height:clamp(340px,58vh,440px)!important;
       padding:24px 4px 20px!important;}
     #loadingOverlay .loading-arcs{inset:0!important;width:100%!important;height:100%!important;}
-    #loadingOverlay .loading-arc{stroke-width:12!important;stroke-dasharray:20 9!important;}
+    #loadingOverlay .loading-arc{stroke-width:9!important;}
     #loadingOverlay .loading-brand{margin-bottom:clamp(16px,3vh,24px)!important;}
     #loadingOverlay .loading-progress-meta,#loadingOverlay .loading-track{width:min(68%,390px)!important;min-width:220px!important;}
   }
   @media(prefers-reduced-motion:reduce){
-    #loadingOverlay .loading-orbit{animation:none!important;}
-    #loadingOverlay .arc-two,#loadingOverlay .arc-three{animation:none!important;}
-    #loadingOverlay .arc-two{opacity:1!important;}#loadingOverlay .arc-three{opacity:1!important;}
+    #loadingOverlay .loading-orbit,#loadingOverlay .loading-arc{animation:none!important;}
   }
 </style>
 
@@ -2781,16 +2779,10 @@
   <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="false">
     <div class="loading-content">
       <svg class="loading-arcs" viewBox="0 0 1000 470" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-        <g class="loading-arc-stage">
-          <path class="loading-arc arc-one" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
-          <path class="loading-arc arc-two" d="M300 42 C150 57 78 137 78 235 C78 333 150 413 300 428" />
-          <path class="loading-arc arc-three" d="M270 22 C112 42 44 132 44 235 C44 338 112 428 270 448" />
-        </g>
-        <g class="loading-arc-stage loading-arc-stage-right">
-          <path class="loading-arc arc-one" d="M670 62 C810 72 888 139 888 235 C888 331 810 398 670 408" />
-          <path class="loading-arc arc-two" d="M700 42 C850 57 922 137 922 235 C922 333 850 413 700 428" />
-          <path class="loading-arc arc-three" d="M730 22 C888 42 956 132 956 235 C956 338 888 428 730 448" />
-        </g>
+        <path class="loading-arc-glow" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
+        <path class="loading-arc-glow" d="M670 62 C810 72 888 139 888 235 C888 331 810 398 670 408" />
+        <path class="loading-arc" d="M330 62 C190 72 112 139 112 235 C112 331 190 398 330 408" />
+        <path class="loading-arc" d="M670 62 C810 72 888 139 888 235 C888 331 810 398 670 408" />
       </svg>
       <div class="loading-brand">
         <img class="loading-logo" src="https://cdn.simpleicons.org/hyundai/ffffff" alt="Hyundai">
