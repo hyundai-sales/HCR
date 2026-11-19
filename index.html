@@ -3778,7 +3778,9 @@
       }
       if (action === "userManagementSave") {
         const result = event.data.userManagementSave || {};
-        $("userEditorWrap").classList.add("hidden");
+        const wasQuickControlSave = userManagementQuickControlPending;
+        userManagementQuickControlPending = false;
+        if (!wasQuickControlSave) $("userEditorWrap").classList.add("hidden");
         setMessage($("userManagementMessage"), result.message || "User record saved.", "success");
         submitRequest("userManagementGet").catch(error => setMessage($("userManagementMessage"), error.message, "error"));
         return;
@@ -6097,6 +6099,7 @@
 
     let userManagementData = { headers: [], rows: [], roles: ["Super Admin","Admin","User"] };
     let editingUserRowNumber = 0;
+    let userManagementQuickControlPending = false;
     const userHeaderIndex = header => userManagementData.headers.findIndex(h => String(h).trim().toLowerCase() === String(header).trim().toLowerCase());
     const userHeaderValue = (values, header) => {
       const key = userManagementData.headers[userHeaderIndex(header)];
@@ -6110,18 +6113,160 @@
       const emailHeader = headers[userHeaderIndex("email address")];
       const roleHeader = headers[userHeaderIndex("role")];
       const activeHeader = headers[userHeaderIndex("active")];
-      const columns = [nameHeader,emailHeader,roleHeader,activeHeader].filter(Boolean);
-      if (!headers.length) { host.textContent = "No Users tab headers were returned."; return; }
-      const head = columns.map(h => `<th>${escapeHtml(h)}</th>`).join("");
-      const rows = (userManagementData.rows || []).map(record => {
-        const cells = columns.map(h => `<td>${escapeHtml(record.values[h] ?? "")}</td>`).join("");
-        return `<tr>${cells}<td><button type="button" class="secondary user-edit-btn" data-row-number="${Number(record.rowNumber)}">Edit</button></td></tr>`;
-      }).join("");
-      host.innerHTML = `<table class="user-management-table"><thead><tr>${head}<th>Action</th></tr></thead><tbody>${rows || `<tr><td colspan="${columns.length+1}">No registered users found.</td></tr>`}</tbody></table>`;
-      host.querySelectorAll(".user-edit-btn").forEach(button => button.addEventListener("click", () => {
-        const row = userManagementData.rows.find(item => Number(item.rowNumber) === Number(button.dataset.rowNumber));
-        if (row) openUserEditor(row);
-      }));
+      if (!headers.length || !nameHeader || !emailHeader || !roleHeader || !activeHeader) {
+        host.textContent = "The Users tab must contain Name, Email Address, Role and Active headers.";
+        return;
+      }
+
+      host.replaceChildren();
+      const list = document.createElement("div");
+      list.className = "user-control-list";
+
+      (userManagementData.rows || []).forEach(record => {
+        const values = record.values || {};
+        const role = String(values[roleHeader] || "User").trim();
+        const active = ["true","yes","1","active"].includes(String(values[activeHeader]).trim().toLowerCase());
+        const email = String(values[emailHeader] || "");
+        const card = document.createElement("article");
+        card.className = "user-control-card";
+        card.dataset.rowNumber = String(record.rowNumber);
+
+        const top = document.createElement("div");
+        top.className = "user-control-top";
+        const identity = document.createElement("div");
+        identity.className = "user-control-identity";
+        const name = document.createElement("strong");
+        name.className = "user-control-name";
+        name.textContent = String(values[nameHeader] || "Unnamed User");
+        const emailLine = document.createElement("div");
+        emailLine.className = "user-control-email";
+        const emailText = document.createElement("span");
+        emailText.className = "user-email-value";
+        emailText.textContent = "••••••••••••";
+        emailText.dataset.email = email;
+        emailText.dataset.revealed = "false";
+        const eye = document.createElement("button");
+        eye.type = "button";
+        eye.className = "user-email-eye";
+        eye.setAttribute("aria-label", "Reveal email address");
+        eye.setAttribute("aria-pressed", "false");
+        eye.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        eye.addEventListener("click", () => {
+          const reveal = emailText.dataset.revealed !== "true";
+          emailText.textContent = reveal ? emailText.dataset.email : "••••••••••••";
+          emailText.dataset.revealed = reveal ? "true" : "false";
+          eye.setAttribute("aria-pressed", reveal ? "true" : "false");
+          eye.setAttribute("aria-label", reveal ? "Conceal email address" : "Reveal email address");
+          eye.classList.toggle("is-lit", reveal);
+        });
+        emailLine.append(emailText, eye);
+        identity.append(name, emailLine);
+        top.appendChild(identity);
+
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "user-card-edit";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => openUserEditor(record));
+        top.appendChild(edit);
+        card.appendChild(top);
+
+        const controls = document.createElement("div");
+        controls.className = "user-control-groups";
+
+        const roleGroup = document.createElement("div");
+        roleGroup.className = "user-control-group";
+        const roleLabel = document.createElement("span");
+        roleLabel.className = "user-control-label";
+        roleLabel.textContent = "ROLE";
+        const roleChoices = document.createElement("div");
+        roleChoices.className = "user-role-switches";
+        [
+          { value:"Super Admin", cls:"super", label:"Super Admin" },
+          { value:"Admin", cls:"admin", label:"Admin" },
+          { value:"User", cls:"user", label:"User" }
+        ].forEach(option => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "user-role-switch " + option.cls + (role.toLowerCase() === option.value.toLowerCase() ? " is-on" : "");
+          button.textContent = option.label;
+          button.setAttribute("aria-pressed", role.toLowerCase() === option.value.toLowerCase() ? "true" : "false");
+          button.addEventListener("click", () => {
+            if (button.classList.contains("is-on") || card.dataset.saving === "true") return;
+            saveUserQuickControl(record, { role: option.value }, card);
+          });
+          roleChoices.appendChild(button);
+        });
+        roleGroup.append(roleLabel, roleChoices);
+
+        const activeGroup = document.createElement("div");
+        activeGroup.className = "user-control-group user-active-group";
+        const activeLabel = document.createElement("span");
+        activeLabel.className = "user-control-label";
+        activeLabel.textContent = "ACTIVE";
+        const activeChoices = document.createElement("div");
+        activeChoices.className = "user-active-switches";
+        [["true","ON"],["false","OFF"]].forEach(([value,label]) => {
+          const on = value === "true";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "user-active-switch " + (on ? "on" : "off") + ((active === on) ? " is-on" : "");
+          button.textContent = label;
+          button.setAttribute("aria-pressed", active === on ? "true" : "false");
+          button.addEventListener("click", () => {
+            if (active === on || card.dataset.saving === "true") return;
+            saveUserQuickControl(record, { active: on }, card);
+          });
+          activeChoices.appendChild(button);
+        });
+        activeGroup.append(activeLabel, activeChoices);
+        controls.append(roleGroup, activeGroup);
+        card.appendChild(controls);
+        list.appendChild(card);
+      });
+
+      if (!list.children.length) {
+        const empty = document.createElement("p");
+        empty.className = "user-control-empty";
+        empty.textContent = "No registered users found.";
+        host.appendChild(empty);
+      } else {
+        host.appendChild(list);
+      }
+    }
+
+    async function saveUserQuickControl(record, changes, card) {
+      if (!isSuperAdminSession()) {
+        showAccessDenied("Team RER Super Admin Access Only.");
+        return;
+      }
+      if (userManagementQuickControlPending || !record || !card) return;
+      const headers = userManagementData.headers || [];
+      const values = {};
+      headers.forEach(header => { values[header] = record.values[header] ?? ""; });
+      const roleHeader = headers[userHeaderIndex("role")];
+      const activeHeader = headers[userHeaderIndex("active")];
+      if (Object.prototype.hasOwnProperty.call(changes, "role")) values[roleHeader] = changes.role;
+      if (Object.prototype.hasOwnProperty.call(changes, "active")) values[activeHeader] = changes.active;
+      userManagementQuickControlPending = true;
+      card.dataset.saving = "true";
+      card.classList.add("is-saving");
+      card.querySelectorAll("button").forEach(button => { button.disabled = true; });
+      setMessage($("userManagementMessage"), "Saving user setting...", "success");
+      try {
+        await submitRequest("userManagementSave", { payload: JSON.stringify({
+          mode: "edit",
+          rowNumber: Number(record.rowNumber),
+          values: values
+        }) });
+      } catch (error) {
+        userManagementQuickControlPending = false;
+        card.dataset.saving = "false";
+        card.classList.remove("is-saving");
+        card.querySelectorAll("button").forEach(button => { button.disabled = false; });
+        setMessage($("userManagementMessage"), error.message || "Unable to save user setting.", "error");
+        submitRequest("userManagementGet").catch(() => {});
+      }
     }
     function openUserEditor(record = null) {
       if (!isSuperAdminSession()) { showAccessDenied("Team RER Super Admin Access Only."); return; }
@@ -6137,8 +6282,7 @@
       const editorFields = [
         { key: "name", label: "Name" },
         { key: "email address", label: "Email Address" },
-        { key: "role", label: "Role" },
-        { key: "active", label: "Status" }
+        ...(!record ? [{ key: "role", label: "Role" }, { key: "active", label: "Status" }] : [])
       ];
       editorFields.forEach((field, fieldIndex) => {
         const headerIndex = userManagementData.headers.findIndex(
@@ -7732,6 +7876,57 @@
     .page-jump-controls button small { font-size:.56rem; line-height:1.15; letter-spacing:.02em; }
 
     .user-management-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; }
+
+    .user-control-list { display:grid; gap:12px; }
+    .user-control-card {
+      min-width:0; padding:14px; border:1px solid rgba(166,202,230,.20);
+      border-radius:16px; background:linear-gradient(145deg,rgba(19,43,65,.94),rgba(10,27,44,.94));
+      box-shadow:0 8px 22px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.045);
+      transition:opacity .15s ease,border-color .15s ease;
+    }
+    .user-control-card.is-saving { opacity:.68; }
+    .user-control-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .user-control-identity { min-width:0; }
+    .user-control-name { display:block; color:#f1f7ff; font-size:15px; line-height:1.35; overflow-wrap:anywhere; }
+    .user-control-email { display:flex; align-items:center; gap:7px; margin-top:4px; color:#a9bfd3; font-size:12px; }
+    .user-email-value { min-width:0; overflow-wrap:anywhere; letter-spacing:.3px; }
+    .user-email-eye,.user-card-edit {
+      display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
+      width:34px; min-width:34px; min-height:32px; padding:5px; margin:0;
+      border:1px solid rgba(172,204,229,.22); border-radius:9px;
+      background:rgba(139,177,207,.10); color:#c5d9eb;
+    }
+    .user-email-eye svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .user-email-eye.is-lit { color:#7dd3fc; background:rgba(14,165,233,.18); border-color:rgba(56,189,248,.55); box-shadow:0 0 12px rgba(56,189,248,.22); }
+    .user-card-edit { width:auto; min-width:56px; padding:6px 10px; font-size:11px; }
+    .user-control-groups { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:end; margin-top:14px; }
+    .user-control-group { min-width:0; }
+    .user-control-label { display:block; margin-bottom:7px; color:#8fa9bf; font-size:9px; font-weight:800; letter-spacing:1.15px; }
+    .user-role-switches,.user-active-switches { display:flex; flex-wrap:wrap; gap:6px; }
+    .user-role-switch,.user-active-switch {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:auto; min-width:0; min-height:34px; margin:0; padding:7px 10px;
+      border:1px solid rgba(170,197,219,.18); border-radius:9px;
+      background:rgba(5,17,29,.72); color:#70869a; font-size:10px; font-weight:800;
+      opacity:.48; box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+      transition:all .16s ease;
+    }
+    .user-role-switch.super.is-on { color:#d5ffe7; opacity:1; border-color:#22c55e; background:linear-gradient(135deg,rgba(22,163,74,.44),rgba(20,83,45,.62)); box-shadow:0 0 14px rgba(34,197,94,.27),inset 0 0 10px rgba(74,222,128,.10); }
+    .user-role-switch.admin.is-on { color:#d8efff; opacity:1; border-color:#38bdf8; background:linear-gradient(135deg,rgba(2,132,199,.48),rgba(7,58,94,.68)); box-shadow:0 0 14px rgba(56,189,248,.27),inset 0 0 10px rgba(125,211,252,.10); }
+    .user-role-switch.user.is-on { color:#fff2bf; opacity:1; border-color:#eab308; background:linear-gradient(135deg,rgba(202,138,4,.46),rgba(113,63,18,.68)); box-shadow:0 0 14px rgba(234,179,8,.25),inset 0 0 10px rgba(253,224,71,.10); }
+    .user-active-switch.on.is-on { color:#dcffe9; opacity:1; border-color:#22c55e; background:rgba(22,163,74,.32); box-shadow:0 0 13px rgba(34,197,94,.25); }
+    .user-active-switch.off.is-on { color:#ffdede; opacity:1; border-color:#ef4444; background:rgba(185,28,28,.30); box-shadow:0 0 13px rgba(239,68,68,.20); }
+    .user-role-switch:disabled,.user-active-switch:disabled,.user-email-eye:disabled,.user-card-edit:disabled { cursor:wait; }
+    .user-control-empty { padding:18px; color:#a9bfd3; text-align:center; }
+    @media(max-width:560px) {
+      .user-control-card { padding:12px; }
+      .user-control-groups { grid-template-columns:1fr; gap:11px; }
+      .user-role-switches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .user-role-switch { padding:7px 4px; font-size:9px; }
+      .user-active-switches { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .user-active-switch { min-height:36px; }
+    }
+
     .user-management-table-wrap { overflow:auto; border:1px solid rgba(255,255,255,.12); border-radius:14px; }
     .user-management-table { width:100%; min-width:640px; border-collapse:collapse; font-size:12px; }
     .user-management-table th,.user-management-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; }
