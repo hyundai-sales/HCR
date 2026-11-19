@@ -3615,8 +3615,11 @@
         const data = event.data.appData;
         syncUserManagementVisibility();
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
-        $("auditTabBtn").classList.toggle("hidden", !data.isAdmin);
-        $("edgeActivityLogsBtn")?.classList.toggle("hidden", !data.isAdmin);
+        // Activity Logs is restricted by the signed-in session role, not the
+        // broader appData flag. Only Admin and Super Admin may see its icons.
+        const canViewActivityLogs = isAdminSession();
+        $("auditTabBtn").classList.toggle("hidden", !canViewActivityLogs);
+        $("edgeActivityLogsBtn")?.classList.toggle("hidden", !canViewActivityLogs);
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
         syncUserManagementVisibility();
         $("orgAddBtn").classList.toggle("hidden", !data.isAdmin);
