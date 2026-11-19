@@ -164,9 +164,22 @@
     .credit-choice label { display:flex; align-items:center; gap:5px; font-weight:normal; margin:0; }
     .credit-choice input { width:auto; min-height:0; }
     .quote-type-switches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .quote-type-switch { min-height:44px; padding:10px 6px; border:1px solid #b8c9d9; border-radius:10px; background:#edf3f8; color:#244866; font-size:12px; font-weight:800; letter-spacing:.25px; cursor:pointer; transition:background .15s,border-color .15s,box-shadow .15s; }
-    .quote-type-switch.active { background:linear-gradient(145deg,#07528d,#003b70); border-color:#003b70; color:#fff; box-shadow:0 3px 10px rgba(0,59,112,.22), inset 0 1px 0 rgba(255,255,255,.18); }
-    @media(max-width:420px){ .quote-type-switches{gap:5px}.quote-type-switch{font-size:10px;padding:9px 3px;} }
+    /* Keep all quotation-type labels readable against their button backgrounds. */
+    body .quote-type-switch {
+      min-width:0; min-height:46px; padding:10px 6px; border:1px solid #66829d !important;
+      border-radius:10px; background:linear-gradient(145deg,#29445e,#1b3046) !important;
+      color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;
+      font-size:12px; font-weight:800; letter-spacing:.2px; line-height:1.2;
+      text-shadow:0 1px 2px rgba(0,0,0,.35); opacity:1 !important;
+      cursor:pointer; transition:background .15s,border-color .15s,box-shadow .15s;
+    }
+    body .quote-type-switch.active {
+      background:linear-gradient(145deg,#0875bd,#034477) !important;
+      border-color:#62b8f0 !important; color:#ffffff !important;
+      -webkit-text-fill-color:#ffffff !important;
+      box-shadow:0 3px 10px rgba(0,59,112,.32),inset 0 1px 0 rgba(255,255,255,.24);
+    }
+    @media(max-width:420px){ .quote-type-switches{gap:5px} body .quote-type-switch{font-size:10.5px;padding:9px 3px;} }
 
     @media(max-width:420px){ .credit-grid{grid-template-columns:1fr;} .credit-field.full{grid-column:auto;} }
     .app-nav button.active { background:#dce9f5; color:#003b70; border:1px solid #9db8d1; }
@@ -2416,7 +2429,7 @@
 
 
 <style id="credit-application-floating-legend-frame">
-  /* Credit Application: floating legend frame around the module content. */
+  /* Credit Application: title and instructions form the fixed/frozen header. */
   #creditPage .credit-module-frame{
     position:relative;
     margin:28px 0 18px;
@@ -2428,48 +2441,49 @@
     -webkit-backdrop-filter:blur(12px) saturate(135%);
     backdrop-filter:blur(12px) saturate(135%);
   }
-  #creditPage .credit-module-frame::before{
-    content:"Credit Application";
-    position:absolute;
-    top:-16px;
-    left:50%;
-    transform:translateX(-50%);
-    max-width:calc(100% - 34px);
-    padding:3px 17px 4px;
-    border:1px solid rgba(76,151,218,.52);
-    border-radius:999px;
-    background:#071d35;
-    color:#dceeff;
-    font-size:clamp(12px,2.8vw,15px);
-    font-weight:700;
-    letter-spacing:.045em;
-    line-height:1.35;
-    white-space:nowrap;
-    box-shadow:0 4px 14px rgba(0,12,28,.24);
-    pointer-events:none;
-  }
-  /* Excel-style frozen pane: title, instructions and divider remain visible
-     while the consultant controls and application fields scroll underneath. */
+  /* The title is part of the sticky pane so it remains visible during scrolling. */
+  #creditPage .credit-module-frame::before{content:none !important;display:none !important}
   #creditPage .credit-freeze-pane{
     position:sticky;
     top:0;
-    z-index:80;
-    margin: -25px calc(-1 * clamp(13px,2.5vw,26px)) 0;
-    padding: 18px clamp(13px,2.5vw,26px) 0;
-    background:linear-gradient(180deg,rgba(7,29,53,.99) 0%,rgba(7,29,53,.98) 88%,rgba(7,29,53,.94) 100%);
+    z-index:120;
+    margin:-25px calc(-1 * clamp(13px,2.5vw,26px)) 0;
+    padding:8px clamp(13px,2.5vw,26px) 0;
+    background:linear-gradient(180deg,rgba(7,29,53,.995) 0%,rgba(7,29,53,.99) 88%,rgba(7,29,53,.97) 100%);
     border-radius:25px 25px 0 0;
-    box-shadow:0 12px 18px rgba(0,12,28,.20);
+    box-shadow:0 12px 18px rgba(0,12,28,.24);
     isolation:isolate;
+  }
+  #creditPage .credit-freeze-pane::before{
+    content:"Credit Application";
+    position:relative;
+    display:block;
+    width:max-content;
+    max-width:calc(100% - 12px);
+    margin:0 auto 8px;
+    padding:7px 25px 8px;
+    border:1.5px solid rgba(91,169,231,.78);
+    border-radius:999px;
+    background:#071d35;
+    color:#e8f4ff;
+    font-size:clamp(14px,3vw,16px);
+    font-weight:750;
+    letter-spacing:.035em;
+    line-height:1.35;
+    text-align:center;
+    white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,12,28,.28),inset 0 1px 0 rgba(255,255,255,.12);
+    pointer-events:none;
   }
   #creditPage .credit-instructions{
     position:relative;
-    margin:8px 0 0;
+    margin:0;
     padding:0 0 17px;
     border-bottom:2px solid rgba(104,174,232,.78);
     box-shadow:0 1px 0 rgba(255,255,255,.055);
     line-height:1.55;
   }
-  /* These controls remain in normal document flow and scroll away with the form. */
+  /* Consultant controls and all application fields stay in normal scrolling flow. */
   #creditPage .credit-consultant-section{
     position:static !important;
     inset:auto !important;
@@ -2477,9 +2491,9 @@
     margin-top:0;
   }
   @media(max-width:560px){
-    #creditPage .credit-module-frame{margin-top:25px;padding:22px 12px 18px;border-radius:22px}
-    #creditPage .credit-module-frame::before{top:-14px;padding:3px 13px;font-size:12px}
-    #creditPage .credit-freeze-pane{margin:-22px -12px 0;padding:16px 12px 0;border-radius:20px 20px 0 0}
+    #creditPage .credit-module-frame{margin-top:28px;padding:22px 12px 18px;border-radius:22px}
+    #creditPage .credit-freeze-pane{margin:-22px -12px 0;padding:8px 12px 0;border-radius:20px 20px 0 0}
+    #creditPage .credit-freeze-pane::before{padding:7px 23px 8px;font-size:15px;margin-bottom:8px}
     #creditPage .credit-instructions{padding-bottom:14px;margin-bottom:0}
   }
 </style>
