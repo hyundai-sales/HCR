@@ -3877,9 +3877,21 @@
         $("pdfPages").replaceChildren();
         previewLoadPending = false;
         $("generateBtn").disabled = false;
-        if (openPriceListPreviewWhenReady) {
-          openPriceListPreviewWhenReady = false;
-          openPriceListPdfPreview();
+        const shouldOpenPreviewAfterHeendy = openPriceListPreviewWhenReady;
+        openPriceListPreviewWhenReady = false;
+        showCplPdfNotification(
+          pendingPriceListPdfUrl,
+          result.fileName || worksheetFileName,
+          worksheetName + " PDF Ready!",
+          worksheetName + " has been generated successfully. Close this notice to open the PDF preview, or download the PDF now."
+        );
+        const heendyClose = document.querySelector("#cplPdfBusyOverlay .cpl-heendy-close");
+        if (heendyClose && shouldOpenPreviewAfterHeendy) {
+          const originalClose = heendyClose.onclick;
+          heendyClose.onclick = () => {
+            if (typeof originalClose === "function") originalClose();
+            openPriceListPdfPreview();
+          };
         }
       }
     });
@@ -6804,6 +6816,7 @@
       $("downloadLink").classList.add("hidden");
       $("viewBtn").disabled = true;
       $("viewBtn").textContent = "Generating PDF...";
+      beginCplPdfGeneration("Preparing " + worksheet + " PDF");
       setMessage($("resultMessage"), "Generating " + worksheet + " PDF. Please wait...");
       openPriceListPreviewWhenReady = true;
       priceListRequestPerfStartedAt = performance.now();
@@ -6832,6 +6845,7 @@
     $("generateBtn").addEventListener("click", requestPriceListPdf);
 
     $("worksheet").addEventListener("change", () => {
+      setCplPdfBusy(false);
       if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
       pendingPriceListPdfUrl = null;
       pendingPriceListPdfBytes = null;
