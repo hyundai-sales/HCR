@@ -3170,6 +3170,7 @@
           <button id="backToMenuFromQuote" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Vehicle Quotation</h2>
           <div id="quoteControls" class="quote-panel">
+            <div class="field hidden" id="quoteConsultantField"><label for="quoteConsultantSelect">Sales Consultant</label><select id="quoteConsultantSelect"><option value="">Select Sales Consultant</option></select></div>
             <div class="field"><label for="quoteSalutation">Client salutation</label><select id="quoteSalutation"><option>Mr.</option><option>Ms.</option><option>Mrs.</option><option>Sir/Ma'am</option></select></div>
             <div class="field"><label for="quoteClientName">Client name</label><input id="quoteClientName" type="text" placeholder="Enter client name"></div>
             <div class="field"><label for="quoteYearModel">Year model</label><input id="quoteYearModel" type="text" inputmode="numeric" placeholder="e.g. 2026"></div>
@@ -4141,6 +4142,7 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        initializeVehicleQuotationConsultantSelector().catch(err=>console.warn("Quotation consultant selector:",err));
         syncActivityLogsVisibility();
         syncCplClearSelectionNewVisibility();
         syncUserManagementVisibility();
@@ -7618,7 +7620,7 @@
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
-    ["quoteVariant","quoteType","quoteSalutation","quoteClientName","quoteYearModel","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteInsuranceAmount","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    ["quoteConsultantSelect","quoteVariant","quoteType","quoteSalutation","quoteClientName","quoteYearModel","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteInsuranceAmount","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     updateQuotePreview();
     $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
@@ -7647,6 +7649,24 @@
     function showQuoteHeendyLoading(){const ov=$('quoteHeendyOverlay');$('quoteHeendyImg').src=($('creditHeendyBuddyImage')&&$('creditHeendyBuddyImage').src)||'';$('quoteHeendyTitle').textContent='Preparing your quotation PDF';$('quoteHeendyMsg').textContent='Heendy is getting your file ready...';$('quoteHeendyFill').style.width='12%';$('quoteHeendyClose').classList.remove('show');ov.classList.add('show');playQuoteHeendySound(false);let v=12;window.__quoteHeendyProgress=setInterval(()=>{v=Math.min(v+Math.random()*9,92);$('quoteHeendyFill').style.width=v+'%';},550);}
     function showQuoteHeendySuccess(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyFill').style.width='100%';$('quoteHeendyTitle').textContent='Quotation PDF Ready!';$('quoteHeendyMsg').textContent='Your quotation has been generated and downloaded successfully.';$('quoteHeendyClose').classList.add('show');playQuoteHeendySound(true);}
     function hideQuoteHeendy(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyOverlay').classList.remove('show');}
+    async function initializeVehicleQuotationConsultantSelector(){
+      const field=$("quoteConsultantField"), select=$("quoteConsultantSelect");
+      if(!field||!select)return;
+      const admin=["admin","super admin"].includes(String(authorizedUser&&authorizedUser.role||"").toLowerCase());
+      if(!admin){field.classList.add("hidden");select.innerHTML="";return;}
+      field.classList.remove("hidden");select.innerHTML='<option value="">Loading consultants...</option>';
+      const response=await submitRequest("vehicleQuotationConsultantsGet",{silent:true});
+      const data=response.vehicleQuotationConsultants||[];
+      select.innerHTML='<option value="">Select Sales Consultant</option>';
+      data.forEach(c=>{const o=document.createElement("option");o.value=c.name;o.textContent=c.name;select.appendChild(o);});
+      if(authorizedUser&&authorizedUser.name&&data.some(c=>c.name===authorizedUser.name))select.value=authorizedUser.name;
+      updateQuotePreview();
+    }
+    function selectedQuotationConsultant(){
+      const admin=["admin","super admin"].includes(String(authorizedUser&&authorizedUser.role||"").toLowerCase());
+      return admin&&$("quoteConsultantSelect")&&$("quoteConsultantSelect").value ? $("quoteConsultantSelect").value : String((authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"");
+    }
+
     $("printQuoteBtn").addEventListener("click", async () => {
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       if (!vehicle) { showTeamRerAlert("Please select a vehicle model and variant first.", "Vehicle details required"); return; }
@@ -7670,8 +7690,7 @@
         quoteType:$('quoteType').value, partnerBank:$('quotePartnerBank').value, downpaymentPercent:$('quoteDownpayment').value,
         insuranceIncluded, insuranceAmount:Number($("quoteInsuranceAmount").value||0), tplIncluded:$("quoteTpl").checked,
         freebies:(()=>{const r=lines.find(el=>el.textContent.toLowerCase().includes("freebies / inclusions"));return r?r.textContent.replace(/freebies \/ inclusions/i,"").trim():$("quoteFreebies").value.trim();})(),
-        consultantName:(authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"",
-        phone:(authorizedUser&&authorizedUser.phone)||""
+        consultantName:selectedQuotationConsultant(),
       };
       const button = $("printQuoteBtn"); button.disabled=true;
       showQuoteHeendyLoading();
