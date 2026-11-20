@@ -7148,13 +7148,22 @@
       const title=document.createElement('strong');title.textContent=retrieved?(data.clientName||'Unnamed Client'):'Client Entry';
       const actions=document.createElement('div');actions.className='cpl-entry-card-actions';
       if(retrieved){
-        const view=document.createElement('button');view.type='button';view.textContent='View';view.className='cpl-view-row';
-        view.onclick=()=>{const collapsed=card.classList.contains('is-collapsed');card.classList.toggle('is-collapsed',!collapsed);card.dataset.mode='view';setCplCardReadOnly(card,true);view.textContent=collapsed?'Hide':'View';};
-        const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.className='cpl-edit-row';
-        edit.onclick=()=>{card.classList.remove('is-collapsed');card.dataset.mode='edit';setCplCardReadOnly(card,false);};
-        const del=document.createElement('button');del.type='button';del.textContent='Delete';del.className='cpl-delete-row';
-        del.onclick=()=>{card.remove();renumberCplCards();};
-        actions.append(view,edit,del);
+        if(isRegularUserSession()){
+          head.style.cursor='pointer';
+          head.setAttribute('role','button');
+          head.setAttribute('tabindex','0');
+          const toggleRetrievedCard=()=>{const collapsed=card.classList.contains('is-collapsed');card.classList.toggle('is-collapsed',!collapsed);card.dataset.mode=collapsed?'edit':'collapsed';setCplCardReadOnly(card,false);};
+          head.addEventListener('click',toggleRetrievedCard);
+          head.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleRetrievedCard();}});
+        }else{
+          const view=document.createElement('button');view.type='button';view.textContent='View';view.className='cpl-view-row';
+          view.onclick=()=>{const collapsed=card.classList.contains('is-collapsed');card.classList.toggle('is-collapsed',!collapsed);card.dataset.mode='view';setCplCardReadOnly(card,true);view.textContent=collapsed?'Hide':'View';};
+          const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.className='cpl-edit-row';
+          edit.onclick=()=>{card.classList.remove('is-collapsed');card.dataset.mode='edit';setCplCardReadOnly(card,false);};
+          const del=document.createElement('button');del.type='button';del.textContent='Delete';del.className='cpl-delete-row';
+          del.onclick=()=>{card.remove();renumberCplCards();};
+          actions.append(view,edit,del);
+        }
       }else{
         const remove=document.createElement('button');remove.type='button';remove.textContent='Remove Entry';remove.className='cpl-remove-row';remove.onclick=()=>{card.remove();renumberCplCards();};actions.appendChild(remove);
       }
