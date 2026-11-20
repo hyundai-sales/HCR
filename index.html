@@ -3059,7 +3059,7 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button><button id="cplClearSelectionNew" type="button" class="secondary hidden" hidden aria-hidden="true" style="display:none!important">Clear Selection &amp; New</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button></div>
@@ -9439,7 +9439,6 @@
     @keyframes cplHyundaiSweepBlue{0%{transform:translateX(-30px) rotate(22deg);opacity:0}18%{opacity:.8}60%{opacity:.6}100%{transform:translateX(125px) rotate(22deg);opacity:0}}
     @media(prefers-reduced-motion:reduce){#teamRerDynamicIsland.cpl-pdf-ready::after,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-emblem,#teamRerDynamicIsland.cpl-pdf-ready .cpl-hyundai-sweep{animation:none!important}}
 
-    #cplPage #cplClearSelectionNew{background:linear-gradient(135deg,#52677b,#34495e)!important;border:1px solid #9eb3c8!important;color:#fff!important;font-weight:800!important;min-height:48px!important;}
     /* CPL retrieval controls: force readable contrast on every device/browser */
     #cplPage .cpl-monthly-retrieve label{color:#f4f8ff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.55)!important;font-weight:800!important;}
     #cplPage .cpl-monthly-retrieve select,
@@ -9537,20 +9536,6 @@
     if (select && select.dataset.cplResetBound !== '1') {
       select.dataset.cplResetBound = '1';
       select.addEventListener('change', resetConsultantWorkspace, true);
-    }
-    const clearNew = document.getElementById('cplClearSelectionNew');
-    if (clearNew && clearNew.dataset.cplClearBound !== '1') {
-      clearNew.dataset.cplClearBound = '1';
-      clearNew.addEventListener('click', () => {
-        if (typeof canUseCplClearSelectionNew !== 'function' || !canUseCplClearSelectionNew()) {
-          if (typeof syncCplClearSelectionNewVisibility === 'function') syncCplClearSelectionNewVisibility();
-          return;
-        }
-        if (select) select.value = '';
-        resetConsultantWorkspace();
-        clearNew.textContent = 'Cleared — New CPL';
-        setTimeout(() => { clearNew.textContent = 'Clear Selection & New'; }, 1800);
-      });
     }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindConsultantReset, {once:true});
