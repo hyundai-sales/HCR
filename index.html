@@ -1776,6 +1776,8 @@
       #cplPage .cpl-saved-client-head strong { font-size:16px !important; }
     }
   
+
+    .quote-color-checkboxes{display:flex;flex-wrap:wrap;gap:10px;padding:8px 2px}.quote-color-checkboxes label{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #b9c8d6;border-radius:10px;background:rgba(255,255,255,.65);font-weight:500}.quote-color-checkboxes input{width:18px;height:18px}
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -3180,8 +3182,8 @@
               <select id="quoteVariant"><option value="">Select variant</option></select>
             </div>
             <div class="field">
-              <label for="quoteColor">Vehicle color</label>
-              <select id="quoteColor" multiple size="3"><option value="">Select variant first</option></select>
+              <label>Available Colors</label>
+              <div id="quoteColor" class="quote-color-checkboxes"><span>Select variant first</span></div>
             </div>
             <div class="field">
               <label>Quotation type</label>
@@ -3228,7 +3230,7 @@
               <select id="quoteLto"><option value="Included">Included</option><option value="Not included">Not included</option></select>
             </div>
           </div>
-          <button id="openQuotePreviewBtn" type="button" style="margin-top:14px">Preview Quotation</button>
+          <button id="printQuoteBtn" type="button" style="margin-top:14px">Print / Save PDF</button>
           <div id="quotePreviewWrap" class="preview-wrap quote-liquid-preview hidden" role="dialog" aria-modal="true" aria-label="Vehicle Quotation Preview">
             <div class="preview-dialog quote-preview-dialog">
               <div class="preview-head quote-preview-head">
@@ -3241,7 +3243,7 @@
                 </div>
               </div>
               <div class="quote-preview-actions">
-                <button id="printQuoteBtn" type="button">Download Quotation PDF</button>
+                
               </div>
             </div>
           </div>
@@ -4495,11 +4497,13 @@
       const variant = $("quoteVariant").value;
       const match = quotationVehicles.find(v => v.model === model && v.variant === variant);
       const colors = match && Array.isArray(match.colors) ? match.colors : [];
-      const colorSelect = $("quoteColor");
-      const previous = Array.from(colorSelect.selectedOptions || []).map(o=>o.value);
-      fillSelect(colorSelect, colors, colors.length ? "Choose color" : "Select a variant first");
-      Array.from(colorSelect.options).forEach(o=>{ if(previous.includes(o.value)) o.selected=true; });
+      const container = $("quoteColor");
+      const previous = selectedQuoteColors();
+      if (!colors.length) { container.innerHTML = '<span>Select variant first</span>'; return; }
+      container.innerHTML = colors.map(color => `<label><input type="checkbox" value="${escapeHtml(color)}" ${previous.includes(String(color))?'checked':''}> ${escapeHtml(color)}</label>`).join('');
+      container.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',updateQuotePreview));
     }
+    function selectedQuoteColors(){ return Array.from($("quoteColor").querySelectorAll('input[type="checkbox"]:checked')).map(cb=>String(cb.value||'').trim()).filter(Boolean); }
 
     function setQuoteType(type) {
       if (!["cash","bankpo","financing"].includes(type)) return;
@@ -4656,8 +4660,8 @@
       const generatedDate = new Date().toLocaleDateString("en-PH", { year:"numeric", month:"long", day:"numeric" });
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml($("quoteYearModel").value.trim())} ${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
-      const selectedColors = Array.from($("quoteColor").selectedOptions || []).map(o=>String(o.value||"").trim()).filter(Boolean);
-      if (selectedColors.length) rows.push(`<div class="quote-line"><span>Vehicle Color</span><strong>${selectedColors.map(escapeHtml).join(", ")}</strong></div>`);
+      const selectedColors = selectedQuoteColors();
+      if (selectedColors.length) rows.push(`<div class="quote-line"><span>Available Colors</span><strong>${selectedColors.map(escapeHtml).join(", ")}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
       if (!financing) {
         rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
@@ -7612,7 +7616,7 @@
       clearLastAppView();
       $("appNav").classList.remove("hidden");
     }));
-    ["quoteVariant","quoteType","quoteColor","quoteSalutation","quoteClientName","quoteYearModel","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteInsuranceAmount","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    ["quoteVariant","quoteType","quoteSalutation","quoteClientName","quoteYearModel","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteInsuranceAmount","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
@@ -7620,41 +7624,6 @@
     function closeQuotePreview() {
       $("quotePreviewWrap").classList.add("hidden");
     }
-    $("openQuotePreviewBtn").addEventListener("click", () => {
-      if (!quotationVehicles.some(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value)) {
-        showTeamRerAlert("Please select a vehicle model and variant first.", "Vehicle details required"); return;
-      }
-      if (["financing","bankpo"].includes($("quoteType").value) && !$("quotePartnerBank").value) {
-        showTeamRerAlert("Please select a partner bank for this transaction.", "Partner bank required"); return;
-      }
-      updateQuotePreview();
-      const quoteWrap = $("quotePreviewWrap");
-      quoteWrap.classList.remove("hidden");
-
-      // Reset every relevant scroll position so the modal header
-      // ("VEHICLE QUOTATION" / "Close") is always visible first.
-      const resetQuotationPreviewPosition = () => {
-        const quoteScroll = quoteWrap.querySelector(".quote-preview-scroll");
-        const quoteDialog = quoteWrap.querySelector(".quote-preview-dialog");
-        quoteWrap.scrollTop = 0;
-        if (quoteScroll) quoteScroll.scrollTop = 0;
-        if (quoteDialog) quoteDialog.scrollTop = 0;
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-        const quoteHeader = quoteWrap.querySelector(".quote-preview-head");
-        if (quoteHeader) quoteHeader.scrollIntoView({ block: "start", inline: "nearest", behavior: "instant" });
-        // Reassert after the browser finishes laying out the newly opened modal.
-        requestAnimationFrame(() => {
-          quoteWrap.scrollTop = 0;
-          if (quoteScroll) quoteScroll.scrollTop = 0;
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-          window.scrollTo(0, 0);
-        });
-      };
-      resetQuotationPreviewPosition();
-    });
     $("closeQuotePreviewBtn").addEventListener("click", closeQuotePreview);
     $("quotePreviewWrap").addEventListener("click", event => {
       if (event.target === $("quotePreviewWrap")) closeQuotePreview();
@@ -7675,7 +7644,7 @@
       const srp = Number(vehicle.srp || 0);
       const discount = amountFromLabel($("quoteType").value === "bankpo" ? "Bank PO Discount" : "Cash Discount") || Number(vehicle.discount || 0);
       const insuranceIncluded = $("quoteInsurance").value === "Included";
-      const colors = Array.from($("quoteColor").selectedOptions || []).map(o=>o.value).filter(Boolean);
+      const colors = selectedQuoteColors();
       const payload = {
         clientName, salutation:$("quoteSalutation").value, yearModel:$("quoteYearModel").value,
         model:vehicle.model, variant:vehicle.variant, colors, srp, discount,
