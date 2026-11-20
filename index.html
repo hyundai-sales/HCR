@@ -10250,7 +10250,38 @@
 }
 </style>
 
-</body>
+
+<style id="teamrer-financing-print-final-override-fix23">
+/* FIX23: force the financing quotation preview itself into print output. */
+@media print {
+  @page { size: A4 portrait; margin: 5mm; }
+  html, body { margin:0!important; padding:0!important; width:100%!important; height:auto!important; overflow:visible!important; background:#fff!important; }
+  body.printing-financing-quote * { visibility:hidden!important; }
+  body.printing-financing-quote #quotePage,
+  body.printing-financing-quote #quotePreviewWrap,
+  body.printing-financing-quote #quotePreviewWrap .preview-dialog,
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-scroll,
+  body.printing-financing-quote #quotePreview,
+  body.printing-financing-quote #quotePreview * { visibility:visible!important; }
+  body.printing-financing-quote #quotePage { display:block!important; position:static!important; width:auto!important; height:auto!important; overflow:visible!important; }
+  body.printing-financing-quote #quotePreviewWrap { display:block!important; visibility:visible!important; position:fixed!important; inset:0!important; width:100%!important; height:auto!important; max-height:none!important; overflow:visible!important; padding:0!important; margin:0!important; background:#fff!important; border:0!important; z-index:999999!important; }
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-dialog,
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-scroll { display:block!important; position:static!important; width:100%!important; height:auto!important; max-height:none!important; max-width:none!important; overflow:visible!important; margin:0!important; padding:0!important; border:0!important; box-shadow:none!important; transform:none!important; background:#fff!important; }
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-head,
+  body.printing-financing-quote #quotePreviewWrap .quote-preview-actions { display:none!important; }
+  body.printing-financing-quote #quotePreview { display:block!important; position:static!important; visibility:visible!important; width:100%!important; height:auto!important; min-height:0!important; max-width:none!important; max-height:none!important; overflow:visible!important; box-sizing:border-box!important; margin:0!important; padding:3mm!important; background:#fff!important; color:#111!important; border:0!important; box-shadow:none!important; transform:none!important; break-inside:auto!important; page-break-inside:auto!important; }
+  body.printing-financing-quote #quotePreview * { visibility:visible!important; color:#111!important; background-color:transparent!important; box-shadow:none!important; }
+  body.printing-financing-quote #appSection,
+  body.printing-financing-quote #appNav,
+  body.printing-financing-quote .brand,
+  body.printing-financing-quote #userDetails,
+  body.printing-financing-quote #loginSection,
+  body.printing-financing-quote #teamRerEdgeNav,
+  body.printing-financing-quote #backToMenuFromQuote { display:none!important; }
+}
+</style>
+\n</body>
 </html>
 
 <style id="team-rer-activity-logs-role-visibility-guard">
