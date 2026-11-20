@@ -7674,7 +7674,7 @@
       try{
         const response=await Promise.race([
           submitRequest("vehicleQuotationVehiclesGet",{silent:true}),
-          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Vehicle list timed out. Tap to retry.")),20000))
+          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Vehicle list timed out. Tap to retry.")),45000))
         ]);
         const data=response.vehicleQuotationVehicles||[];
         quotationVehicles=data;
