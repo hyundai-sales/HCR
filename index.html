@@ -7283,6 +7283,8 @@
       if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}
       saveCplDraft();
       closeCplSavedEntryModal();
+      // Editing requires the CPL entry workspace to be visible, even from monthly-retrieval mode.
+      $('cplPage')?.classList.remove('cpl-monthly-mode');
       cplSingleEntryEdit={
         formId:String(form.id),date:String(form.date||''),consultant:String(consultant||form.consultant||''),
         manager:String(form.manager||'Ralph Edward Rosales'),dealer:String(form.dealer||'HCR'),type:String(form.type||'FIELD'),
@@ -7350,6 +7352,13 @@
         showTeamRerDynamicIsland('CPL entry update failed: '+(err?.message||err));
       }
     }
+    function formatCplSavedEntryDate(value){
+      const raw=String(value||'').trim();if(!raw)return 'Date unavailable';
+      const m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if(m)return `${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}-${m[1]}`;
+      const d=new Date(raw);if(!Number.isNaN(d.getTime()))return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;
+      return raw;
+    }
     function renderCplConsultantSavedEntries(monthPrefix=null,forcedConsultant=null){
       const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
       const consultant=forcedConsultant|| (isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim());
@@ -7362,7 +7371,7 @@
         const item=document.createElement('article');item.className='cpl-saved-client-card';
         item.setAttribute('role','button');item.setAttribute('tabindex','0');
         const clientName=String(row.clientName||'Unnamed Client');
-        const entryDate=String(form.date||'Date unavailable');
+        const entryDate=formatCplSavedEntryDate(form.date);
         item.setAttribute('aria-label','Open saved CPL entry for '+clientName+', dated '+entryDate);
         const header=document.createElement('div');header.className='cpl-saved-client-head';
         const title=document.createElement('strong');title.textContent=clientName;
