@@ -7309,12 +7309,12 @@
       return `${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}-${parsed.getFullYear()}`;
     }
     function renderCplConsultantSavedEntries(){
-      const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
+      const host=$('cplConsultantSavedEntries');if(!host)return;host.hidden=false;host.style.display='';host.classList.remove('hidden');host.replaceChildren();
       const consultant=isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim();
       if(!consultant)return;
       const forms=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
       if(!forms.length){const empty=document.createElement('div');empty.className='cpl-saved-empty';empty.textContent='No saved CPL entries for '+consultant+'.';host.appendChild(empty);return;}
-      const heading=document.createElement('div');heading.className='cpl-saved-list-heading';heading.textContent='Saved CPL entries · '+consultant;host.appendChild(heading);
+      const heading=document.createElement('div');heading.className='cpl-saved-list-heading';heading.textContent='SAVED CPL ENTRIES';heading.style.textAlign='center';heading.style.fontWeight='700';heading.style.textTransform='uppercase';host.appendChild(heading);
       const labels={source:'Source',sc:'Sales Consultant',clientName:'Client Name',phone:'Phone',email:'Email',vehicle:'Vehicle of Interest',specs:'Specs',timeline:'Timeline',workProfile:'Work Profile',drivingNow:'Driving Now',likes:'Likes',concerns:'Concerns',freqUsage:'Frequency of Usage',nextStep:'Next Step'};
       forms.forEach(form=>{(form.rows||[]).forEach((row,rowIndex)=>{
         const item=document.createElement('article');item.className='cpl-saved-client-card';
@@ -7369,7 +7369,7 @@
       if(!matching.length){cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();setCplConsultant();if(isCplAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const rows=[];
       matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.createdAt=copy.createdAt||f.createdAt||f.date||'';copy.sc=consultant;rows.push(copy);}));
-      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};setCplMonthlyActionMode(true);$('cplSaveForm').textContent='Save Monthly Changes';setCplSaveButtonVisible(false);$('cplConsultantSavedEntries').classList.add('hidden');
+      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};setCplMonthlyActionMode(true);$('cplSaveForm').textContent='Save Monthly Changes';setCplSaveButtonVisible(false);const savedList=$('cplConsultantSavedEntries');savedList.classList.add('hidden');savedList.hidden=true;savedList.style.display='none';
       $("cplEntryRows").replaceChildren();rows.forEach(r=>addCplEntryRow(r,{retrieved:true}));
       setCplConsultant();
       if(isCplAdminSession()){$("cplConsultantSelect").value=consultant;Array.from($("cplEntryRows").querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}
