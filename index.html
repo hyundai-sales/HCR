@@ -5247,6 +5247,7 @@
     function setCplPdfBusy(on, message) {
       document.body.classList.toggle('cpl-pdf-busy', !!on);
       if (!on) {
+        stopCplPrinterSound();
         if (cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
         const oldOverlay=document.getElementById('cplPdfBusyOverlay');
         if(oldOverlay) oldOverlay.remove();
@@ -5276,8 +5277,40 @@
       if(fill) fill.style.width=p+'%'; if(label) label.textContent=p+'%';
     }
     function setCplPdfReadyOverlay() { /* success handled by Heendy CPL modal */ }
-    function beginCplPdfGeneration(message) { setCplPdfBusy(true,message||'Preparing your CPL PDF'); }
+    // Soft, looping printer-like sound, started only by CPL PDF generation and stopped on success/error.
+    let cplPrinterAudio = null;
+    function startCplPrinterSound() {
+      stopCplPrinterSound();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+        const noiseBuffer = ctx.createBuffer(1, Math.max(1,ctx.sampleRate*1.2), ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.28;
+        const noise = ctx.createBufferSource(); noise.buffer=noiseBuffer; noise.loop=true;
+        const filter = ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=1050; filter.Q.value=0.65;
+        const noiseGain = ctx.createGain(); noiseGain.gain.value=0.018;
+        const motor = ctx.createOscillator(); motor.type='triangle'; motor.frequency.value=62;
+        const motorGain = ctx.createGain(); motorGain.gain.value=0.012;
+        const wobble = ctx.createOscillator(); wobble.frequency.value=2.4;
+        const wobbleGain = ctx.createGain(); wobbleGain.gain.value=0.006;
+        wobble.connect(wobbleGain); wobbleGain.connect(motorGain.gain);
+        noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(ctx.destination);
+        motor.connect(motorGain); motorGain.connect(ctx.destination);
+        noise.start(); motor.start(); wobble.start();
+        cplPrinterAudio={ctx,noise,motor,wobble};
+      } catch (_) { cplPrinterAudio=null; }
+    }
+    function stopCplPrinterSound() {
+      const a=cplPrinterAudio; cplPrinterAudio=null; if(!a)return;
+      try{a.noise.stop();}catch(_){} try{a.motor.stop();}catch(_){} try{a.wobble.stop();}catch(_){}
+      try{a.ctx.close();}catch(_){}
+    }
+    function beginCplPdfGeneration(message) { startCplPrinterSound(); setCplPdfBusy(true,message||'Preparing your CPL PDF'); }
     function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction, directPrintPreview, afterPrintOrClose) {
+      stopCplPrinterSound();
       const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your PDF');
       const active=document.getElementById('cplPdfBusyOverlay'); if(!active) return;
       if(cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
