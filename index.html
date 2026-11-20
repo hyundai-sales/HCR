@@ -3881,6 +3881,8 @@
 
     let pendingRequestShowsLoading = true;
     let pendingRequestTimeout = null;
+    let pendingBridgeResolve = null;
+    let pendingBridgeReject = null;
 
     function clearPendingRequestTimeout() {
       if (pendingRequestTimeout !== null) {
@@ -3931,6 +3933,7 @@
         pendingNonce = null;
         pendingAction = null;
         pendingRequestTimeout = null;
+        if (pendingBridgeReject) { pendingBridgeReject(new Error("Google Apps Script did not return a response within " + ((action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate") ? 240 : 45) + " seconds. Please try again.")); pendingBridgeResolve = null; pendingBridgeReject = null; }
         $("tokenField").value = "";
         $("nonceField").value = "";
         if (showRequestLoading || action === "cplBlankPdf" || action === "cplMonthlyPdf") hideLoading();
@@ -3949,7 +3952,7 @@
           setMessage($("resultMessage"), message, "error");
         }
       }, (action === "cplBlankPdf" || action === "cplMonthlyPdf" || action === "generate") ? 240000 : 45000);
-      $("bridgeForm").submit();
+      return new Promise((resolve, reject) => { pendingBridgeResolve = resolve; pendingBridgeReject = reject; $("bridgeForm").submit(); });
     }
 
     function showLoginError(message) {
@@ -4025,6 +4028,9 @@
 
       clearPendingRequestTimeout();
       const action = pendingAction;
+      const responseData = event.data;
+      if (event.data.success) { if (pendingBridgeResolve) pendingBridgeResolve(responseData); } else { if (pendingBridgeReject) pendingBridgeReject(new Error(event.data.error || "Request failed.")); }
+      pendingBridgeResolve = null; pendingBridgeReject = null;
       if (pendingRequestShowsLoading) hideLoading();
       pendingRequestShowsLoading = true;
       pendingNonce = null;
@@ -7951,6 +7957,7 @@
         clearPendingRequestTimeout();
         pendingNonce = null;
         pendingAction = null;
+        pendingBridgeResolve = null; pendingBridgeReject = null;
         $("appSection").classList.add("hidden");
         $("loginSection").classList.remove("hidden");
         $("loginBtn").disabled = false;
