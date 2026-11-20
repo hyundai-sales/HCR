@@ -7168,6 +7168,8 @@
     function renderCplClients(){const host=$('cplClientsList');if(!host)return;host.replaceChildren();}
     let cplSavedEntryModal=null;
     let cplSavedEntryPreviousBodyOverflow='';
+    let cplSingleEntryEdit=null;
+    let cplSingleEntryEditBanner=null;
     function closeCplSavedEntryModal(){
       if(cplSavedEntryModal){cplSavedEntryModal.remove();cplSavedEntryModal=null;document.body.style.overflow=cplSavedEntryPreviousBodyOverflow;}
       document.removeEventListener('keydown',handleCplSavedEntryEscape);
@@ -7192,6 +7194,98 @@
       dialog.append(head,body,footer);overlay.appendChild(dialog);overlay.addEventListener('click',event=>{if(event.target===overlay)closeCplSavedEntryModal();});
       cplSavedEntryPreviousBodyOverflow=document.body.style.overflow;document.body.style.overflow='hidden';document.body.appendChild(overlay);cplSavedEntryModal=overlay;document.addEventListener('keydown',handleCplSavedEntryEscape);close.focus();
     }
+    function setCplSingleEntryEditLayout(editing){
+      ['cplAddRow','cplPrintBlank'].forEach(id=>{const el=$(id);if(el)el.classList.toggle('hidden',!!editing);});
+      const saved=$('cplConsultantSavedEntries');if(saved)saved.classList.toggle('hidden',!!editing);
+      const monthly=$('cplMonthlyRetrieve')?.closest('.cpl-monthly-retrieve');if(monthly)monthly.classList.toggle('hidden',!!editing);
+      const printSave=$('cplPrintSave');if(printSave){if(editing){printSave.classList.add('hidden');printSave.hidden=true;}else if(cplMonthlyRetrieved){printSave.classList.remove('hidden');printSave.hidden=false;}}
+      if(editing){
+        if(!cplSingleEntryEditBanner){
+          cplSingleEntryEditBanner=document.createElement('div');
+          cplSingleEntryEditBanner.className='cpl-single-entry-edit-banner';
+          cplSingleEntryEditBanner.textContent='EDITING SAVED CPL ENTRY';
+        }
+        const shell=$('cplEntryRows')?.parentElement;
+        if(shell&&!cplSingleEntryEditBanner.isConnected)shell.insertBefore(cplSingleEntryEditBanner,$('cplEntryRows'));
+      }else if(cplSingleEntryEditBanner){
+        cplSingleEntryEditBanner.remove();cplSingleEntryEditBanner=null;
+      }
+    }
+    function startCplSingleEntryEdit(row,form,rowIndex,consultant){
+      if(!form||!form.id||!Array.isArray(form.rows)||!Number.isInteger(rowIndex)||rowIndex<0||rowIndex>=form.rows.length){
+        showTeamRerDynamicIsland('This saved entry could not be opened for editing.');return;
+      }
+      // Preserve any unrelated in-progress CPL draft before opening this isolated editor.
+      if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}
+      saveCplDraft();
+      closeCplSavedEntryModal();
+      cplSingleEntryEdit={
+        formId:String(form.id),date:String(form.date||''),consultant:String(consultant||form.consultant||''),
+        manager:String(form.manager||'Ralph Edward Rosales'),dealer:String(form.dealer||'HCR'),type:String(form.type||'FIELD'),
+        rows:form.rows.map(item=>Object.assign({},item)),rowIndex:rowIndex,dirty:false
+      };
+      $('cplHeaderDate').value=cplSingleEntryEdit.date;
+      $('cplManagerFixed').value=cplSingleEntryEdit.manager;
+      $('cplDealerFixed').value=cplSingleEntryEdit.dealer;
+      $('cplTypeFixed').value=cplSingleEntryEdit.type;
+      setCplConsultant();
+      if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value=cplSingleEntryEdit.consultant;
+      if($('cplConsultantFixed'))$('cplConsultantFixed').value=cplSingleEntryEdit.consultant;
+      $('cplEntryRows').replaceChildren();
+      addCplEntryRow(Object.assign({},row,{sc:String(row.sc||cplSingleEntryEdit.consultant)}));
+      $('cplEntryRows').querySelector('.cpl-remove-row')?.remove();
+      setCplSingleEntryEditLayout(true);
+      $('cplSaveForm').textContent='Close';
+      setCplSaveButtonVisible(true);
+      $('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    function finishCplSingleEntryEdit(restoreDraft=true){
+      if(!cplSingleEntryEdit)return;
+      cplSingleEntryEdit=null;
+      setCplSingleEntryEditLayout(false);
+      $('cplEntryRows').replaceChildren();
+      $('cplHeaderDate').value='';
+      $('cplSaveForm').textContent='Save CPL';
+      setCplSaveButtonVisible(false);
+      setCplConsultant();
+      if(restoreDraft&&restoreCplDraft()){
+        // The user's separate unsaved draft is restored without mixing it into the edited saved record.
+      }else{
+        $('cplEntryRows').replaceChildren();
+        $('cplHeaderDate').value='';
+        setCplSaveButtonVisible(false);
+      }
+      renderCplConsultantSavedEntries();
+      if(cplMonthlyRetrieved)setCplMonthlyActionMode(true);
+      $('cplPage').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    async function handleCplSingleEntryEditAction(){
+      const state=cplSingleEntryEdit;if(!state)return;
+      if(!state.dirty){finishCplSingleEntryEdit(true);return;}
+      const currentRows=getCplRows();
+      if(!currentRows.length){showTeamRerDynamicIsland('The CPL entry is missing.');return;}
+      const updatedRows=state.rows.map(item=>Object.assign({},item));
+      updatedRows[state.rowIndex]=Object.assign({},updatedRows[state.rowIndex]||{},currentRows[0]);
+      const payload={
+        formId:state.formId,date:state.date,consultant:state.consultant,
+        manager:state.manager,dealer:state.dealer,type:state.type,rows:updatedRows
+      };
+      const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;
+      saveBtn.disabled=true;
+      showTeamRerDynamicIsland('Saving CPL entry changes…',true);
+      try{
+        await submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true});
+        const existing=(cplData.clients||[]).findIndex(item=>String(item.id)===state.formId);
+        const updatedForm={id:state.formId,date:state.date,consultant:state.consultant,dealer:state.dealer,type:state.type,manager:state.manager,rows:updatedRows};
+        if(existing>=0)cplData.clients[existing]=Object.assign({},cplData.clients[existing],updatedForm);else cplData.clients.push(updatedForm);
+        saveBtn.disabled=false;
+        finishCplSingleEntryEdit(true);
+        showTeamRerDynamicIsland('CPL entry updated successfully.');
+      }catch(err){
+        saveBtn.disabled=false;
+        showTeamRerDynamicIsland('CPL entry update failed: '+(err?.message||err));
+      }
+    }
     function renderCplConsultantSavedEntries(){
       const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
       const consultant=isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim();
@@ -7200,7 +7294,7 @@
       if(!forms.length){const empty=document.createElement('div');empty.className='cpl-saved-empty';empty.textContent='No saved CPL entries for '+consultant+'.';host.appendChild(empty);return;}
       const heading=document.createElement('div');heading.className='cpl-saved-list-heading';heading.textContent='Saved CPL entries · '+consultant;host.appendChild(heading);
       const labels={source:'Source',sc:'Sales Consultant',clientName:'Client Name',phone:'Phone',email:'Email',vehicle:'Vehicle of Interest',specs:'Specs',timeline:'Timeline',workProfile:'Work Profile',drivingNow:'Driving Now',likes:'Likes',concerns:'Concerns',freqUsage:'Frequency of Usage',nextStep:'Next Step'};
-      forms.forEach(form=>{(form.rows||[]).forEach(row=>{
+      forms.forEach(form=>{(form.rows||[]).forEach((row,rowIndex)=>{
         const item=document.createElement('article');item.className='cpl-saved-client-card';
         item.setAttribute('role','button');item.setAttribute('tabindex','0');
         const clientName=String(row.clientName||'Unnamed Client');
@@ -7209,7 +7303,7 @@
         const header=document.createElement('div');header.className='cpl-saved-client-head';
         const title=document.createElement('strong');title.textContent=clientName;
         const date=document.createElement('small');date.textContent=entryDate;header.append(title,date);
-        const editSavedEntry=()=>{const dateValue=String(form.date||'');const match=dateValue.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}closeCplSavedEntryModal();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});};
+        const editSavedEntry=()=>startCplSingleEntryEdit(row,form,rowIndex,consultant);
         const openDetails=()=>openCplSavedEntryModal(row,form,labels,editSavedEntry);
         item.addEventListener('click',openDetails);
         item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails();}});
@@ -7264,11 +7358,11 @@
     // CPL draft autosave: stored in this browser/device, keyed per signed-in user.
     let cplDraftSaveTimer=null, cplDraftAutosaveAttached=false;
     function cplDraftKey(){const user=String(authorizedUser?.email||authorizedUser?.name||authorizedUser?.displayName||'session').toLowerCase().replace(/[^a-z0-9._-]/g,'_');return 'TEAM_RER_CPL_DRAFT_V2_'+user;}
-    function saveCplDraft(){if(!document.getElementById('cplEntryRows'))return;try{const rows=Array.from($('cplEntryRows').children).map(card=>({retrieved:card.dataset.retrieved==='1',data:Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value]))}));const draft={savedAt:Date.now(),consultant:cplMonthlyRetrieved?.consultant||(isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value),headerDate:$('cplHeaderDate').value,manager:$('cplManagerFixed').value,monthly:cplMonthlyRetrieved?{...cplMonthlyRetrieved}:null,month:$('cplMonthlyMonth')?.value||'',year:$('cplMonthlyYear')?.value||'',monthlyConsultant:$('cplMonthlyConsultant')?.value||'',rows};localStorage.setItem(cplDraftKey(),JSON.stringify(draft));}catch(err){console.warn('CPL draft autosave unavailable:',err);}}
-    function queueCplDraftSave(){if(cplDraftSaveTimer)clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=setTimeout(saveCplDraft,250);}
+    function saveCplDraft(){if(cplSingleEntryEdit)return;if(!document.getElementById('cplEntryRows'))return;try{const rows=Array.from($('cplEntryRows').children).map(card=>({retrieved:card.dataset.retrieved==='1',data:Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value]))}));const draft={savedAt:Date.now(),consultant:cplMonthlyRetrieved?.consultant||(isSuperAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value),headerDate:$('cplHeaderDate').value,manager:$('cplManagerFixed').value,monthly:cplMonthlyRetrieved?{...cplMonthlyRetrieved}:null,month:$('cplMonthlyMonth')?.value||'',year:$('cplMonthlyYear')?.value||'',monthlyConsultant:$('cplMonthlyConsultant')?.value||'',rows};localStorage.setItem(cplDraftKey(),JSON.stringify(draft));}catch(err){console.warn('CPL draft autosave unavailable:',err);}}
+    function queueCplDraftSave(){if(cplSingleEntryEdit)return;if(cplDraftSaveTimer)clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=setTimeout(saveCplDraft,250);}
     function clearCplDraft(){try{localStorage.removeItem(cplDraftKey());}catch(_){}}
     function restoreCplDraft(){try{const draft=JSON.parse(localStorage.getItem(cplDraftKey())||'null');if(!draft||!Array.isArray(draft.rows)||!draft.rows.length)return false;cplMonthlyRetrieved=draft.monthly||null;$('cplHeaderDate').value=draft.headerDate||'';$('cplManagerFixed').value=draft.manager||'Ralph Edward Rosales';if($('cplMonthlyMonth')&&draft.month!==undefined)$('cplMonthlyMonth').value=draft.month;if($('cplMonthlyYear')&&draft.year!==undefined)$('cplMonthlyYear').value=draft.year;if($('cplMonthlyConsultant')&&draft.monthlyConsultant!==undefined)$('cplMonthlyConsultant').value=draft.monthlyConsultant;if(draft.consultant){$('cplConsultantSelect').value=draft.consultant;if(!$('cplMonthlyConsultant').value)$('cplMonthlyConsultant').value=draft.consultant;} $('cplSaveForm').textContent=cplMonthlyRetrieved?'Save Monthly Changes':'Save CPL';$('cplEntryRows').replaceChildren();draft.rows.forEach(item=>addCplEntryRow(item.data||{}, {retrieved:!!item.retrieved}));setCplSaveButtonVisible(true);setCplConsultant();if(isCplAdminSession()&&draft.consultant){$('cplConsultantSelect').value=draft.consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=draft.consultant);}return true;}catch(err){console.warn('CPL draft restore failed:',err);return false;}}
-    function attachCplDraftAutosave(){if(cplDraftAutosaveAttached)return;cplDraftAutosaveAttached=true;const rows=$('cplEntryRows');const markCplDirty=()=>{setCplSaveButtonVisible(true);queueCplDraftSave();};rows.addEventListener('input',markCplDirty);rows.addEventListener('change',markCplDirty);rows.addEventListener('click',event=>{if(event.target.closest('.cpl-delete-row,.cpl-remove-row'))markCplDirty();});$('cplConsultantSelect').addEventListener('change',queueCplDraftSave);$('cplAddRow').addEventListener('click',()=>{setCplSaveButtonVisible(true);queueCplDraftSave();});$('cplMonthlyConsultant').addEventListener('change',queueCplDraftSave);$('cplMonthlyMonth').addEventListener('change',queueCplDraftSave);$('cplMonthlyYear').addEventListener('change',queueCplDraftSave);new MutationObserver(queueCplDraftSave).observe(rows,{childList:true});}
+    function attachCplDraftAutosave(){if(cplDraftAutosaveAttached)return;cplDraftAutosaveAttached=true;const rows=$('cplEntryRows');const markCplDirty=()=>{if(cplSingleEntryEdit){cplSingleEntryEdit.dirty=true;$('cplSaveForm').textContent='Save';setCplSaveButtonVisible(true);return;}setCplSaveButtonVisible(true);queueCplDraftSave();};rows.addEventListener('input',markCplDirty);rows.addEventListener('change',markCplDirty);rows.addEventListener('click',event=>{if(event.target.closest('.cpl-delete-row,.cpl-remove-row'))markCplDirty();});$('cplConsultantSelect').addEventListener('change',queueCplDraftSave);$('cplAddRow').addEventListener('click',()=>{setCplSaveButtonVisible(true);queueCplDraftSave();});$('cplMonthlyConsultant').addEventListener('change',queueCplDraftSave);$('cplMonthlyMonth').addEventListener('change',queueCplDraftSave);$('cplMonthlyYear').addEventListener('change',queueCplDraftSave);new MutationObserver(queueCplDraftSave).observe(rows,{childList:true});}
     function initCplForm(){ $('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);$('cplHeaderDate').value='';$('cplManagerFixed').value='Ralph Edward Rosales';$('cplDealerFixed').value='HCR';$('cplTypeFixed').value='FIELD';$('cplEntryRows').replaceChildren();setCplConsultant(); }
     $('cplTabBtn').addEventListener('click',()=>{if(!canAccessCplSession()){showAccessDenied("TEAM RER CPL access only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;$('cplPage').scrollIntoView({block:'start',behavior:'smooth'});loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
@@ -7279,7 +7373,7 @@
        setCplMonthlyActionMode(false);
        setCplSaveButtonVisible(false);
      });
-    $('cplSaveForm').addEventListener('click',()=>{const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';setCplConsultant();renderCplConsultantSavedEntries();if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
+    $('cplSaveForm').addEventListener('click',()=>{if(cplSingleEntryEdit){handleCplSingleEntryEditAction();return;}const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value='';setCplConsultant();renderCplConsultantSavedEntries();if(meta){showTeamRerDynamicIsland(rows.length?'Monthly CPL entries replaced.':'Monthly CPL entries cleared.');}else{showTeamRerDynamicIsland('CPL saved successfully.');}}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isSuperAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
@@ -9302,6 +9396,7 @@
 
 
     /* CPL saved-entry detail modal: structured, readable, mobile-first view */
+    #cplPage .cpl-single-entry-edit-banner{display:block!important;margin:12px 0 10px!important;padding:11px 13px!important;border:1px solid rgba(111,174,220,.55)!important;border-radius:11px!important;background:linear-gradient(135deg,#174e78,#123653)!important;color:#eaf5ff!important;font-size:13px!important;font-weight:900!important;letter-spacing:.07em!important;text-align:center!important;box-shadow:0 5px 15px rgba(0,0,0,.2)!important;}
     .cpl-saved-modal-overlay{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,24px);background:rgba(3,12,23,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
     .cpl-saved-modal{display:flex;flex-direction:column;width:min(100%,680px);max-height:min(90dvh,900px);overflow:hidden;border:1px solid #66839d;border-radius:20px;background:linear-gradient(145deg,#17283b,#20354a 55%,#182b3e);color:#f2f6fb;box-shadow:0 24px 70px rgba(0,0,0,.48);}
     .cpl-saved-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid rgba(157,195,227,.25);background:rgba(7,20,34,.32);}
