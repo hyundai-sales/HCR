@@ -7702,16 +7702,28 @@
       const html=source.innerHTML;
       printWin.document.open();
       printWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Bank Financing Quotation</title><style>
-        @page{size:A4 portrait;margin:5mm}
-        html,body{margin:0;padding:0;width:100%;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
-        #quotePreview{box-sizing:border-box;width:100%;padding:2mm 3mm;font-size:9pt;color:#111}
-        #quotePreview *{box-sizing:border-box;color:#111!important;background-color:transparent!important;box-shadow:none!important}
-        #quotePreview h2{font-size:13pt;margin:1mm 0;text-align:center}
-        #quotePreview .quote-line{padding:1.1mm 0;font-size:8.1pt;line-height:1.1}
-        #quotePreview .quote-total{padding:1.7mm;margin-top:1mm;font-size:9.5pt}
-        #quotePreview .quote-terms{margin-top:1.5mm;font-size:6.8pt;line-height:1.1}
-        #quotePreview .quote-contact{margin-top:1.5mm;padding-top:1mm;font-size:7.5pt;line-height:1.1}
-        #quotePreview img{width:42px;height:24px}
+        @page{size:A4 portrait;margin:14mm}
+        html,body{margin:0;padding:0;background:#fff;color:#17212b;font-family:Arial,Helvetica,sans-serif}
+        #quotePreview{box-sizing:border-box;width:100%;padding:0;font-size:10pt;color:#17212b}
+        #quotePreview *{box-sizing:border-box;color:#17212b!important;box-shadow:none!important}
+        #quotePreview>div:first-child{text-align:center!important;margin:0 auto 2mm!important}
+        #quotePreview>div:first-child img{width:55px!important;height:30px!important}
+        #quotePreview h2{font-size:17pt!important;letter-spacing:.5px;margin:2mm 0 1mm!important;text-align:center!important}
+        #quotePreview .quote-sub{text-align:center!important;font-size:9pt!important;letter-spacing:1.2px!important;font-weight:bold!important;margin:0 0 6mm!important;color:#425466!important}
+        #quotePreview .quote-date{font-size:9pt!important;text-align:right!important;margin:0 0 4mm!important}
+        #quotePreview p{margin:2mm 0!important;font-size:10pt!important}
+        #quotePreview .quote-line{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;gap:8mm!important;padding:3mm 3mm!important;font-size:10pt!important;line-height:1.3!important;border:1px solid #d5dde5!important;border-bottom:0!important;background:#fff!important}
+        #quotePreview .quote-line:nth-of-type(even){background:#f6f8fa!important}
+        #quotePreview .quote-line span{width:42%!important;flex:0 0 42%!important;font-weight:600!important}
+        #quotePreview .quote-line strong{width:58%!important;flex:1!important;text-align:right!important;font-weight:500!important;white-space:normal!important}
+        #quotePreview .quote-total{display:flex!important;justify-content:space-between!important;gap:8mm!important;padding:4mm!important;margin:0 0 4mm!important;font-size:11pt!important;font-weight:bold!important;background:#eaf1f7!important;border:1px solid #9eafbf!important}
+        #quotePreview .quote-total span:first-child{font-weight:bold!important}
+        #quotePreview .quote-total span:last-child{text-align:right!important}
+        #quotePreview .quote-terms{margin-top:5mm!important;padding-top:3mm!important;border-top:1px solid #c6d0da!important;font-size:8pt!important;line-height:1.35!important;color:#455463!important}
+        #quotePreview .quote-contact{margin-top:5mm!important;padding-top:3mm!important;border-top:2px solid #193b59!important;font-size:9pt!important;line-height:1.4!important}
+        #quotePreview .quote-contact strong{font-size:10pt!important}
+        #quotePreview img{width:55px;height:30px}
+        @media print{.quote-line,.quote-total,.quote-contact{break-inside:avoid;page-break-inside:avoid}}
       </style></head><body><div id="quotePreview">${html}</div></body></html>`);
       printWin.document.close();
       printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
