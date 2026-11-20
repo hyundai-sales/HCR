@@ -3243,8 +3243,9 @@
                   <p>Select a vehicle to preview the quotation.</p>
                 </div>
               </div>
-              <div class="quote-preview-actions">
-                
+              <div class="quote-preview-actions" id="quotePreviewActions">
+                <button id="quoteFinancingDownloadBtn" type="button" class="hidden">Download PDF</button>
+                <button id="quoteFinancingCloseBtn" type="button" class="secondary hidden">Close</button>
               </div>
             </div>
           </div>
@@ -3520,7 +3521,7 @@
       APP_VIEW_PAGES.forEach(id => $(id).classList.toggle("hidden",id !== view.page));
       if (view.page === "promoPage") {
         setPromoView(["promos","stock","banks","srp"].includes(view.tab) ? view.tab : "promos");
-        submitRequest("promoInventoryGet").catch(error => setMessage($("promoModuleMessage"),error.message,"error"));
+        submitRequest("promoInventoryGet",{silent:true}).catch(error => setMessage($("promoModuleMessage"),error.message,"error"));
       } else if (view.page === "cplPage") {
         loadCpl();
       } else if (view.page === "auditPage") {
@@ -3536,7 +3537,7 @@
         syncCreditConsultantForRole();
         buildCreditForm();
       } else if (view.page === "quotePage" || view.page === "pdfPage") {
-        if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to reload module data:",error));
+        if (!promoInventoryLoaded) submitRequest("promoInventoryGet",{silent:true}).catch(error => console.warn("Unable to reload module data:",error));
         if (view.page === "quotePage") updateQuotePreview();
       }
       const restoreScroll = () => {
@@ -4541,6 +4542,8 @@
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", active ? "true" : "false");
       });
+      const actionBtn = $("printQuoteBtn");
+      if (actionBtn) actionBtn.textContent = type === "financing" ? "View Quotation" : "Print / Save PDF";
       updateQuotePreview();
     }
 
@@ -7612,7 +7615,7 @@
       $("auditPage").classList.add("hidden");
       
       if (!promoInventoryLoaded) {
-        submitRequest("promoInventoryGet").catch(error => setMessage($("resultMessage"), "Unable to load active partner banks: " + error.message, "error"));
+        submitRequest("promoInventoryGet",{silent:true}).catch(error => setMessage($("resultMessage"), "Unable to load active partner banks: " + error.message, "error"));
       } else {
         refreshPriceListBankOptions();
       }
@@ -7625,7 +7628,7 @@
       $("promoPage").classList.add("hidden");
       $("auditPage").classList.add("hidden");
       
-      if (!promoInventoryLoaded) submitRequest("promoInventoryGet").catch(error => console.warn("Unable to load promotion matching data:", error));
+      if (!promoInventoryLoaded) submitRequest("promoInventoryGet",{silent:true}).catch(error => console.warn("Unable to load promotion matching data:", error));
       updateQuotePreview();
     }));
     $("backToMenuFromPdf").addEventListener("click", () => runPageTransition("Returning to Main Menu...",() => {
@@ -7652,12 +7655,35 @@
     $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
     document.querySelectorAll(".quote-type-switch[data-quote-type]").forEach(button => button.addEventListener("click", () => setQuoteType(button.dataset.quoteType)));
+    setQuoteType($("quoteType").value||"cash");
     function closeQuotePreview() {
       $("quotePreviewWrap").classList.add("hidden");
+    }
+    function openFinancingQuotationPreview(){
+      const actions=$("quotePreviewActions");
+      if(actions){
+        $("quoteFinancingDownloadBtn").classList.remove("hidden");
+        $("quoteFinancingCloseBtn").classList.remove("hidden");
+      }
+      $("quotePreviewWrap").classList.remove("hidden");
+    }
+    function resetQuotationPreviewActions(){
+      if($("quoteFinancingDownloadBtn"))$("quoteFinancingDownloadBtn").classList.add("hidden");
+      if($("quoteFinancingCloseBtn"))$("quoteFinancingCloseBtn").classList.add("hidden");
     }
     $("closeQuotePreviewBtn").addEventListener("click", closeQuotePreview);
     $("quotePreviewWrap").addEventListener("click", event => {
       if (event.target === $("quotePreviewWrap")) closeQuotePreview();
+    });
+    $("quoteFinancingCloseBtn").addEventListener("click",closeQuotePreview);
+    $("quoteFinancingDownloadBtn").addEventListener("click",()=>{
+      closeQuotePreview();
+      window.__teamRerQuoteDescription="Bank Financing Quotation";
+      window.__teamRerOriginalDocumentTitle=document.title;
+      document.title="BANK FINANCING QUOTATION";
+      document.body.classList.add("printing-quote");
+      window.__teamRerQuotePrintPending=true;
+      setTimeout(()=>window.print(),120);
     });
     /* Vehicle Quotation Heendy loader + success feedback */
     (function addQuotationHeendyUI(){
@@ -7668,12 +7694,12 @@
       #quoteHeendyImg{width:min(100%,240px);height:170px;object-fit:contain;margin:0 auto 4px;display:block}#quoteHeendyOverlay h2{margin:6px 0 8px;color:#e9f6ff}#quoteHeendyMsg{color:#c7def4;font-size:14px;line-height:1.5}
       #quoteHeendyBar{height:18px;border-radius:99px;padding:2px;background:#071b30;border:1px solid #78caff;margin:14px 0;overflow:hidden}#quoteHeendyFill{height:100%;width:5%;border-radius:99px;background:linear-gradient(90deg,#bff4ff,#39baff,#0875dd);box-shadow:0 0 12px #48baff;transition:width .35s ease}
       #quoteHeendyClose{display:none;width:100%;min-height:46px;border-radius:13px;border:1px solid #7bc8ff;background:linear-gradient(145deg,#1594ff,#0758b5);color:white;font-weight:800;margin-top:12px}#quoteHeendyClose.show{display:block}`;
-      document.head.appendChild(st);const ov=document.createElement('div');ov.id='quoteHeendyOverlay';ov.innerHTML='<div id="quoteHeendyCard"><img id="quoteHeendyImg" alt="Heendy"><h2 id="quoteHeendyTitle">Preparing your quotation</h2><p id="quoteHeendyMsg">Preparing the quotation for you...</p><div id="quoteHeendyBar"><div id="quoteHeendyFill"></div></div><button id="quoteHeendyClose" type="button">Done</button></div>';document.body.appendChild(ov);
-      document.getElementById('quoteHeendyClose').addEventListener('click',()=>ov.classList.remove('show'));
+      document.head.appendChild(st);const ov=document.createElement('div');ov.id='quoteHeendyOverlay';ov.innerHTML='<div id="quoteHeendyCard"><img id="quoteHeendyImg" alt="Heendy"><h2 id="quoteHeendyTitle">Preparing your quotation</h2><p id="quoteHeendyMsg">Preparing the quotation for you...</p><div id="quoteHeendyBar"><div id="quoteHeendyFill"></div></div><button id="quoteHeendyClose" type="button">Close</button></div>';document.body.appendChild(ov);
+      document.getElementById('quoteHeendyClose').addEventListener('click',()=>{if(document.getElementById('quoteHeendyClose').textContent==='OPEN PDF'&&window.__quoteReadyPdfUrl){window.open(window.__quoteReadyPdfUrl,'_blank');}ov.classList.remove('show');});
     })();
     function playQuoteHeendySound(success){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=new AC();if(c.state==='suspended')c.resume();const notes=success?[660,880,990,1320]:[440,660,880];notes.forEach((hz,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=hz;g.gain.setValueAtTime(.0001,c.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.12,c.currentTime+i*.12+.025);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+i*.12+.16);o.connect(g);g.connect(c.destination);o.start(c.currentTime+i*.12);o.stop(c.currentTime+i*.12+.18);});setTimeout(()=>c.close(),900);}catch(e){}}
     function showQuoteHeendyLoading(){const ov=$('quoteHeendyOverlay');$('quoteHeendyImg').src=($('creditHeendyBuddyImage')&&$('creditHeendyBuddyImage').src)||'';$('quoteHeendyTitle').textContent='Preparing your quotation';$('quoteHeendyMsg').textContent='Preparing the quotation for you...';$('quoteHeendyFill').style.width='12%';$('quoteHeendyClose').classList.remove('show');ov.classList.add('show');playQuoteHeendySound(false);let v=12;window.__quoteHeendyProgress=setInterval(()=>{v=Math.min(v+Math.random()*9,92);$('quoteHeendyFill').style.width=v+'%';},550);}
-    function showQuoteHeendySuccess(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyFill').style.width='100%';$('quoteHeendyTitle').textContent='Quotation PDF Ready!';$('quoteHeendyMsg').textContent='Your quotation has been generated and downloaded successfully.';$('quoteHeendyClose').classList.add('show');playQuoteHeendySound(true);}
+    function showQuoteHeendySuccess(quoteType){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyFill').style.width='100%';$('quoteHeendyTitle').textContent='Quotation PDF Ready!';$('quoteHeendyMsg').textContent='Your quotation has been generated and downloaded successfully.';const action=$('quoteHeendyClose');action.textContent=(quoteType==='cash'||quoteType==='bankpo')?'OPEN PDF':'Close';action.classList.add('show');playQuoteHeendySound(true);}
     function hideQuoteHeendy(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyOverlay').classList.remove('show');}
     async function initializeVehicleQuotationVehicles(){
       const modelSelect=$("quoteModel");
@@ -7731,6 +7757,17 @@
     }
 
     $("printQuoteBtn").addEventListener("click", async () => {
+      if($("quoteType").value === "financing") {
+        const financingVehicle=quotationVehicles.find(v=>v.model===$("quoteModel").value&&v.variant===$("quoteVariant").value);
+        if(!financingVehicle){showTeamRerAlert("Please select a vehicle model and variant first.","Vehicle details required");return;}
+        if(!String($("quoteClientName").value||"").trim()){showTeamRerAlert("Enter the client's name first.","Client name required");return;}
+        if(!$("quotePartnerBank").value){showTeamRerAlert("Please select a partner bank for this transaction.","Partner bank required");return;}
+        resetQuotationPreviewActions();
+        updateQuotePreview();
+        openFinancingQuotationPreview();
+        return;
+      }
+      resetQuotationPreviewActions();
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       if (!vehicle) { showTeamRerAlert("Please select a vehicle model and variant first.", "Vehicle details required"); return; }
       const clientName = String($("quoteClientName").value || "").trim();
@@ -7762,8 +7799,8 @@
         const pdf = response.vehicleQuotationPdf;
         if (!pdf || !pdf.base64) throw new Error("PDF file was not returned by the server.");
         const binary=atob(pdf.base64), bytes=new Uint8Array(binary.length); for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-        const blob=new Blob([bytes],{type:"application/pdf"}), url=URL.createObjectURL(blob);
-        const link=document.createElement("a"); link.href=url; link.download=pdf.filename||("Quotation_"+clientName+".pdf"); document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500); showQuoteHeendySuccess();
+        const blob=new Blob([bytes],{type:"application/pdf"}), url=URL.createObjectURL(blob); window.__quoteReadyPdfUrl=url;
+        const link=document.createElement("a"); link.href=url; link.download=pdf.filename||("Quotation_"+clientName+".pdf"); document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>{if(window.__quoteReadyPdfUrl!==url)URL.revokeObjectURL(url);},60000); showQuoteHeendySuccess(payload.quoteType);
       } catch(err) { hideQuoteHeendy(); showTeamRerAlert(err.message||"Quotation PDF generation failed.","PDF generation error"); }
       finally { button.disabled=false; }
     });
