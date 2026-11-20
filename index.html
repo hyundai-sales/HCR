@@ -5277,7 +5277,7 @@
       if(fill) fill.style.width=p+'%'; if(label) label.textContent=p+'%';
     }
     function setCplPdfReadyOverlay() { /* success handled by Heendy CPL modal */ }
-    // Soft, looping printer-like sound, started only by CPL PDF generation and stopped on success/error.
+    // Rhythmic office-printer sound: roller whirr with distinct paper-feed/clack bursts.
     let cplPrinterAudio = null;
     function startCplPrinterSound() {
       stopCplPrinterSound();
@@ -5286,26 +5286,33 @@
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
         if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
-        const noiseBuffer = ctx.createBuffer(1, Math.max(1,ctx.sampleRate*1.2), ctx.sampleRate);
-        const data = noiseBuffer.getChannelData(0);
-        for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.28;
-        const noise = ctx.createBufferSource(); noise.buffer=noiseBuffer; noise.loop=true;
-        const filter = ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=1050; filter.Q.value=0.65;
-        const noiseGain = ctx.createGain(); noiseGain.gain.value=0.035;
-        const motor = ctx.createOscillator(); motor.type='triangle'; motor.frequency.value=62;
-        const motorGain = ctx.createGain(); motorGain.gain.value=0.018;
-        const wobble = ctx.createOscillator(); wobble.frequency.value=2.4;
-        const wobbleGain = ctx.createGain(); wobbleGain.gain.value=0.008;
-        wobble.connect(wobbleGain); wobbleGain.connect(motorGain.gain);
-        noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(ctx.destination);
-        motor.connect(motorGain); motorGain.connect(ctx.destination);
-        noise.start(); motor.start(); wobble.start();
-        cplPrinterAudio={ctx,noise,motor,wobble};
+        const master = ctx.createGain(); master.gain.value=0.42; master.connect(ctx.destination);
+        const buffer = ctx.createBuffer(1, Math.max(1,Math.floor(ctx.sampleRate*0.18)), ctx.sampleRate);
+        const d=buffer.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.7;
+        function burst() {
+          if(!cplPrinterAudio || cplPrinterAudio.ctx!==ctx || ctx.state==='closed') return;
+          const t=ctx.currentTime;
+          // short roller pulse
+          const osc=ctx.createOscillator(), og=ctx.createGain(); osc.type='sawtooth'; osc.frequency.setValueAtTime(115,t); osc.frequency.exponentialRampToValueAtTime(72,t+0.13);
+          og.gain.setValueAtTime(0.0001,t); og.gain.exponentialRampToValueAtTime(0.11,t+0.018); og.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+          osc.connect(og); og.connect(master); osc.start(t); osc.stop(t+0.17);
+          // brief mechanical paper-feed rasp
+          const src=ctx.createBufferSource(); src.buffer=buffer;
+          const filt=ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=1600; filt.Q.value=1.2;
+          const ng=ctx.createGain(); ng.gain.setValueAtTime(0.0001,t); ng.gain.exponentialRampToValueAtTime(0.075,t+0.012); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.095);
+          src.connect(filt); filt.connect(ng); ng.connect(master); src.start(t); src.stop(t+0.1);
+          // a sharper paper/print head click
+          const click=ctx.createOscillator(), cg=ctx.createGain(); click.type='square'; click.frequency.value=850;
+          cg.gain.setValueAtTime(0.0001,t+0.04); cg.gain.exponentialRampToValueAtTime(0.045,t+0.045); cg.gain.exponentialRampToValueAtTime(0.0001,t+0.065);
+          click.connect(cg); cg.connect(master); click.start(t+0.04); click.stop(t+0.07);
+        }
+        burst(); const timer=setInterval(burst,420);
+        cplPrinterAudio={ctx,timer,master};
       } catch (_) { cplPrinterAudio=null; }
     }
     function stopCplPrinterSound() {
       const a=cplPrinterAudio; cplPrinterAudio=null; if(!a)return;
-      try{a.noise.stop();}catch(_){} try{a.motor.stop();}catch(_){} try{a.wobble.stop();}catch(_){}
+      try{clearInterval(a.timer);}catch(_){}
       try{a.ctx.close();}catch(_){}
     }
     function beginCplPdfGeneration(message) { startCplPrinterSound(); setCplPdfBusy(true,message||'Preparing your CPL PDF'); }
