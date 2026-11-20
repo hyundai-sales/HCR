@@ -7694,13 +7694,27 @@
     });
     $("quoteFinancingCloseBtn").addEventListener("click",closeQuotePreview);
     $("quoteFinancingDownloadBtn").addEventListener("click",()=>{
-      closeQuotePreview();
-      window.__teamRerQuoteDescription="Bank Financing Quotation";
-      window.__teamRerOriginalDocumentTitle=document.title;
-      document.title="BANK FINANCING QUOTATION";
-      document.body.classList.add("printing-quote","printing-financing-quote");
-      window.__teamRerQuotePrintPending=true;
-      setTimeout(()=>window.print(),120);
+      /* Print a standalone copy of the financing preview; do not print the app shell. */
+      const source=$("quotePreview");
+      if(!source){showTeamRerAlert("Quotation preview is unavailable.","Print error");return;}
+      const printWin=window.open("","_blank");
+      if(!printWin){showTeamRerAlert("Allow pop-ups to print the quotation.","Pop-up blocked");return;}
+      const html=source.innerHTML;
+      printWin.document.open();
+      printWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Bank Financing Quotation</title><style>
+        @page{size:A4 portrait;margin:5mm}
+        html,body{margin:0;padding:0;width:100%;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
+        #quotePreview{box-sizing:border-box;width:100%;padding:2mm 3mm;font-size:9pt;color:#111}
+        #quotePreview *{box-sizing:border-box;color:#111!important;background-color:transparent!important;box-shadow:none!important}
+        #quotePreview h2{font-size:13pt;margin:1mm 0;text-align:center}
+        #quotePreview .quote-line{padding:1.1mm 0;font-size:8.1pt;line-height:1.1}
+        #quotePreview .quote-total{padding:1.7mm;margin-top:1mm;font-size:9.5pt}
+        #quotePreview .quote-terms{margin-top:1.5mm;font-size:6.8pt;line-height:1.1}
+        #quotePreview .quote-contact{margin-top:1.5mm;padding-top:1mm;font-size:7.5pt;line-height:1.1}
+        #quotePreview img{width:42px;height:24px}
+      </style></head><body><div id="quotePreview">${html}</div></body></html>`);
+      printWin.document.close();
+      printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
     });
     /* Vehicle Quotation Heendy loader + success feedback */
     (function addQuotationHeendyUI(){
@@ -10251,37 +10265,8 @@
 </style>
 
 
-<style id="teamrer-financing-print-final-override-fix23">
-/* FIX23: force the financing quotation preview itself into print output. */
-@media print {
-  @page { size: A4 portrait; margin: 5mm; }
-  html, body { margin:0!important; padding:0!important; width:100%!important; height:auto!important; overflow:visible!important; background:#fff!important; }
-  body.printing-financing-quote * { visibility:hidden!important; }
-  body.printing-financing-quote #quotePage,
-  body.printing-financing-quote #quotePreviewWrap,
-  body.printing-financing-quote #quotePreviewWrap .preview-dialog,
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-dialog,
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-scroll,
-  body.printing-financing-quote #quotePreview,
-  body.printing-financing-quote #quotePreview * { visibility:visible!important; }
-  body.printing-financing-quote #quotePage { display:block!important; position:static!important; width:auto!important; height:auto!important; overflow:visible!important; }
-  body.printing-financing-quote #quotePreviewWrap { display:block!important; visibility:visible!important; position:fixed!important; inset:0!important; width:100%!important; height:auto!important; max-height:none!important; overflow:visible!important; padding:0!important; margin:0!important; background:#fff!important; border:0!important; z-index:999999!important; }
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-dialog,
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-scroll { display:block!important; position:static!important; width:100%!important; height:auto!important; max-height:none!important; max-width:none!important; overflow:visible!important; margin:0!important; padding:0!important; border:0!important; box-shadow:none!important; transform:none!important; background:#fff!important; }
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-head,
-  body.printing-financing-quote #quotePreviewWrap .quote-preview-actions { display:none!important; }
-  body.printing-financing-quote #quotePreview { display:block!important; position:static!important; visibility:visible!important; width:100%!important; height:auto!important; min-height:0!important; max-width:none!important; max-height:none!important; overflow:visible!important; box-sizing:border-box!important; margin:0!important; padding:3mm!important; background:#fff!important; color:#111!important; border:0!important; box-shadow:none!important; transform:none!important; break-inside:auto!important; page-break-inside:auto!important; }
-  body.printing-financing-quote #quotePreview * { visibility:visible!important; color:#111!important; background-color:transparent!important; box-shadow:none!important; }
-  body.printing-financing-quote #appSection,
-  body.printing-financing-quote #appNav,
-  body.printing-financing-quote .brand,
-  body.printing-financing-quote #userDetails,
-  body.printing-financing-quote #loginSection,
-  body.printing-financing-quote #teamRerEdgeNav,
-  body.printing-financing-quote #backToMenuFromQuote { display:none!important; }
-}
-</style>
-\n</body>
+
+</body>
 </html>
 
 <style id="team-rer-activity-logs-role-visibility-guard">
