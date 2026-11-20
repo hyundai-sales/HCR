@@ -5291,11 +5291,11 @@
         for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.28;
         const noise = ctx.createBufferSource(); noise.buffer=noiseBuffer; noise.loop=true;
         const filter = ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=1050; filter.Q.value=0.65;
-        const noiseGain = ctx.createGain(); noiseGain.gain.value=0.018;
+        const noiseGain = ctx.createGain(); noiseGain.gain.value=0.035;
         const motor = ctx.createOscillator(); motor.type='triangle'; motor.frequency.value=62;
-        const motorGain = ctx.createGain(); motorGain.gain.value=0.012;
+        const motorGain = ctx.createGain(); motorGain.gain.value=0.018;
         const wobble = ctx.createOscillator(); wobble.frequency.value=2.4;
-        const wobbleGain = ctx.createGain(); wobbleGain.gain.value=0.006;
+        const wobbleGain = ctx.createGain(); wobbleGain.gain.value=0.008;
         wobble.connect(wobbleGain); wobbleGain.connect(motorGain.gain);
         noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(ctx.destination);
         motor.connect(motorGain); motorGain.connect(ctx.destination);
@@ -7398,8 +7398,12 @@
       $('cplConsultantSavedEntries').classList.remove('hidden');
       renderCplConsultantSavedEntries(prefix,consultant);
       if(!matching.length){showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
-      const rowCount=matching.reduce((n,f)=>n+(f.rows||[]).length,0);
-      showTeamRerDynamicIsland(`Displaying ${rowCount} saved entries from ${matching.length} CPL form(s) for ${month}/${year}.`);
+      const allRows=matching.flatMap(f=>(f.rows||[]).map(r=>Object.assign({},r)));
+      allRows.forEach(row=>addCplEntryRow(row,{retrieved:true}));
+      cplMonthlyRetrieved={consultant,month,year};
+      setCplMonthlyActionMode(true);
+      const rowCount=allRows.length;
+      showTeamRerDynamicIsland(`Displaying ${rowCount} saved entries from ${matching.length} CPL form(s) for ${month}/${year}. Tap PRINT / SAVE PDF to generate the monthly PDF.`);
     }
     function setCplConsultant(){const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'').trim();const cplPageEl=$('cplPage');if(cplPageEl)cplPageEl.classList.toggle('cpl-regular-user-view',isRegularUserSession());const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isCplAdminSession());input.classList.toggle('hidden',isCplAdminSession());input.value=name;if(isCplAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}else{select.disabled=true;}const chosen=isCplAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const current=isCplAdminSession()?String(select.value||''):name;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=current);renderCplConsultantSavedEntries();};select.onchange=()=>{const current=isCplAdminSession()?String(select.value||''):name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);clearCplDraft();Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=current);renderCplConsultantSavedEntries();};updateRowSC();if($('cplMonthlyConsultant')){if(isCplAdminSession())$('cplMonthlyConsultant').disabled=false;else{$('cplMonthlyConsultant').value=name;$('cplMonthlyConsultant').disabled=true;}}}
     // CPL draft restoration/autosave disabled to prevent stale draft rows from reappearing.
