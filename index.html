@@ -7452,7 +7452,17 @@
        setCplMonthlyActionMode(false);
        setCplSaveButtonVisible(false);
      });
+    function playCplSuccessSound(){
+      try{
+        const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;
+        const ctx=new AudioCtx();if(ctx.state==='suspended')ctx.resume();
+        const master=ctx.createGain();master.gain.setValueAtTime(0.0001,ctx.currentTime);master.gain.exponentialRampToValueAtTime(0.16,ctx.currentTime+0.025);master.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.75);master.connect(ctx.destination);
+        [659.25,783.99,1046.5].forEach((freq,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.12);gain.gain.exponentialRampToValueAtTime(0.8,ctx.currentTime+i*0.12+0.025);gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+i*0.12+0.22);osc.connect(gain);gain.connect(master);osc.start(ctx.currentTime+i*0.12);osc.stop(ctx.currentTime+i*0.12+0.24);});
+        setTimeout(()=>{try{ctx.close()}catch(_){}},1000);
+      }catch(_){}
+    }
     function showCplSaveChoice(message,monthly=false, savedConsultant=''){
+      playCplSuccessSound();
       const toast=ensureCreditToast();toast.className='credit-toast show';$('creditToastBackdrop')?.classList.add('show');toast.replaceChildren();
       const head=document.createElement('div');head.className='credit-toast-head';const icon=document.createElement('span');icon.className='credit-toast-icon';icon.textContent='✓';const heading=document.createElement('h3');heading.className='credit-toast-title';heading.textContent='Saved Successfully';head.append(icon,heading);toast.appendChild(head);
       const copy=document.createElement('p');copy.className='credit-toast-copy';copy.textContent=message;toast.appendChild(copy);
