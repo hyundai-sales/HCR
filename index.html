@@ -4283,6 +4283,7 @@
       }
       if (action === "cplSheetPrint" || action === "cplBlankSheetPrint") { const result=event.data[action]||{}; if(cplPrintWindow&&!cplPrintWindow.closed&&result.url){cplPrintWindow.location.href=result.url;} cplPrintWindow=null; setMessage($("cplMessage"),result.message||"CPL template is ready. Open the sheet to print.","success");return; }
       if (action === "cplClientSave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");return; }
+      if (action === "cplClientDelete") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Deleted.","success");return; }
       if (action === "cplActivitySave") { setMessage($("cplMessage"),(event.data[action]||{}).message||"Saved.","success");loadCpl();return; }
       if (action === "cplReportGet") { renderCplReport(event.data.cplReport||{rows:[],month:""});return; }
       if (action === "orgChartGet") { orgChartRecords=event.data.orgChart||[];renderOrgChart();$("orgAddBtn").classList.toggle("hidden",!isAdminSession());return; }
@@ -7367,10 +7368,11 @@
         const title=document.createElement('strong');title.textContent=clientName;
         const date=document.createElement('small');date.textContent=entryDate;header.append(title,date);
         const editSavedEntry=()=>startCplSingleEntryEdit(row,form,rowIndex,consultant);
-        const openDetails=()=>openCplSavedEntryModal(row,form,labels,editSavedEntry);
-        item.addEventListener('click',openDetails);
-        item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails();}});
-        item.appendChild(header);host.appendChild(item);
+        const actions=document.createElement('div');actions.className='cpl-saved-card-actions';actions.style.cssText='display:flex;gap:8px;margin-top:10px;';
+        const editBtn=document.createElement('button');editBtn.type='button';editBtn.textContent='EDIT';editBtn.style.cssText='flex:1;min-height:40px;';editBtn.addEventListener('click',editSavedEntry);
+        const deleteBtn=document.createElement('button');deleteBtn.type='button';deleteBtn.textContent='DELETE';deleteBtn.style.cssText='flex:1;min-height:40px;background:#8e2832;color:#fff;border:1px solid #c76a73;';
+        deleteBtn.addEventListener('click',async()=>{if(!form.id)return showTeamRerDynamicIsland('Missing saved record ID.');if(!confirm('Permanently delete CPL entry for '+clientName+'?'))return;deleteBtn.disabled=true;try{await submitRequest('cplClientDelete',{payload:JSON.stringify({id:form.id}),silent:true});cplData.clients=(cplData.clients||[]).filter(f=>String(f.id)!==String(form.id));renderCplConsultantSavedEntries(monthPrefix,consultant);showTeamRerDynamicIsland('CPL record permanently deleted.');}catch(err){deleteBtn.disabled=false;showTeamRerDynamicIsland('Delete failed: '+(err?.message||err));}});
+        actions.append(editBtn,deleteBtn);item.append(header,actions);item.style.cursor='default';host.appendChild(item);
       });});
     }
     function restoreCplUserMonthlyConsultant(){
@@ -7410,6 +7412,8 @@
       cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplPage').classList.add('cpl-monthly-mode');$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);
       if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;
       $('cplConsultantSavedEntries').classList.remove('hidden');
+      const savedList=$('cplConsultantSavedEntries'),monthlyWrap=$('cplMonthlyPanel')?.parentElement;
+      if(savedList&&monthlyWrap&&savedList.parentElement!==monthlyWrap)monthlyWrap.appendChild(savedList);
       renderCplConsultantSavedEntries(prefix,consultant);
       if(!matching.length){showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
       const allRows=matching.flatMap(f=>(f.rows||[]).map(r=>Object.assign({},r)));
