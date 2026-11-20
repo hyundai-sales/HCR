@@ -4533,13 +4533,22 @@
       const previous = selectedQuoteColors();
       if (!colors.length) { container.innerHTML = '<span>Select variant first</span>'; return; }
       container.innerHTML = colors.map(color => `<label><input type="checkbox" value="${escapeHtml(color)}" ${previous.includes(String(color))?'checked':''}> ${escapeHtml(color)}</label>`).join('');
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',updateQuotePreview));
+      container.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',()=>{
+        if($("quoteType").value==="financing" && cb.checked){
+          container.querySelectorAll('input[type="checkbox"]').forEach(other=>{if(other!==cb)other.checked=false;});
+        }
+        updateQuotePreview();
+      }));
     }
     function selectedQuoteColors(){ return Array.from($("quoteColor").querySelectorAll('input[type="checkbox"]:checked')).map(cb=>String(cb.value||'').trim()).filter(Boolean); }
 
     function setQuoteType(type) {
       if (!["cash","bankpo","financing"].includes(type)) return;
       $("quoteType").value = type;
+      if(type==="financing") {
+        const checked=$("quoteColor")?.querySelectorAll('input[type="checkbox"]:checked');
+        if(checked && checked.length>1) Array.from(checked).slice(1).forEach(cb=>cb.checked=false);
+      }
       document.querySelectorAll(".quote-type-switch[data-quote-type]").forEach(button => {
         const active = button.dataset.quoteType === type;
         button.classList.toggle("active", active);
@@ -4697,7 +4706,7 @@
       const rows = [];
       rows.push(`<div class="quote-line"><span>Vehicle</span><strong>${escapeHtml($("quoteYearModel").value.trim())} ${escapeHtml(vehicle.model)} ${escapeHtml(vehicle.variant)}</strong></div>`);
       const selectedColors = selectedQuoteColors();
-      if (selectedColors.length) rows.push(`<div class="quote-line"><span>Available Colors</span><strong>${selectedColors.map(escapeHtml).join(", ")}</strong></div>`);
+      if (selectedColors.length) rows.push(`<div class="quote-line"><span>${financing ? "Color" : "Available Colors"}</span><strong>${selectedColors.map(escapeHtml).join(", ")}</strong></div>`);
       rows.push(`<div class="quote-line"><span>Suggested Retail Price</span><strong>${financing ? money2(srp) : money(srp)}</strong></div>`);
       if (!financing) {
         rows.push(`<div class="quote-line"><span>${bankPo ? "Bank PO Discount" : "Cash Discount"}</span><strong>${money(discount)}</strong></div>`);
@@ -4729,7 +4738,7 @@
       if (freebies.length) rows.push(`<div class="quote-line"><span>Freebies / Inclusions</span><strong>${freebies.map(escapeHtml).join("<br>")}</strong></div>`);
       const selectedConsultantName = financing ? selectedQuotationConsultant() : String(authorizedUser?.name || "TEAM RER Sales Consultant");
       const consultantDetails = financing ? (quotationConsultantDetails.find(c => String(c.name||"").trim().toLowerCase() === String(selectedConsultantName||"").trim().toLowerCase()) || {}) : {};
-      const consultantEmail = financing ? String(consultantDetails.email || authorizedUser?.email || "") : String(authorizedUser?.email || "");
+      const consultantEmail = financing ? String(consultantDetails.email || (String(selectedConsultantName||"").trim().toLowerCase()===String(authorizedUser?.name||"").trim().toLowerCase()?authorizedUser?.email:"" ) || "") : String(authorizedUser?.email || "");
       const consultantPhone = financing ? String(consultantDetails.phone || "") : "";
       const contactBlock = `<div class="quote-contact"><strong>${escapeHtml(selectedConsultantName || "TEAM RER Sales Consultant")}</strong><br>Sales Consultant | Hyundai Cainta${consultantEmail ? `<br>${escapeHtml(consultantEmail)}` : ""}${consultantPhone ? `<br>${escapeHtml(consultantPhone)}` : ""}</div>`;
       preview.innerHTML = `<div style="text-align:center"><img src="https://cdn.simpleicons.org/hyundai/003B70" alt="Hyundai" style="width:76px;height:42px;object-fit:contain"></div><div style="text-align:center;color:#003b70;font-weight:bold;letter-spacing:1px">HYUNDAI CAINTA</div><h2>VEHICLE QUOTATION</h2><p class="quote-sub">${financing ? "BANK FINANCING" : (bankPo ? "BANK PO TRANSACTION" : "CASH TRANSACTION")}</p><p class="quote-date"><strong>Date Generated:</strong> ${generatedDate}</p><p><strong>Dear ${escapeHtml($("quoteSalutation").value)} ${escapeHtml($("quoteClientName").value.trim())},</strong></p>${rows.join("")}<div class="quote-terms">Quotation validity: ${validity} calendar days. Prices and financing figures are estimates and are subject to final confirmation, vehicle availability, and applicable bank / dealership terms.</div>${contactBlock}`;
@@ -7689,7 +7698,7 @@
       window.__teamRerQuoteDescription="Bank Financing Quotation";
       window.__teamRerOriginalDocumentTitle=document.title;
       document.title="BANK FINANCING QUOTATION";
-      document.body.classList.add("printing-quote");
+      document.body.classList.add("printing-quote","printing-financing-quote");
       window.__teamRerQuotePrintPending=true;
       setTimeout(()=>window.print(),120);
     });
@@ -7761,8 +7770,10 @@
     }
 
     function selectedQuotationConsultant(){
-      const admin=["admin","super admin"].includes(String(authorizedUser&&authorizedUser.role||"").toLowerCase());
-      return admin&&$("quoteConsultantSelect")&&$("quoteConsultantSelect").value ? $("quoteConsultantSelect").value : String((authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"");
+      const select=$("quoteConsultantSelect");
+      const selected=select ? String(select.value||"").trim() : "";
+      if(selected) return selected;
+      return String((authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"").trim();
     }
 
     $("printQuoteBtn").addEventListener("click", async () => {
@@ -7814,7 +7825,7 @@
       finally { button.disabled=false; }
     });
     window.addEventListener("afterprint", () => {
-      document.body.classList.remove("printing-quote");
+      document.body.classList.remove("printing-quote","printing-financing-quote");
       if (window.__teamRerQuotePrintPending) {
         window.__teamRerQuotePrintPending = false;
         if (window.__teamRerOriginalDocumentTitle) document.title = window.__teamRerOriginalDocumentTitle;
@@ -10194,6 +10205,23 @@
 })();
 </script>
 
+
+<style id="vehicle-quotation-financing-single-page-fix">
+@media print {
+  body.printing-financing-quote @page { size: A4 portrait; margin: 5mm; }
+  body.printing-financing-quote #quotePreview {
+    box-sizing:border-box !important; width:100% !important; max-width:100% !important;
+    padding:2mm 3mm !important; font-size:8.5pt !important; line-height:1.12 !important;
+    transform:none !important; break-inside:avoid !important; page-break-inside:avoid !important;
+  }
+  body.printing-financing-quote #quotePreview h2 { font-size:13pt !important; margin:1mm 0 !important; }
+  body.printing-financing-quote #quotePreview .quote-line { padding:1.3mm 0 !important; font-size:8.3pt !important; line-height:1.1 !important; }
+  body.printing-financing-quote #quotePreview .quote-total { padding:2mm !important; margin-top:1.5mm !important; font-size:10pt !important; }
+  body.printing-financing-quote #quotePreview .quote-terms { margin-top:2mm !important; font-size:7pt !important; line-height:1.12 !important; }
+  body.printing-financing-quote #quotePreview .quote-contact { margin-top:2mm !important; padding-top:1.5mm !important; font-size:8pt !important; line-height:1.15 !important; }
+  body.printing-financing-quote #quotePreview img { width:42px !important; height:24px !important; }
+}
+</style>
 </body>
 </html>
 
