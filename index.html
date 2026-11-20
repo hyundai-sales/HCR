@@ -7654,14 +7654,31 @@
       if(!field||!select)return;
       const admin=["admin","super admin"].includes(String(authorizedUser&&authorizedUser.role||"").toLowerCase());
       if(!admin){field.classList.add("hidden");select.innerHTML="";return;}
-      field.classList.remove("hidden");select.innerHTML='<option value="">Loading consultants...</option>';
-      const response=await submitRequest("vehicleQuotationConsultantsGet",{silent:true});
-      const data=response.vehicleQuotationConsultants||[];
-      select.innerHTML='<option value="">Select Sales Consultant</option>';
-      data.forEach(c=>{const o=document.createElement("option");o.value=c.name;o.textContent=c.name;select.appendChild(o);});
-      if(authorizedUser&&authorizedUser.name&&data.some(c=>c.name===authorizedUser.name))select.value=authorizedUser.name;
-      updateQuotePreview();
+      field.classList.remove("hidden");
+      select.replaceChildren();
+      const loading=document.createElement("option");loading.value="";loading.textContent="Loading consultants...";select.appendChild(loading);
+      select.disabled=true;
+      try{
+        const response=await Promise.race([
+          submitRequest("vehicleQuotationConsultantsGet",{silent:true}),
+          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Consultant list timed out. Tap to retry.")),20000))
+        ]);
+        const data=response.vehicleQuotationConsultants||[];
+        select.replaceChildren();
+        const first=document.createElement("option");first.value="";first.textContent="Select Sales Consultant";select.appendChild(first);
+        data.forEach(c=>{const o=document.createElement("option");o.value=c.name;o.textContent=c.name;select.appendChild(o);});
+        if(authorizedUser&&authorizedUser.name&&data.some(c=>c.name===authorizedUser.name))select.value=authorizedUser.name;
+        select.disabled=false;
+        updateQuotePreview();
+      }catch(err){
+        select.replaceChildren();
+        const failed=document.createElement("option");failed.value="__retry__";failed.textContent="Failed to load — tap to retry";select.appendChild(failed);
+        select.disabled=false;
+        select.onchange=()=>{if(select.value==="__retry__"){select.onchange=null;initializeVehicleQuotationConsultantSelector();}};
+        if(typeof showTeamRerDynamicIsland==="function")showTeamRerDynamicIsland(err&&err.message?err.message:"Unable to load consultants. Please retry.");
+      }
     }
+
     function selectedQuotationConsultant(){
       const admin=["admin","super admin"].includes(String(authorizedUser&&authorizedUser.role||"").toLowerCase());
       return admin&&$("quoteConsultantSelect")&&$("quoteConsultantSelect").value ? $("quoteConsultantSelect").value : String((authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"");
