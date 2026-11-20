@@ -3901,7 +3901,16 @@
       }
     }
 
-    async function submitRequest(action, extra = {}) {
+    // Single-slot iframe bridge: serialize EVERY request so background/module
+    // requests cannot overwrite the nonce, action, or resolve/reject handlers.
+    let bridgeRequestQueue = Promise.resolve();
+    function submitRequest(action, extra = {}) {
+      const run = () => submitRequestImmediate(action, extra);
+      const task = bridgeRequestQueue.then(run, run);
+      bridgeRequestQueue = task.catch(() => undefined);
+      return task;
+    }
+    async function submitRequestImmediate(action, extra = {}) {
       if (!currentUser) throw new Error("Please sign in again.");
       const isCplPdfRequest = action === "cplBlankPdf" || action === "cplMonthlyPdf";
       // CPL PDF requests must not inherit or leave the global 8% loader visible.
@@ -3913,9 +3922,8 @@
       if (showRequestLoading) showLoading(loadingMessages[action] || "Preparing your document...");
       if (showRequestLoading) setLoadingProgress(18, "Securing your session");
       const tokenPromise = currentUser.getIdToken(true);
-      const token = action === "generate"
-        ? await Promise.race([tokenPromise, new Promise((_, reject) => window.setTimeout(() => reject(new Error("Secure sign-in is taking too long. Please retry View PDF.")), 20000))])
-        : await tokenPromise;
+      const tokenTimeoutMs = action === "generate" ? 20000 : 20000;
+      const token = await Promise.race([tokenPromise, new Promise((_, reject) => window.setTimeout(() => reject(new Error("Secure sign-in is taking too long. Please retry.")), tokenTimeoutMs))]);
       if (showRequestLoading) setLoadingProgress(36, "Preparing your request");
       const nonce = makeNonce();
       pendingNonce = nonce;
@@ -4142,8 +4150,8 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
-        // The bridge uses a single pending-request slot. Do not fire these two
-        // requests simultaneously or they can overwrite one another's nonce/action.
+        // Requests are serialized by bridgeRequestQueue. Strict order is still
+        // enforced here: Users names first, then vehicle data.
         (async()=>{
           // Strict sequence: first read Users!B/D for consultant names;
           // only after that request settles, retrieve the vehicle list.
@@ -7674,10 +7682,7 @@
       const loading=document.createElement("option");loading.value="";loading.textContent="Loading vehicles...";modelSelect.appendChild(loading);
       modelSelect.disabled=true;
       try{
-        const response=await Promise.race([
-          submitRequest("vehicleQuotationVehiclesGet",{silent:true}),
-          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Vehicle list timed out. Tap to retry.")),45000))
-        ]);
+        const response=await submitRequest("vehicleQuotationVehiclesGet",{silent:true});
         const data=response.vehicleQuotationVehicles||[];
         quotationVehicles=data;
         const models=[...new Set(data.map(v=>v.model))].sort();
@@ -7703,10 +7708,7 @@
       const loading=document.createElement("option");loading.value="";loading.textContent="Loading consultants...";select.appendChild(loading);
       select.disabled=true;
       try{
-        const response=await Promise.race([
-          submitRequest("vehicleQuotationConsultantsGet",{silent:true}),
-          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Consultant list timed out. Tap to retry.")),20000))
-        ]);
+        const response=await submitRequest("vehicleQuotationConsultantsGet",{silent:true});
         const data=response.vehicleQuotationConsultants||[];
         select.replaceChildren();
         const first=document.createElement("option");first.value="";first.textContent="Select Sales Consultant";select.appendChild(first);
