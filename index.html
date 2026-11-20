@@ -7648,7 +7648,8 @@
       const payload = {
         clientName, salutation:$("quoteSalutation").value, yearModel:$("quoteYearModel").value,
         model:vehicle.model, variant:vehicle.variant, colors, srp, discount,
-        insuranceIncluded, insuranceAmount:Number($("quoteInsuranceAmount").value||0),
+        insuranceIncluded, insuranceAmount:Number($("quoteInsuranceAmount").value||0), tplIncluded:$("quoteTpl").checked,
+        freebies:(()=>{const r=lines.find(el=>el.textContent.toLowerCase().includes("freebies / inclusions"));return r?r.textContent.replace(/freebies \/ inclusions/i,"").trim():$("quoteFreebies").value.trim();})(),
         consultantName:(authorizedUser&&authorizedUser.name)|| (currentUser&&currentUser.displayName)||"",
         phone:(authorizedUser&&authorizedUser.phone)||""
       };
