@@ -4143,6 +4143,7 @@
         authorizationInProgress = false;
         authorizedUser = event.data.user;
         initializeVehicleQuotationConsultantSelector().catch(err=>console.warn("Quotation consultant selector:",err));
+        initializeVehicleQuotationVehicles().catch(err=>console.warn("Quotation vehicles:",err));
         syncActivityLogsVisibility();
         syncCplClearSelectionNewVisibility();
         syncUserManagementVisibility();
@@ -4192,6 +4193,15 @@
         $("auditPage").classList.add("hidden");
         $("userManagementPage").classList.add("hidden");
         loadAppData().catch(error => setMessage($("resultMessage"), error.message, "error"));
+        return;
+      }
+
+      if (action === "vehicleQuotationVehiclesGet") {
+        const data = event.data.vehicleQuotationVehicles || [];
+        quotationVehicles = data;
+        const models = [...new Set(quotationVehicles.map(v => v.model))].sort();
+        fillSelect($("quoteModel"), models, "Choose vehicle model");
+        if ($("creditFormFields").dataset.built === "yes") refreshCreditVehicleDropdowns();
         return;
       }
 
@@ -7642,13 +7652,39 @@
       #quoteHeendyImg{width:min(100%,240px);height:170px;object-fit:contain;margin:0 auto 4px;display:block}#quoteHeendyOverlay h2{margin:6px 0 8px;color:#e9f6ff}#quoteHeendyMsg{color:#c7def4;font-size:14px;line-height:1.5}
       #quoteHeendyBar{height:18px;border-radius:99px;padding:2px;background:#071b30;border:1px solid #78caff;margin:14px 0;overflow:hidden}#quoteHeendyFill{height:100%;width:5%;border-radius:99px;background:linear-gradient(90deg,#bff4ff,#39baff,#0875dd);box-shadow:0 0 12px #48baff;transition:width .35s ease}
       #quoteHeendyClose{display:none;width:100%;min-height:46px;border-radius:13px;border:1px solid #7bc8ff;background:linear-gradient(145deg,#1594ff,#0758b5);color:white;font-weight:800;margin-top:12px}#quoteHeendyClose.show{display:block}`;
-      document.head.appendChild(st);const ov=document.createElement('div');ov.id='quoteHeendyOverlay';ov.innerHTML='<div id="quoteHeendyCard"><img id="quoteHeendyImg" alt="Heendy"><h2 id="quoteHeendyTitle">Preparing your quotation PDF</h2><p id="quoteHeendyMsg">Heendy is getting your file ready...</p><div id="quoteHeendyBar"><div id="quoteHeendyFill"></div></div><button id="quoteHeendyClose" type="button">Done</button></div>';document.body.appendChild(ov);
+      document.head.appendChild(st);const ov=document.createElement('div');ov.id='quoteHeendyOverlay';ov.innerHTML='<div id="quoteHeendyCard"><img id="quoteHeendyImg" alt="Heendy"><h2 id="quoteHeendyTitle">Preparing your quotation</h2><p id="quoteHeendyMsg">Preparing the quotation for you...</p><div id="quoteHeendyBar"><div id="quoteHeendyFill"></div></div><button id="quoteHeendyClose" type="button">Done</button></div>';document.body.appendChild(ov);
       document.getElementById('quoteHeendyClose').addEventListener('click',()=>ov.classList.remove('show'));
     })();
     function playQuoteHeendySound(success){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=new AC();if(c.state==='suspended')c.resume();const notes=success?[660,880,990,1320]:[440,660,880];notes.forEach((hz,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=hz;g.gain.setValueAtTime(.0001,c.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.12,c.currentTime+i*.12+.025);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+i*.12+.16);o.connect(g);g.connect(c.destination);o.start(c.currentTime+i*.12);o.stop(c.currentTime+i*.12+.18);});setTimeout(()=>c.close(),900);}catch(e){}}
-    function showQuoteHeendyLoading(){const ov=$('quoteHeendyOverlay');$('quoteHeendyImg').src=($('creditHeendyBuddyImage')&&$('creditHeendyBuddyImage').src)||'';$('quoteHeendyTitle').textContent='Preparing your quotation PDF';$('quoteHeendyMsg').textContent='Heendy is getting your file ready...';$('quoteHeendyFill').style.width='12%';$('quoteHeendyClose').classList.remove('show');ov.classList.add('show');playQuoteHeendySound(false);let v=12;window.__quoteHeendyProgress=setInterval(()=>{v=Math.min(v+Math.random()*9,92);$('quoteHeendyFill').style.width=v+'%';},550);}
+    function showQuoteHeendyLoading(){const ov=$('quoteHeendyOverlay');$('quoteHeendyImg').src=($('creditHeendyBuddyImage')&&$('creditHeendyBuddyImage').src)||'';$('quoteHeendyTitle').textContent='Preparing your quotation';$('quoteHeendyMsg').textContent='Preparing the quotation for you...';$('quoteHeendyFill').style.width='12%';$('quoteHeendyClose').classList.remove('show');ov.classList.add('show');playQuoteHeendySound(false);let v=12;window.__quoteHeendyProgress=setInterval(()=>{v=Math.min(v+Math.random()*9,92);$('quoteHeendyFill').style.width=v+'%';},550);}
     function showQuoteHeendySuccess(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyFill').style.width='100%';$('quoteHeendyTitle').textContent='Quotation PDF Ready!';$('quoteHeendyMsg').textContent='Your quotation has been generated and downloaded successfully.';$('quoteHeendyClose').classList.add('show');playQuoteHeendySound(true);}
     function hideQuoteHeendy(){clearInterval(window.__quoteHeendyProgress);$('quoteHeendyOverlay').classList.remove('show');}
+    async function initializeVehicleQuotationVehicles(){
+      const modelSelect=$("quoteModel");
+      if(!modelSelect)return;
+      modelSelect.replaceChildren();
+      const loading=document.createElement("option");loading.value="";loading.textContent="Loading vehicles...";modelSelect.appendChild(loading);
+      modelSelect.disabled=true;
+      try{
+        const response=await Promise.race([
+          submitRequest("vehicleQuotationVehiclesGet",{silent:true}),
+          new Promise((_,reject)=>window.setTimeout(()=>reject(new Error("Vehicle list timed out. Tap to retry.")),20000))
+        ]);
+        const data=response.vehicleQuotationVehicles||[];
+        quotationVehicles=data;
+        const models=[...new Set(data.map(v=>v.model))].sort();
+        fillSelect(modelSelect,models,"Choose vehicle model");
+        modelSelect.disabled=false;
+        if($("creditFormFields").dataset.built==="yes")refreshCreditVehicleDropdowns();
+      }catch(err){
+        modelSelect.replaceChildren();
+        const failed=document.createElement("option");failed.value="__retry__";failed.textContent="Failed to load — tap to retry";modelSelect.appendChild(failed);
+        modelSelect.disabled=false;
+        modelSelect.onchange=()=>{if(modelSelect.value==="__retry__"){modelSelect.onchange=null;initializeVehicleQuotationVehicles();}};
+        if(typeof showTeamRerDynamicIsland==="function")showTeamRerDynamicIsland(err&&err.message?err.message:"Unable to load vehicles. Please retry.");
+      }
+    }
+
     async function initializeVehicleQuotationConsultantSelector(){
       const field=$("quoteConsultantField"), select=$("quoteConsultantSelect");
       if(!field||!select)return;
