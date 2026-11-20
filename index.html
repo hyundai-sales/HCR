@@ -4142,8 +4142,14 @@
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
-        initializeVehicleQuotationConsultantSelector().catch(err=>console.warn("Quotation consultant selector:",err));
-        initializeVehicleQuotationVehicles().catch(err=>console.warn("Quotation vehicles:",err));
+        // The bridge uses a single pending-request slot. Do not fire these two
+        // requests simultaneously or they can overwrite one another's nonce/action.
+        (async()=>{
+          try { await initializeVehicleQuotationConsultantSelector(); }
+          catch(err) { console.warn("Quotation consultant selector:",err); }
+          try { await initializeVehicleQuotationVehicles(); }
+          catch(err) { console.warn("Quotation vehicles:",err); }
+        })();
         syncActivityLogsVisibility();
         syncCplClearSelectionNewVisibility();
         syncUserManagementVisibility();
