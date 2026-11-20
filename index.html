@@ -2727,6 +2727,79 @@
   }
 </style>
 
+  <style id="cpl-saved-card-final-design">
+    /* CPL saved entries: single tap target, readable horizontal name/date header. */
+    #cplPage .cpl-saved-client-card{
+      position:relative!important;display:block!important;box-sizing:border-box!important;
+      width:100%!important;min-width:0!important;margin:0 0 12px!important;padding:15px 16px!important;
+      border:1px solid #587792!important;border-radius:15px!important;
+      background:linear-gradient(145deg,#172d43 0%,#1d344a 58%,#172b40 100%)!important;
+      color:#f5f8fc!important;cursor:pointer!important;text-align:left!important;
+      box-shadow:0 8px 20px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.06)!important;
+      transition:border-color .16s ease,transform .16s ease,filter .16s ease!important;
+      -webkit-tap-highlight-color:rgba(126,184,220,.18)!important;
+    }
+    #cplPage .cpl-saved-client-card:hover{border-color:#8bb8d8!important;filter:brightness(1.06)!important;}
+    #cplPage .cpl-saved-client-card:active{transform:scale(.995)!important;}
+    #cplPage .cpl-saved-client-card:focus-visible{outline:3px solid #8fc5e8!important;outline-offset:3px!important;}
+    #cplPage .cpl-saved-client-head{
+      display:flex!important;flex-direction:row!important;align-items:flex-start!important;
+      justify-content:space-between!important;flex-wrap:nowrap!important;gap:12px!important;
+      width:100%!important;min-width:0!important;margin:0!important;
+    }
+    #cplPage .cpl-saved-client-head strong{
+      display:block!important;flex:1 1 auto!important;width:auto!important;min-width:0!important;
+      margin:0!important;padding:0!important;color:#fff!important;font-size:18px!important;
+      font-weight:800!important;line-height:1.35!important;letter-spacing:.005em!important;
+      overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important;
+      text-shadow:none!important;
+    }
+    #cplPage .cpl-saved-client-head small{
+      display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;
+      width:auto!important;max-width:45%!important;margin:1px 0 0!important;padding:6px 9px!important;
+      border:1px solid rgba(151,188,216,.35)!important;border-radius:9px!important;
+      background:rgba(7,19,32,.55)!important;color:#d9e8f5!important;
+      font-size:12px!important;font-weight:600!important;line-height:1.25!important;
+      white-space:nowrap!important;text-align:center!important;
+    }
+    #cplPage .cpl-saved-client-actions{display:none!important;}
+    #cplPage .cpl-saved-list-heading{color:#e5f1fb!important;font-size:15px!important;font-weight:700!important;}
+
+    /* Unified Hyundai-inspired navy/slate CPL palette; print styles remain untouched. */
+    #cplPage .cpl-form-shell{
+      background:linear-gradient(145deg,#172d43 0%,#1b3349 55%,#172b40 100%)!important;
+      color:#f3f7fb!important;border:1.5px solid #587792!important;border-radius:21px!important;
+      box-shadow:0 12px 30px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.06)!important;
+    }
+    #cplPage .cpl-form-heading h2,#cplPage .cpl-meta-grid label,#cplPage .cpl-field label{
+      color:#f2f7fc!important;text-shadow:none!important;
+    }
+    #cplPage .cpl-form-heading{border-bottom-color:rgba(137,180,211,.42)!important;}
+    #cplPage .cpl-entry-card,#cplPage .cpl-monthly-retrieve{
+      background:linear-gradient(145deg,#1b3045 0%,#20384f 100%)!important;
+      color:#f3f7fb!important;border:1px solid #587792!important;
+    }
+    #cplPage .cpl-entry-tools #cplAddRow,#cplPage #cplSaveForm,#cplPage #cplMonthlyRetrieve,#cplPage #cplPrintSave{
+      background:linear-gradient(135deg,#17699f,#124d78)!important;
+      border:1px solid #83b9dc!important;color:#fff!important;
+      box-shadow:0 6px 16px rgba(0,25,48,.28),inset 0 1px 0 rgba(255,255,255,.16)!important;
+    }
+    #cplPage #cplPrintBlank{
+      background:linear-gradient(135deg,#344b62,#263b50)!important;
+      border:1px solid #9db3c7!important;color:#f5f8fc!important;
+    }
+    #cplPage .cpl-monthly-retrieve label{color:#f2f7fc!important;}
+    #cplPage .cpl-monthly-retrieve select,#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{
+      color:#152b40!important;
+    }
+    @media(max-width:420px){
+      #cplPage .cpl-saved-client-card{padding:13px!important;}
+      #cplPage .cpl-saved-client-head{gap:8px!important;}
+      #cplPage .cpl-saved-client-head strong{font-size:17px!important;}
+      #cplPage .cpl-saved-client-head small{font-size:11px!important;padding:5px 7px!important;}
+    }
+    @media(prefers-reduced-motion:reduce){#cplPage .cpl-saved-client-card{transition:none!important;}}
+  </style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -7120,16 +7193,18 @@
       const labels={source:'Source',sc:'Sales Consultant',clientName:'Client Name',phone:'Phone',email:'Email',vehicle:'Vehicle of Interest',specs:'Specs',timeline:'Timeline',workProfile:'Work Profile',drivingNow:'Driving Now',likes:'Likes',concerns:'Concerns',freqUsage:'Frequency of Usage',nextStep:'Next Step'};
       forms.forEach(form=>{(form.rows||[]).forEach(row=>{
         const item=document.createElement('article');item.className='cpl-saved-client-card';
+        item.setAttribute('role','button');item.setAttribute('tabindex','0');
+        const clientName=String(row.clientName||'Unnamed Client');
+        const entryDate=String(form.date||'Date unavailable');
+        item.setAttribute('aria-label','Open saved CPL entry for '+clientName+', dated '+entryDate);
         const header=document.createElement('div');header.className='cpl-saved-client-head';
-        const title=document.createElement('strong');title.textContent=String(row.clientName||'Unnamed Client');
-        const date=document.createElement('small');date.textContent=String(form.date||'Date unavailable');header.append(title,date);
-        const actions=document.createElement('div');actions.className='cpl-saved-client-actions';
-        const view=document.createElement('button');view.type='button';view.className='cpl-saved-view';view.textContent='View';
-        const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';
+        const title=document.createElement('strong');title.textContent=clientName;
+        const date=document.createElement('small');date.textContent=entryDate;header.append(title,date);
         const editSavedEntry=()=>{const dateValue=String(form.date||'');const match=dateValue.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}closeCplSavedEntryModal();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});};
-        edit.addEventListener('click',editSavedEntry);
-        view.addEventListener('click',()=>openCplSavedEntryModal(row,form,labels,editSavedEntry));
-        actions.append(view,edit);item.append(header,actions);host.appendChild(item);
+        const openDetails=()=>openCplSavedEntryModal(row,form,labels,editSavedEntry);
+        item.addEventListener('click',openDetails);
+        item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails();}});
+        item.appendChild(header);host.appendChild(item);
       });});
     }
     function restoreCplUserMonthlyConsultant(){
