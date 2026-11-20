@@ -4145,6 +4145,8 @@
         // The bridge uses a single pending-request slot. Do not fire these two
         // requests simultaneously or they can overwrite one another's nonce/action.
         (async()=>{
+          // Strict sequence: first read Users!B/D for consultant names;
+          // only after that request settles, retrieve the vehicle list.
           try { await initializeVehicleQuotationConsultantSelector(); }
           catch(err) { console.warn("Quotation consultant selector:",err); }
           try { await initializeVehicleQuotationVehicles(); }
