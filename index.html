@@ -2788,6 +2788,10 @@
       background:linear-gradient(135deg,#344b62,#263b50)!important;
       border:1px solid #9db3c7!important;color:#f5f8fc!important;
     }
+    #cplPage #cplMonthlyToggle{display:block!important;width:100%!important;min-height:48px!important;margin:12px 0!important;padding:12px 16px!important;border:1px solid rgba(139,190,225,.62)!important;border-radius:12px!important;background:linear-gradient(135deg,#263f57,#1b3045)!important;color:#f2f7fc!important;font-size:14px!important;font-weight:800!important;letter-spacing:.035em!important;text-align:left!important;box-shadow:0 5px 14px rgba(0,0,0,.22)!important;}
+    #cplPage #cplMonthlyToggle:active{transform:translateY(1px)!important;}
+    #cplPage #cplMonthlyPanel[hidden]{display:none!important;}
+    #cplPage #cplMonthlyToggle.hidden{display:none!important;}
     #cplPage .cpl-monthly-retrieve label{color:#f2f7fc!important;}
     #cplPage .cpl-monthly-retrieve select,#cplPage .cpl-meta-grid input,#cplPage .cpl-meta-grid select{
       color:#152b40!important;
@@ -3059,14 +3063,15 @@
                 <label>MANAGER <input id="cplManagerFixed" value="Ralph Edward Rosales" readonly></label>
               </div>
             </div>
-            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary">PRINT BLANK CPL FORM</button></div>
+            <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary hidden" hidden>PRINT BLANK CPL FORM</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
             <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button></div>
             <div id="cplMessage" class="message hidden" aria-live="polite"></div>
           </div>
           <div class="cpl-saved-wrap">
-            <div class="cpl-monthly-retrieve">
+            <button type="button" id="cplMonthlyToggle" class="cpl-monthly-toggle" aria-expanded="false" aria-controls="cplMonthlyPanel">＋ MONTHLY CPL RETRIEVAL</button>
+            <div id="cplMonthlyPanel" class="cpl-monthly-retrieve hidden" data-expanded="false" hidden>
               <label>Sales Consultant<select id="cplMonthlyConsultant"><option value="">Select consultant</option></select></label>
               <label>Month<select id="cplMonthlyMonth"></select></label>
               <label>Year<select id="cplMonthlyYear"></select></label>
@@ -7197,7 +7202,7 @@
     function setCplSingleEntryEditLayout(editing){
       ['cplAddRow','cplPrintBlank'].forEach(id=>{const el=$(id);if(el)el.classList.toggle('hidden',!!editing);});
       const saved=$('cplConsultantSavedEntries');if(saved)saved.classList.toggle('hidden',!!editing);
-      const monthly=$('cplMonthlyRetrieve')?.closest('.cpl-monthly-retrieve');if(monthly)monthly.classList.toggle('hidden',!!editing);
+      const monthly=$('cplMonthlyPanel');if(monthly){const collapsed=monthly.dataset.expanded!=='true';monthly.classList.toggle('hidden',!!editing||collapsed);monthly.hidden=!!editing||collapsed;}const monthlyToggle=$('cplMonthlyToggle');if(monthlyToggle)monthlyToggle.classList.toggle('hidden',!!editing);
       const printSave=$('cplPrintSave');if(printSave){if(editing){printSave.classList.add('hidden');printSave.hidden=true;}else if(cplMonthlyRetrieved){printSave.classList.remove('hidden');printSave.hidden=false;}}
       if(editing){
         if(!cplSingleEntryEditBanner){
@@ -7367,7 +7372,15 @@
     $('cplTabBtn').addEventListener('click',()=>{if(!canAccessCplSession()){showAccessDenied("TEAM RER CPL access only.");return;}runPageTransition("Opening Client Probing Log...",()=>{$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;$('cplPage').scrollIntoView({block:'start',behavior:'smooth'});loadCpl();});});
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
-    $('cplAddRow').addEventListener('click',()=>{if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
+    $('cplAddRow').addEventListener('click',()=>{if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyToggle').addEventListener('click',()=>{
+       const panel=$('cplMonthlyPanel'),toggle=$('cplMonthlyToggle');
+       const opening=!!panel.hidden;
+       panel.hidden=!opening;
+       panel.classList.toggle('hidden',!opening);
+       toggle.setAttribute('aria-expanded',String(opening));
+       toggle.textContent=opening?'− HIDE MONTHLY CPL RETRIEVAL':'＋ MONTHLY CPL RETRIEVAL';
+     });
+     $('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
      $('cplMonthlyConsultant').addEventListener('change',()=>{
        cplMonthlyRetrieved=null;
        setCplMonthlyActionMode(false);
