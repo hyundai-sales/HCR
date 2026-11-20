@@ -7084,6 +7084,25 @@
     function renumberCplCards(){Array.from($('cplEntryRows').children).forEach((card,i)=>{const title=card.querySelector('.cpl-entry-card-head strong');if(title&&!card.dataset.retrieved)title.textContent='Client Entry '+(i+1);if(title&&card.dataset.retrieved)title.textContent=Array.from(card.querySelectorAll('[data-key]')).find(el=>el.dataset.key==='clientName')?.value||'Unnamed Client';});}
     function getCplRows(){return Array.from($('cplEntryRows').children).map(card=>Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value])));}
     function renderCplClients(){const host=$('cplClientsList');if(!host)return;host.replaceChildren();}
+    let cplSavedEntryModal=null;
+    function closeCplSavedEntryModal(){
+      if(cplSavedEntryModal){cplSavedEntryModal.remove();cplSavedEntryModal=null;}
+      document.removeEventListener('keydown',handleCplSavedEntryEscape);
+    }
+    function handleCplSavedEntryEscape(event){if(event.key==='Escape')closeCplSavedEntryModal();}
+    function openCplSavedEntryModal(row,form,labels,onEdit){
+      closeCplSavedEntryModal();
+      const overlay=document.createElement('div');overlay.className='cpl-saved-modal-overlay';overlay.setAttribute('role','presentation');
+      const dialog=document.createElement('section');dialog.className='cpl-saved-modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','Saved CPL entry details');
+      const head=document.createElement('header');head.className='cpl-saved-modal-head';
+      const heading=document.createElement('div');const title=document.createElement('strong');title.textContent=String(row.clientName||'Unnamed Client');const date=document.createElement('small');date.textContent=String(form.date||'Date unavailable');heading.append(title,date);
+      const close=document.createElement('button');close.type='button';close.className='cpl-saved-modal-close';close.textContent='×';close.setAttribute('aria-label','Close details');close.addEventListener('click',closeCplSavedEntryModal);head.append(heading,close);
+      const body=document.createElement('div');body.className='cpl-saved-modal-body';
+      const groups=[{title:'Client Information',keys:['clientName','phone','email']},{title:'Vehicle Preferences',keys:['vehicle','specs','timeline','likes','freqUsage']},{title:'Application Profile',keys:['source','sc','workProfile','drivingNow','concerns','nextStep']}];
+      groups.forEach(group=>{const section=document.createElement('section');section.className='cpl-saved-modal-group';const h=document.createElement('h3');h.textContent=group.title;const grid=document.createElement('div');grid.className='cpl-saved-modal-grid';group.keys.forEach(key=>{const value=String(row[key]||'').trim();if(!value)return;const cell=document.createElement('div');cell.className='cpl-saved-modal-field';const label=document.createElement('small');label.textContent=labels[key]||key;const val=document.createElement('span');val.textContent=value;cell.append(label,val);grid.appendChild(cell);});if(grid.childElementCount){section.append(h,grid);body.appendChild(section);}});
+      const footer=document.createElement('footer');footer.className='cpl-saved-modal-actions';const done=document.createElement('button');done.type='button';done.className='cpl-saved-modal-done';done.textContent='Close';done.addEventListener('click',closeCplSavedEntryModal);const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-modal-edit';edit.textContent='Edit Entry';edit.addEventListener('click',onEdit);footer.append(done,edit);
+      dialog.append(head,body,footer);overlay.appendChild(dialog);overlay.addEventListener('click',event=>{if(event.target===overlay)closeCplSavedEntryModal();});document.body.appendChild(overlay);cplSavedEntryModal=overlay;document.addEventListener('keydown',handleCplSavedEntryEscape);close.focus();
+    }
     function renderCplConsultantSavedEntries(){
       const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
       const consultant=isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim();
@@ -7099,11 +7118,11 @@
         const date=document.createElement('small');date.textContent=String(form.date||'Date unavailable');header.append(title,date);
         const actions=document.createElement('div');actions.className='cpl-saved-client-actions';
         const view=document.createElement('button');view.type='button';view.className='cpl-saved-view';view.textContent='View';
-        const details=document.createElement('div');details.className='cpl-saved-client-details hidden';
-        Object.keys(labels).forEach(key=>{const value=String(row[key]||'').trim();if(!value)return;const pair=document.createElement('div');pair.className='cpl-saved-detail';const label=document.createElement('small');label.textContent=labels[key];const val=document.createElement('span');val.textContent=value;pair.append(label,val);details.appendChild(pair);});
-        view.addEventListener('click',()=>{const opened=!details.classList.contains('hidden');host.querySelectorAll('.cpl-saved-client-details').forEach(d=>d.classList.add('hidden'));host.querySelectorAll('.cpl-saved-view').forEach(b=>b.textContent='View');details.classList.toggle('hidden',opened);view.textContent=opened?'View':'Hide';});
-        const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';edit.addEventListener('click',()=>{const date=String(form.date||'');const match=date.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});});
-        actions.append(view,edit);item.append(header,actions,details);host.appendChild(item);
+        const edit=document.createElement('button');edit.type='button';edit.className='cpl-saved-edit';edit.textContent='Edit';
+        const editSavedEntry=()=>{const dateValue=String(form.date||'');const match=dateValue.match(/^(\d{4})-(\d{2})/);if(!match){showTeamRerDynamicIsland('This saved CPL entry has no valid date for monthly editing.');return;}closeCplSavedEntryModal();$('cplMonthlyConsultant').value=consultant;$('cplMonthlyMonth').value=match[2];$('cplMonthlyYear').value=match[1];retrieveCplMonthly();$('cplEntryRows').scrollIntoView({behavior:'smooth',block:'start'});};
+        edit.addEventListener('click',editSavedEntry);
+        view.addEventListener('click',()=>openCplSavedEntryModal(row,form,labels,editSavedEntry));
+        actions.append(view,edit);item.append(header,actions);host.appendChild(item);
       });});
     }
     function restoreCplUserMonthlyConsultant(){
@@ -9187,6 +9206,30 @@
     #cplPage .cpl-edit-row,#cplPage .cpl-saved-edit{background:linear-gradient(135deg,#24628d,#17476e)!important;color:#fff!important;border:1px solid #82b4d6!important;}
     #cplPage .cpl-delete-row{background:linear-gradient(135deg,#8d3440,#692530)!important;color:#fff!important;border:1px solid #d28b95!important;}
     @media(max-width:600px){#cplPage .cpl-saved-client-card{background:linear-gradient(145deg,#17283b,#20354a,#182b3e)!important;}}
+
+
+    /* CPL saved-entry detail modal: structured, readable, mobile-first view */
+    .cpl-saved-modal-overlay{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,24px);background:rgba(3,12,23,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    .cpl-saved-modal{display:flex;flex-direction:column;width:min(100%,680px);max-height:min(90dvh,900px);overflow:hidden;border:1px solid #66839d;border-radius:20px;background:linear-gradient(145deg,#17283b,#20354a 55%,#182b3e);color:#f2f6fb;box-shadow:0 24px 70px rgba(0,0,0,.48);}
+    .cpl-saved-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid rgba(157,195,227,.25);background:rgba(7,20,34,.32);}
+    .cpl-saved-modal-head strong{display:block;font-size:19px;line-height:1.35;overflow-wrap:anywhere;}
+    .cpl-saved-modal-head small{display:block;margin-top:6px;color:#c6d8e8;font-size:12px;}
+    .cpl-saved-modal-close{flex:0 0 38px;width:38px;min-height:38px;padding:0;border:1px solid #6987a1;border-radius:50%;background:#263f56;color:#fff;font-size:25px;line-height:1;}
+    .cpl-saved-modal-body{min-height:0;overflow:auto;padding:15px 17px 18px;-webkit-overflow-scrolling:touch;}
+    .cpl-saved-modal-group{margin:0 0 14px;padding:13px;border:1px solid rgba(126,164,193,.34);border-radius:13px;background:rgba(8,17,29,.25);}
+    .cpl-saved-modal-group:last-child{margin-bottom:0;}
+    .cpl-saved-modal-group h3{margin:0 0 10px;color:#b9d9f1;font-size:13px;letter-spacing:.035em;}
+    .cpl-saved-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+    .cpl-saved-modal-field{min-width:0;padding:10px;border:1px solid rgba(145,177,204,.18);border-radius:9px;background:rgba(3,12,23,.35);}
+    .cpl-saved-modal-field small{display:block;margin-bottom:5px;color:#9fc5e4;font-size:10px;font-weight:800;letter-spacing:.025em;}
+    .cpl-saved-modal-field span{display:block;color:#f5f8fc;font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
+    .cpl-saved-modal-actions{display:flex;gap:10px;padding:13px 17px calc(13px + env(safe-area-inset-bottom));border-top:1px solid rgba(157,195,227,.22);background:rgba(7,20,34,.42);}
+    .cpl-saved-modal-actions button{flex:1;min-width:0;min-height:46px;border-radius:11px;font-weight:800;}
+    .cpl-saved-modal-done{background:#e7edf4;color:#203144;border:1px solid #a9bbcc;}
+    .cpl-saved-modal-edit{background:linear-gradient(135deg,#24628d,#17476e);color:#fff;border:1px solid #82b4d6;}
+    @media(max-width:560px){.cpl-saved-modal-overlay{padding:9px;align-items:center;}.cpl-saved-modal{width:100%;max-height:calc(100dvh - 18px);border-radius:17px;}.cpl-saved-modal-head{padding:14px}.cpl-saved-modal-body{padding:11px}.cpl-saved-modal-group{padding:11px;margin-bottom:10px}.cpl-saved-modal-grid{grid-template-columns:1fr 1fr;gap:7px}.cpl-saved-modal-field{padding:9px}.cpl-saved-modal-field span{font-size:13px}.cpl-saved-modal-actions{padding:10px 11px calc(10px + env(safe-area-inset-bottom));}}
+    @media(max-width:360px){.cpl-saved-modal-grid{grid-template-columns:1fr;}}
+    @media print{.cpl-saved-modal-overlay{display:none!important;}}
 
     /* CPL final patch: desktop default consultant reset, monthly retrieval contrast, blue logo ring */
     #cplPage #cplConsultantSelect{autocomplete:off;}
