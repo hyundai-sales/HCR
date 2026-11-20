@@ -7324,11 +7324,11 @@
         showTeamRerDynamicIsland('CPL entry update failed: '+(err?.message||err));
       }
     }
-    function renderCplConsultantSavedEntries(){
+    function renderCplConsultantSavedEntries(monthPrefix=null,forcedConsultant=null){
       const host=$('cplConsultantSavedEntries');if(!host)return;host.replaceChildren();
-      const consultant=isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim();
+      const consultant=forcedConsultant|| (isCplAdminSession()?String($('cplConsultantSelect').value||'').trim():String($('cplConsultantFixed').value||'').trim());
       if(!consultant)return;
-      const forms=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+      const forms=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant&&(!monthPrefix||String(f.date||'').slice(0,7)===monthPrefix)).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
       if(!forms.length){const empty=document.createElement('div');empty.className='cpl-saved-empty';empty.textContent='No saved CPL entries for '+consultant+'.';host.appendChild(empty);return;}
       const heading=document.createElement('div');heading.className='cpl-saved-list-heading';heading.textContent='SAVED CPL ENTRIES';host.appendChild(heading);
       const labels={source:'Source',sc:'Sales Consultant',clientName:'Client Name',phone:'Phone',email:'Email',vehicle:'Vehicle of Interest',specs:'Specs',timeline:'Timeline',workProfile:'Work Profile',drivingNow:'Driving Now',likes:'Likes',concerns:'Concerns',freqUsage:'Frequency of Usage',nextStep:'Next Step'};
@@ -7382,15 +7382,13 @@
       if(!consultant){showTeamRerDynamicIsland("Select a Sales Consultant first.");return;}
       const prefix=`${year}-${month}`;
       const matching=(cplData.clients||[]).filter(f=>String(f.consultant||'').trim()===consultant&&String(f.date||'').slice(0,7)===prefix);
-      if(!matching.length){cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();setCplConsultant();if(isCplAdminSession()){$('cplConsultantSelect').value=consultant;Array.from($('cplEntryRows').querySelectorAll('[data-key=\"sc\"]')).forEach(el=>el.value=consultant);}$('cplHeaderDate').value=cplToday();$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
-      const rows=[];
-      matching.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(f=>(f.rows||[]).forEach(r=>{const copy={...r};if(!copy.date)copy.date=f.date||'';copy.createdAt=copy.createdAt||f.createdAt||f.date||'';copy.sc=consultant;rows.push(copy);}));
-      cplMonthlyRetrieved={consultant,month,year,formCount:matching.length,rowCount:rows.length};setCplMonthlyActionMode(true);$('cplSaveForm').textContent='Save Monthly Changes';setCplSaveButtonVisible(false);$('cplConsultantSavedEntries').classList.add('hidden');
-      $("cplEntryRows").replaceChildren();rows.forEach(r=>addCplEntryRow(r,{retrieved:true}));
-      setCplConsultant();
-      if(isCplAdminSession()){$("cplConsultantSelect").value=consultant;Array.from($("cplEntryRows").querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=consultant);}
-      $("cplHeaderDate").value=`${year}-${month}-01`;
-      showTeamRerDynamicIsland(`Loaded ${rows.length} entries from ${matching.length} saved CPL form(s). Ready to review.`);
+      cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);
+      if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;
+      $('cplConsultantSavedEntries').classList.remove('hidden');
+      renderCplConsultantSavedEntries(prefix,consultant);
+      if(!matching.length){showTeamRerDynamicIsland(`No saved CPL records found for ${consultant} in ${month}/${year}.`);return;}
+      const rowCount=matching.reduce((n,f)=>n+(f.rows||[]).length,0);
+      showTeamRerDynamicIsland(`Displaying ${rowCount} saved entries from ${matching.length} CPL form(s) for ${month}/${year}.`);
     }
     function setCplConsultant(){const name=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'').trim();const cplPageEl=$('cplPage');if(cplPageEl)cplPageEl.classList.toggle('cpl-regular-user-view',isRegularUserSession());const select=$('cplConsultantSelect'),input=$('cplConsultantFixed');select.classList.toggle('hidden',!isCplAdminSession());input.classList.toggle('hidden',isCplAdminSession());input.value=name;if(isCplAdminSession()){select.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='Select Sales Consultant';select.appendChild(opt);(cplData.consultants||[]).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o);});}else{select.disabled=true;}const chosen=isCplAdminSession()?String(select.value||''):name;const updateRowSC=()=>{const current=isCplAdminSession()?String(select.value||''):name;Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=current);renderCplConsultantSavedEntries();};select.onchange=()=>{const current=isCplAdminSession()?String(select.value||''):name;if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);clearCplDraft();Array.from($('cplEntryRows').querySelectorAll('[data-key="sc"]')).forEach(el=>el.value=current);renderCplConsultantSavedEntries();};updateRowSC();if($('cplMonthlyConsultant')){if(isCplAdminSession())$('cplMonthlyConsultant').disabled=false;else{$('cplMonthlyConsultant').value=name;$('cplMonthlyConsultant').disabled=true;}}}
     // CPL draft restoration/autosave disabled to prevent stale draft rows from reappearing.
