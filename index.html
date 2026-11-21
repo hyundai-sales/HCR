@@ -7612,6 +7612,34 @@
     updateQuotePreview();
     $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
     $("quoteModel").addEventListener("change", refreshQuoteVariants);
+
+    // Vehicle Quotation only: advance focus after a field is completed and
+    // bring the next visible control into view on mobile and desktop.
+    (function installQuoteAutoAdvance(){
+      const quoteFlow = [
+        "quoteConsultantSelect", "quoteSalutation", "quoteClientName",
+        "quoteYearModel", "quoteModel", "quoteVariant",
+        "quoteDownpayment", "quotePartnerBank", "quoteFreebies",
+        "quoteValidity", "quoteTpl", "quoteInsurance",
+        "quoteInsuranceAmount", "quoteLto"
+      ];
+      quoteFlow.forEach((id, index) => {
+        const control = $(id);
+        if (!control) return;
+        const eventName = control.tagName === "SELECT" || control.type === "checkbox" ? "change" : "change";
+        control.addEventListener(eventName, () => {
+          if (!$("quotePage") || $("quotePage").classList.contains("hidden")) return;
+          if (control.type === "checkbox" && id === "quoteTpl" && !control.checked) return;
+          for (let nextIndex = index + 1; nextIndex < quoteFlow.length; nextIndex++) {
+            const next = $(quoteFlow[nextIndex]);
+            if (!next || next.disabled || next.closest(".hidden") || next.offsetParent === null) continue;
+            next.focus({ preventScroll: true });
+            next.scrollIntoView({ behavior: "smooth", block: "center" });
+            break;
+          }
+        });
+      });
+    })();
     document.querySelectorAll(".quote-type-switch[data-quote-type]").forEach(button => button.addEventListener("click", () => setQuoteType(button.dataset.quoteType)));
     setQuoteType($("quoteType").value||"cash");
     function closeQuotePreview() {
