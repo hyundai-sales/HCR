@@ -3498,6 +3498,10 @@
     }
     window.addEventListener("scroll",queueLastAppViewCapture,{passive:true});
     document.addEventListener("scroll",queueLastAppViewCapture,true);
+    // Save the active worksheet/subpage and scroll position immediately before
+    // refresh, tab close, or navigation away. This complements visibility observers.
+    window.addEventListener("beforeunload",captureLastAppView);
+    window.addEventListener("pagehide",captureLastAppView);
     document.addEventListener("click",event => {
       if (event.target.closest("[id^='backToMenu']")) {
         clearLastAppView();
@@ -3507,8 +3511,10 @@
         clearLastAppView();
         return;
       }
-      if (event.target.closest("#appNav button,[id$='TabBtn']")) {
+      if (event.target.closest("#appNav button,[id$='TabBtn'],[data-edge-target]")) {
+        queueLastAppViewCapture();
         setTimeout(queueLastAppViewCapture,80);
+        setTimeout(queueLastAppViewCapture,250);
       }
     },true);
     const appViewObserver = new MutationObserver(queueLastAppViewCapture);
