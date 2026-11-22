@@ -5415,11 +5415,15 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction, directPrintPreview, afterPrintOrClose) {
       stopCplPrinterSound();
       const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your PDF');
-      const active=document.getElementById('cplPdfBusyOverlay'); if(!active) return;
+      const active=document.getElementById('cplPdfBusyOverlay'); if(!active) { setCplPdfBusy(true,'Preparing your PDF'); }
+      const successOverlay=document.getElementById('cplPdfBusyOverlay'); if(!successOverlay) { showTeamRerDynamicIsland('PDF generated, but the download panel could not be displayed.'); return; }
+      successOverlay.style.display='flex'; successOverlay.style.visibility='visible'; successOverlay.style.opacity='1';
       if(cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
       updateCplHeendyProgress(100);
-      const loading=active.querySelector('.cpl-heendy-loading'); const successCard=active.querySelector('.cpl-heendy-success');
-      if(loading) loading.hidden=true; if(successCard) successCard.hidden=false;
+      const loading=successOverlay.querySelector('.cpl-heendy-loading'); const successCard=successOverlay.querySelector('.cpl-heendy-success');
+      if(loading) { loading.hidden=true; loading.style.display='none'; }
+      if(successCard) { successCard.hidden=false; successCard.style.display='block'; successCard.style.visibility='visible'; }
+      const active=successOverlay;
       const successTitle=active.querySelector('.cpl-heendy-success h2'); if(successTitle) { successTitle.textContent=titleText || 'PDF Ready!'; successTitle.setAttribute('data-module-success-title','true'); }
       const successText=active.querySelector('#cplHeendySuccessText'); if(successText) successText.textContent=copyText||'Your document has been generated successfully.';
       const download=active.querySelector('.cpl-heendy-download'); const close=active.querySelector('.cpl-heendy-close');
