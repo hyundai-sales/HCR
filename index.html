@@ -3408,6 +3408,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       const overlay = $("loadingOverlay");
       if (!overlay) return;
       if (loadingHideTimer) { clearTimeout(loadingHideTimer); loadingHideTimer = null; }
+      overlay.style.removeProperty("display");
       $("loadingMessage").textContent = message || "Preparing your document...";
       setLoadingProgress(8, "Preparing request");
       overlay.classList.remove("hidden");
@@ -3421,6 +3422,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       if (loadingHideTimer) clearTimeout(loadingHideTimer);
       loadingHideTimer = window.setTimeout(() => {
         overlay.classList.add("hidden");
+        overlay.style.setProperty("display", "none", "important");
         overlay.setAttribute("aria-hidden", "true");
         loadingHideTimer = null;
       }, 240);
