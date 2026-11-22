@@ -3408,7 +3408,6 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       const overlay = $("loadingOverlay");
       if (!overlay) return;
       if (loadingHideTimer) { clearTimeout(loadingHideTimer); loadingHideTimer = null; }
-      overlay.style.removeProperty("display");
       $("loadingMessage").textContent = message || "Preparing your document...";
       setLoadingProgress(8, "Preparing request");
       overlay.classList.remove("hidden");
@@ -3422,7 +3421,6 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       if (loadingHideTimer) clearTimeout(loadingHideTimer);
       loadingHideTimer = window.setTimeout(() => {
         overlay.classList.add("hidden");
-        overlay.style.setProperty("display", "none", "important");
         overlay.setAttribute("aria-hidden", "true");
         loadingHideTimer = null;
       }, 240);
@@ -5417,15 +5415,11 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     function showCplPdfNotification(downloadUrl, fileName, titleText, copyText, showPrintSaveAction, directPrintPreview, afterPrintOrClose) {
       stopCplPrinterSound();
       const overlay=document.getElementById('cplPdfBusyOverlay'); if(!overlay) setCplPdfBusy(true,'Preparing your PDF');
-      const active=document.getElementById('cplPdfBusyOverlay'); if(!active) { setCplPdfBusy(true,'Preparing your PDF'); }
-      const successOverlay=document.getElementById('cplPdfBusyOverlay'); if(!successOverlay) { showTeamRerDynamicIsland('PDF generated, but the download panel could not be displayed.'); return; }
-      successOverlay.style.display='flex'; successOverlay.style.visibility='visible'; successOverlay.style.opacity='1';
+      const active=document.getElementById('cplPdfBusyOverlay'); if(!active) return;
       if(cplHeendyProgressTimer) { clearInterval(cplHeendyProgressTimer); cplHeendyProgressTimer=null; }
       updateCplHeendyProgress(100);
-      const loading=successOverlay.querySelector('.cpl-heendy-loading'); const successCard=successOverlay.querySelector('.cpl-heendy-success');
-      if(loading) { loading.hidden=true; loading.style.display='none'; }
-      if(successCard) { successCard.hidden=false; successCard.style.display='block'; successCard.style.visibility='visible'; }
-      const active=successOverlay;
+      const loading=active.querySelector('.cpl-heendy-loading'); const successCard=active.querySelector('.cpl-heendy-success');
+      if(loading) loading.hidden=true; if(successCard) successCard.hidden=false;
       const successTitle=active.querySelector('.cpl-heendy-success h2'); if(successTitle) { successTitle.textContent=titleText || 'PDF Ready!'; successTitle.setAttribute('data-module-success-title','true'); }
       const successText=active.querySelector('#cplHeendySuccessText'); if(successText) successText.textContent=copyText||'Your document has been generated successfully.';
       const download=active.querySelector('.cpl-heendy-download'); const close=active.querySelector('.cpl-heendy-close');
@@ -7589,27 +7583,15 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       try { await submitRequest('cplBlankPdf',{consultant,silent:true}); }
       catch(err){blankBtn.disabled=false;setCplPdfBusy(false);showTeamRerDynamicIsland('CPL PDF request failed: '+(err?.message||err));}
     });
-    async function printCplMonthlyDirectPdf(rows,meta,generatedDate,consultant,manager){
-      const payload={date:generatedDate,consultant,manager,dealer:'HCR',type:'FIELD',rows,month:meta.month,year:meta.year};
-      try{
-        beginCplPdfGeneration('Generating monthly CPL PDF…');
-        await submitRequest('cplMonthlyPdf',{payload:JSON.stringify(payload),silent:true});
-        return true;
-      }catch(err){
-        const printBtn=$('cplPrintSave');if(printBtn)printBtn.disabled=false;
-        setCplPdfBusy(false);
-        showTeamRerAlert('Monthly CPL PDF generation failed: '+(err?.message||err),'CPL Print');
-        return false;
-      }
-    }
     $('cplPrintSave').addEventListener('click',()=>{
       const rows=getCplRows();
       if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before printing.','CPL Validation');return;}
       if(cplMonthlyRetrieved){
         const meta=cplMonthlyRetrieved,consultant=meta.consultant,generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
         const payload={date:generatedDate,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthly:true,month:meta.month,year:meta.year};
-        const printBtn=$('cplPrintSave');if(printBtn.disabled)return;
-        printCplMonthlyDirectPdf(rows,meta,generatedDate,consultant,payload.manager).finally(()=>{printBtn.disabled=false;setCplPdfBusy(false);});
+        const printBtn=$('cplPrintSave');if(printBtn.disabled)return;printBtn.disabled=true;
+        beginCplPdfGeneration(`Generating ${rows.length} monthly CPL entries as PDF…`);
+        submitRequest('cplMonthlyPdf',{payload:JSON.stringify(payload),silent:true}).catch(err=>{printBtn.disabled=false;setCplPdfBusy(false);showTeamRerDynamicIsland('Monthly CPL PDF request failed: '+(err?.message||err));});
         return;
       }
       const generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
