@@ -3234,6 +3234,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
           <div id="creditHeendyBuddy" aria-hidden="true">
             <img id="creditHeendyBuddyImage" alt="">
           </div>
+          <div id="creditSelectionPanel">
           <div class="credit-section credit-consultant-section">
             <div class="credit-grid">
               <div class="credit-field full" id="creditConsultantSelectWrap">
@@ -3266,8 +3267,10 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
               </div>
             </div>
           </div>
+          </div>
           <div id="creditFormFields" class="hidden"></div>
           <button id="saveCreditBtn" class="hidden" type="button">Save</button>
+          <button id="cancelCreditBtn" class="hidden secondary" type="button">Cancel</button>
           <button id="generateCreditBtn" class="hidden" type="button">Generate Application PDF</button>
           <div id="creditMessage" class="message hidden" aria-live="polite"></div>
           </div>
@@ -4383,8 +4386,8 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       if (action === "creditHistorySave") {
         const saved = event.data.creditHistorySave || {};
         if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
-        setCreditEditorStage("generate");
-        setMessage($("creditMessage"),"Application saved. You can now generate the PDF.","success");
+        setCreditEditorStage("closed");
+        setMessage($("creditMessage"),"Application saved successfully.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
         return;
       }
@@ -5505,16 +5508,36 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 
     function setCreditEditorStage(stage) {
       const fields = $("creditFormFields");
+      const panel = $("creditSelectionPanel");
       const saveBtn = $("saveCreditBtn");
+      const cancelBtn = $("cancelCreditBtn");
       const generateBtn = $("generateCreditBtn");
-      fields.classList.toggle("hidden", stage === "closed");
+      const editingForm = stage !== "closed";
+      fields.classList.toggle("hidden", !editingForm);
+      if (panel) panel.classList.toggle("hidden", editingForm);
       saveBtn.classList.toggle("hidden", stage !== "save");
+      cancelBtn.classList.toggle("hidden", !editingForm);
       generateBtn.classList.toggle("hidden", stage !== "generate");
       saveBtn.disabled = false;
       saveBtn.textContent = "Save";
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = "Cancel";
       generateBtn.disabled = false;
       generateBtn.textContent = "Generate Application PDF";
     }
+
+    function cancelCreditEditor() {
+      currentCreditApplicationId = "";
+      if ($("creditApplicationMode")) $("creditApplicationMode").value = "new";
+      syncCreditModeButtons();
+      $("creditPreviousApplicationWrap")?.classList.add("hidden");
+      buildCreditForm();
+      document.querySelectorAll("#creditFormFields [data-cell]").forEach(field => field.value = "");
+      document.querySelectorAll('#creditFormFields input[type="radio"]').forEach(field => field.checked = false);
+      setCreditEditorStage("closed");
+      setMessage($("creditMessage"), "", "");
+    }
+    $("cancelCreditBtn").addEventListener("click", cancelCreditEditor);
 
     function markCreditApplicationDirty() {
       const generateBtn = $("generateCreditBtn");
