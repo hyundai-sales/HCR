@@ -4129,6 +4129,17 @@
         if (manualLockButton) manualLockButton.classList.toggle("hidden", !isAdminSession());
         startIdleMonitor();
         $("loginSection").classList.add("hidden");
+        // Prevent the dashboard/Main Menu from flashing while saved navigation is restored.
+        let restoreShield = document.getElementById("teamRerViewRestoreShield");
+        if (!restoreShield) {
+          restoreShield = document.createElement("div");
+          restoreShield.id = "teamRerViewRestoreShield";
+          restoreShield.setAttribute("role", "status");
+          restoreShield.setAttribute("aria-live", "polite");
+          restoreShield.textContent = "Restoring your workspace…";
+          restoreShield.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(9,28,48,.94);color:#fff;font:700 16px system-ui,sans-serif;text-align:center;";
+          document.body.appendChild(restoreShield);
+        }
         $("appSection").classList.remove("hidden");
         const roleLabel = $("welcomeRoleLabel");
         if (roleLabel) {
@@ -4204,6 +4215,9 @@
         setMessage($("resultMessage"), "Workspace ready. Select a worksheet to continue.", "success");
         const restoredLastView = restoreLastAppView();
         if (!restoredLastView) loadApplicationsDashboard(applicationsDashboardPeriod);
+        // Remove the startup shield only after the saved page is selected (or dashboard fallback).
+        const restoreShield = document.getElementById("teamRerViewRestoreShield");
+        if (restoreShield) restoreShield.remove();
         return;
       }
 
