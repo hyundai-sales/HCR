@@ -4188,8 +4188,22 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
           restoreShield.id = "teamRerViewRestoreShield";
           restoreShield.setAttribute("role", "status");
           restoreShield.setAttribute("aria-live", "polite");
-          restoreShield.textContent = "Restoring your workspace…";
-          restoreShield.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(9,28,48,.94);color:#fff;font:700 16px system-ui,sans-serif;text-align:center;";
+          restoreShield.innerHTML = `
+            <style>
+              #teamRerViewRestoreShield{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(5,20,39,.58);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);}
+              #teamRerViewRestoreShield .tr-restore-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;}
+              #teamRerViewRestoreShield .tr-restore-orbit{width:94px;height:94px;position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+              #teamRerViewRestoreShield .tr-restore-orbit:before{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(91,173,255,.15);border-top-color:#8bd2ff;border-right-color:#318bff;box-shadow:0 0 10px rgba(65,155,255,.35),inset 0 0 8px rgba(65,155,255,.12);animation:trRestoreSpin 1.15s linear infinite;}
+              #teamRerViewRestoreShield .tr-restore-orbit:after{content:'';position:absolute;inset:7px;border-radius:50%;border:1px solid rgba(100,180,255,.10);}
+              #teamRerViewRestoreShield .tr-restore-logo{width:52px;height:34px;object-fit:contain;filter:brightness(0) invert(1) drop-shadow(0 0 7px rgba(100,190,255,.75));}
+              #teamRerViewRestoreShield .tr-restore-dots{display:flex;align-items:center;gap:7px;}
+              #teamRerViewRestoreShield .tr-restore-dots i{display:block;width:6px;height:6px;border-radius:50%;background:#9bd5ff;box-shadow:0 0 8px rgba(95,177,255,.65);animation:trRestoreWave .85s ease-in-out infinite;}
+              #teamRerViewRestoreShield .tr-restore-dots i:nth-child(2){animation-delay:.14s}#teamRerViewRestoreShield .tr-restore-dots i:nth-child(3){animation-delay:.28s}
+              @keyframes trRestoreSpin{to{transform:rotate(360deg)}}@keyframes trRestoreWave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-6px);opacity:1}}
+              @media(prefers-reduced-motion:reduce){#teamRerViewRestoreShield .tr-restore-orbit:before,#teamRerViewRestoreShield .tr-restore-dots i{animation-duration:2.5s}}
+            </style>
+            <div class="tr-restore-wrap" aria-hidden="true"><div class="tr-restore-orbit"><img class="tr-restore-logo" src="https://cdn.simpleicons.org/hyundai/FFFFFF" alt=""></div><div class="tr-restore-dots"><i></i><i></i><i></i></div></div>`;
+          restoreShield.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;";
           document.body.appendChild(restoreShield);
         }
         $("appSection").classList.remove("hidden");
