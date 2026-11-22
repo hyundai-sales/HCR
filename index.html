@@ -166,6 +166,15 @@
 
     .quote-switch-field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 15px;border:1px solid #d6e2ed;border-radius:12px;background:linear-gradient(145deg,#f8fbfe,#edf4fa);margin:12px 0}
     .quote-switch-field>label:first-child{margin:0;font-size:14px;color:#123d63}
+    /* Force readable label contrast on light toggle cards, including dark-theme/mobile overrides. */
+    body #quotePage .quote-switch-field > label:first-child,
+    body #quotePage .quote-switch-field > label[for="quoteLto"],
+    body #quotePage .quote-switch-field > label[for="quoteTpl"],
+    body #quotePage .quote-switch-field > label[for="quoteInsurance"] {
+      color:#123d63 !important; -webkit-text-fill-color:#123d63 !important;
+      opacity:1 !important; visibility:visible !important; text-shadow:none !important;
+      font-weight:700 !important;
+    }
     .quote-toggle{position:relative;display:inline-flex;align-items:center;margin:0!important;cursor:pointer;flex:0 0 auto}
     .quote-toggle input{position:absolute;opacity:0;width:1px;height:1px}
     .quote-toggle-track{display:block;width:54px;height:30px;border-radius:99px;background:#cbd5e1;box-shadow:inset 0 1px 3px rgba(0,0,0,.14);transition:background .2s,box-shadow .2s;position:relative}
@@ -2761,6 +2770,37 @@
     }
     @media(prefers-reduced-motion:reduce){#cplPage .cpl-saved-client-card{transition:none!important;}}
   </style>
+
+<style id="teamrer-global-mobile-fullscreen-adaptive">
+/* Global mobile/tablet full-viewport layout. Does not alter module logic. */
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+@media screen and (max-width:1024px) {
+  html { min-height:100%; }
+  body {
+    margin:0 !important; padding:0 !important; width:100% !important;
+    min-height:100vh !important; min-height:100dvh !important;
+    min-height:100svh !important; overflow-x:hidden !important;
+  }
+  body .wrap {
+    width:100% !important; max-width:none !important;
+    margin:0 !important; min-height:100vh !important; min-height:100dvh !important;
+    min-height:100svh !important;
+  }
+  body .wrap > .card {
+    width:100% !important; max-width:none !important;
+    min-height:100vh !important; min-height:100dvh !important; min-height:100svh !important;
+    margin:0 !important; border-radius:0 !important;
+    padding-top:max(12px, env(safe-area-inset-top)) !important;
+    padding-right:max(12px, env(safe-area-inset-right)) !important;
+    padding-bottom:max(12px, env(safe-area-inset-bottom)) !important;
+    padding-left:max(12px, env(safe-area-inset-left)) !important;
+  }
+}
+@media screen and (max-width:1024px) and (display-mode:standalone),
+       screen and (max-width:1024px) and (display-mode:fullscreen) {
+  body { min-height:100dvh !important; min-height:100svh !important; }
+}
+</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
