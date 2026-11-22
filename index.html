@@ -163,6 +163,18 @@
     .credit-choice { display:flex; flex-wrap:wrap; gap:12px; font-size:13px; }
     .credit-choice label { display:flex; align-items:center; gap:5px; font-weight:normal; margin:0; }
     .credit-choice input { width:auto; min-height:0; }
+
+    .quote-switch-field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 15px;border:1px solid #d6e2ed;border-radius:12px;background:linear-gradient(145deg,#f8fbfe,#edf4fa);margin:12px 0}
+    .quote-switch-field>label:first-child{margin:0;font-size:14px;color:#123d63}
+    .quote-toggle{position:relative;display:inline-flex;align-items:center;margin:0!important;cursor:pointer;flex:0 0 auto}
+    .quote-toggle input{position:absolute;opacity:0;width:1px;height:1px}
+    .quote-toggle-track{display:block;width:54px;height:30px;border-radius:99px;background:#cbd5e1;box-shadow:inset 0 1px 3px rgba(0,0,0,.14);transition:background .2s,box-shadow .2s;position:relative}
+    .quote-toggle-track:after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:white;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s}
+    .quote-toggle input:checked+.quote-toggle-track{background:#16804a;box-shadow:0 0 0 3px rgba(22,128,74,.12),inset 0 1px 3px rgba(0,0,0,.1)}
+    .quote-toggle input:checked+.quote-toggle-track:after{transform:translateX(24px)}
+    .quote-toggle input:focus-visible+.quote-toggle-track{outline:3px solid #7db8e5;outline-offset:2px}
+    #quoteInsuranceAmount{font-variant-numeric:tabular-nums}
+
     .quote-type-switches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
     /* Keep all quotation-type labels readable against their button backgrounds. */
     body .quote-type-switch {
@@ -3157,21 +3169,21 @@
               <label for="quoteValidity">Quotation validity (days)</label>
               <input id="quoteValidity" type="number" min="1" max="90" value="7">
             </div>
-            <div class="field">
-              <label for="quoteTpl">TPL</label>
-              <div class="credit-choice"><label><input id="quoteTpl" type="checkbox" value="true"> Include TPL (₱1,700)</label></div>
-            </div>
-            <div class="field">
-              <label for="quoteInsurance">Insurance</label>
-              <select id="quoteInsurance"><option value="Included">Included</option><option value="Not included">Not included</option></select>
-            </div>
-            <div class="field" id="quoteInsuranceAmountField">
-              <label for="quoteInsuranceAmount">Insurance amount (when not included)</label>
-              <input id="quoteInsuranceAmount" type="number" min="0" step="0.01" value="0">
-            </div>
-            <div class="field">
+            <div class="field quote-switch-field">
               <label for="quoteLto">LTO registration</label>
-              <select id="quoteLto"><option value="Included">Included</option><option value="Not included">Not included</option></select>
+              <label class="quote-toggle"><input id="quoteLto" type="checkbox" checked><span class="quote-toggle-track"></span></label>
+            </div>
+            <div class="field quote-switch-field">
+              <label for="quoteTpl">TPL</label>
+              <label class="quote-toggle"><input id="quoteTpl" type="checkbox" checked><span class="quote-toggle-track"></span></label>
+            </div>
+            <div class="field quote-switch-field">
+              <label for="quoteInsurance">Insurance</label>
+              <label class="quote-toggle"><input id="quoteInsurance" type="checkbox" checked><span class="quote-toggle-track"></span></label>
+            </div>
+            <div class="field hidden" id="quoteInsuranceAmountField">
+              <label for="quoteInsuranceAmount">Insurance amount</label>
+              <input id="quoteInsuranceAmount" type="text" inputmode="decimal" placeholder="Enter amount">
             </div>
           </div>
           <button id="printQuoteBtn" type="button" style="margin-top:14px">Print / Save PDF</button>
@@ -4620,7 +4632,7 @@
     function updateQuotePreview() {
       const vehicle = quotationVehicles.find(v => v.model === $("quoteModel").value && v.variant === $("quoteVariant").value);
       const preview = $("quotePreview");
-      const insuranceIncluded = $("quoteInsurance").value === "Included";
+      const insuranceIncluded = $("quoteInsurance").checked;
       $("quoteInsuranceAmountField").classList.toggle("hidden", insuranceIncluded);
       const quoteType = $("quoteType").value;
       const financing = quoteType === "financing";
@@ -4695,7 +4707,7 @@
         rows.push(`<div class="quote-total"><span>TOTAL CASHOUT</span><span>${money2(totalCashout)}</span></div>`);
       }
       rows.push(`<div class="quote-line"><span>Insurance</span><strong>${escapeHtml($("quoteInsurance").value)}</strong></div>`);
-      rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${escapeHtml($("quoteLto").value)}</strong></div>`);
+      rows.push(`<div class="quote-line"><span>LTO Registration</span><strong>${$("quoteLto").checked ? "Included" : "Not included"}</strong></div>`);
       if (freebies.length) rows.push(`<div class="quote-line"><span>Freebies / Inclusions</span><strong>${freebies.map(escapeHtml).join("<br>")}</strong></div>`);
       const selectedConsultantName = financing ? selectedQuotationConsultant() : String(authorizedUser?.name || "TEAM RER Sales Consultant");
       const consultantDetails = financing ? (quotationConsultantDetails.find(c => String(c.name||"").trim().toLowerCase() === String(selectedConsultantName||"").trim().toLowerCase()) || {}) : {};
@@ -7628,6 +7640,20 @@
       $("appNav").classList.remove("hidden");
     }));
     ["quoteConsultantSelect","quoteVariant","quoteType","quoteSalutation","quoteClientName","quoteYearModel","quoteDownpayment","quotePartnerBank","quoteFreebies","quoteValidity","quoteTpl","quoteInsurance","quoteInsuranceAmount","quoteLto"].forEach(id => $(id).addEventListener("change", updateQuotePreview));
+    const quoteInsuranceAmountInput = $("quoteInsuranceAmount");
+    quoteInsuranceAmountInput.addEventListener("input", function(){
+      const raw=this.value.replace(/[^0-9.]/g,"");
+      const parts=raw.split(".");
+      const integer=(parts.shift()||"").replace(/^0+(?=\d)/,"");
+      const decimal=parts.join("").slice(0,2);
+      this.value=integer.replace(/\B(?=(\d{3})+(?!\d))/g,",")+(raw.includes(".")?"."+decimal:"");
+    });
+    quoteInsuranceAmountInput.addEventListener("blur",function(){
+      if(!this.value.trim())return;
+      const n=Number(this.value.replace(/,/g,""));
+      if(Number.isFinite(n))this.value=n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    });
+
     $("quoteFreebies").addEventListener("input", updateQuotePreview);
     updateQuotePreview();
     $("quoteVariant").addEventListener("change", () => { refreshQuoteColorDropdown(); refreshQuotePartnerBanks(); });
@@ -7819,13 +7845,13 @@
       }
       const srp = Number(vehicle.srp || 0);
       const discount = amountFromLabel($("quoteType").value === "bankpo" ? "Bank PO Discount" : "Cash Discount") || Number(vehicle.discount || 0);
-      const insuranceIncluded = $("quoteInsurance").value === "Included";
+      const insuranceIncluded = $("quoteInsurance").checked;
       const colors = selectedQuoteColors();
       const payload = {
         clientName, salutation:$("quoteSalutation").value, yearModel:$("quoteYearModel").value,
         model:vehicle.model, variant:vehicle.variant, colors, srp, discount,
         quoteType:$('quoteType').value, partnerBank:$('quotePartnerBank').value, downpaymentPercent:$('quoteDownpayment').value,
-        insuranceIncluded, insuranceAmount:Number($("quoteInsuranceAmount").value||0), tplIncluded:$("quoteTpl").checked,
+        insuranceIncluded, insuranceAmount:Number($("quoteInsuranceAmount").value.replace(/,/g,"")||0), tplIncluded:$("quoteTpl").checked,
         freebies:(()=>{const r=lines.find(el=>el.textContent.toLowerCase().includes("freebies / inclusions"));return r?r.textContent.replace(/freebies \/ inclusions/i,"").trim():$("quoteFreebies").value.trim();})(),
         consultantName:selectedQuotationConsultant(),
       };
