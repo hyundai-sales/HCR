@@ -3073,7 +3073,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
               <label>Month<select id="cplMonthlyMonth"></select></label>
               <label>Year<select id="cplMonthlyYear"></select></label>
               <button type="button" id="cplMonthlyRetrieve">Retrieve Monthly CPL Entries</button>
-              <button type="button" id="cplPrintSave" class="hidden" hidden>PRINT / SAVE PDF</button><button type="button" id="cplCleanupPrintTabs" class="secondary">CLEANUP TEMP PRINT TABS</button>
+              <button type="button" id="cplPrintSave" class="hidden" hidden>PRINT / SAVE PDF</button>
             </div>
           </div>
         </section>
@@ -7583,21 +7583,19 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       try { await submitRequest('cplBlankPdf',{consultant,silent:true}); }
       catch(err){blankBtn.disabled=false;setCplPdfBusy(false);showTeamRerDynamicIsland('CPL PDF request failed: '+(err?.message||err));}
     });
-    async function printCplMonthlyNativeSheets(rows,meta,generatedDate,consultant,manager){
-      const win=window.open('about:blank','_blank');
-      if(!win){showTeamRerAlert('Please allow pop-ups for this app to open the CPL spreadsheet.','CPL Print');return false;}
-      try{win.document.write('<title>Preparing CPL print tabs...</title><p style="font-family:Arial;padding:24px">Preparing original CPL template tabs in Google Sheets...</p>');win.document.close();}catch(e){}
+    async function printCplMonthlyDirectPdf(rows,meta,generatedDate,consultant,manager){
+      const payload={date:generatedDate,consultant,manager,dealer:'HCR',type:'FIELD',rows,month:meta.month,year:meta.year};
       try{
-        const payload={date:generatedDate,consultant,manager,dealer:'HCR',type:'FIELD',rows,month:meta.month,year:meta.year};
-        const result=await submitRequest('cplMonthlyNativeTabs',{payload:JSON.stringify(payload),silent:true});
-        const data=result?.cplMonthlyNativeTabs||result;
-        if(!data||!data.spreadsheetUrl)throw new Error('The temporary CPL print tabs were not created.');
-        win.location.href=data.spreadsheetUrl;
-        showTeamRerAlert('Created '+data.pageCount+' CPL print tab(s) using the original Google Sheets CPL template. In Sheets, select the tabs named '+data.tabNames.join(', ')+' (or the temporary CPL tabs), then File > Print > Selected sheets. After printing, return to the spreadsheet and manually delete the temporary tabs named CPL_PRINT_TEMP_.','CPL Native Sheets Print');
+        beginCplPdfGeneration('Generating monthly CPL PDF…');
+        await submitRequest('cplMonthlyPdf',{payload:JSON.stringify(payload),silent:true});
         return true;
-      }catch(err){try{win.close();}catch(e){}showTeamRerAlert('CPL print-tab preparation failed: '+(err?.message||err),'CPL Print');return false;}
+      }catch(err){
+        const printBtn=$('cplPrintSave');if(printBtn)printBtn.disabled=false;
+        setCplPdfBusy(false);
+        showTeamRerAlert('Monthly CPL PDF generation failed: '+(err?.message||err),'CPL Print');
+        return false;
+      }
     }
-    const cplCleanupBtn=$('cplCleanupPrintTabs');if(cplCleanupBtn)cplCleanupBtn.addEventListener('click',async()=>{if(!confirm('Delete all temporary CPL print tabs created by this print workflow?'))return;cplCleanupBtn.disabled=true;try{const res=await submitRequest('cplMonthlyNativeTabsCleanup',{silent:true});showTeamRerDynamicIsland(res?.cplMonthlyNativeTabsCleanup?.message||'Temporary CPL print tabs cleaned up.');}catch(err){showTeamRerAlert('Cleanup failed: '+(err?.message||err),'CPL Cleanup');}finally{cplCleanupBtn.disabled=false;}});
     $('cplPrintSave').addEventListener('click',()=>{
       const rows=getCplRows();
       if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before printing.','CPL Validation');return;}
@@ -7605,7 +7603,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         const meta=cplMonthlyRetrieved,consultant=meta.consultant,generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
         const payload={date:generatedDate,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthly:true,month:meta.month,year:meta.year};
         const printBtn=$('cplPrintSave');if(printBtn.disabled)return;
-        printCplMonthlyNativeSheets(rows,meta,generatedDate,consultant,payload.manager).finally(()=>{printBtn.disabled=false;setCplPdfBusy(false);});
+        printCplMonthlyDirectPdf(rows,meta,generatedDate,consultant,payload.manager).finally(()=>{printBtn.disabled=false;setCplPdfBusy(false);});
         return;
       }
       const generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
