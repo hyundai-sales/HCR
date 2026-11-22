@@ -7583,15 +7583,27 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       try { await submitRequest('cplBlankPdf',{consultant,silent:true}); }
       catch(err){blankBtn.disabled=false;setCplPdfBusy(false);showTeamRerDynamicIsland('CPL PDF request failed: '+(err?.message||err));}
     });
+    function printCplMonthlyNative(rows,meta,generatedDate,consultant,manager){
+      const win=window.open('about:blank','_blank');
+      if(!win){showTeamRerAlert('Please allow pop-ups for this app to open the CPL print preview.','CPL Print');return false;}
+      const columns=[['SOURCE','source'],['SC','sc'],['CLIENT NAME','clientName'],['PHONE','phone'],['EMAIL','email'],['VEHICLE','vehicle'],['SPECS','specs'],['TIMELINE','timeline'],['WORK PROFILE?','workProfile'],['DRIVING NOW?','drivingNow'],['LIKES?','likes'],['CONCERNS?','concerns'],['FREQUENCY OF USAGE?','freqUsage'],['NEXT STEP','nextStep']];
+      const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const dateFmt=v=>{if(!v)return '';const parts=String(v).split('-');return parts.length===3?`${parts[1]}-${parts[2]}-${parts[0]}`:String(v)};
+      const pages=[];for(let i=0;i<rows.length;i+=8)pages.push(rows.slice(i,i+8));
+      const pageHtml=pages.map((page,pi)=>`<section class="page"><header><h1>CLIENT PROBING LOG (CPL)</h1><div class="meta"><span>DEALER: ${esc('HCR')}</span><span>TYPE: FIELD</span><span>SC: ${esc(consultant)}</span><span>MANAGER: ${esc(manager)}</span><span>DATE: ${esc(generatedDate)}</span><span>MONTH: ${esc(meta.month+'/'+meta.year)}</span></div></header><table><thead><tr><th class="first"># / DATE</th>${columns.map(c=>`<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${page.map((r,ri)=>`<tr><td class="first"><div class="number">${pi*8+ri+1}</div><div class="date"><span>${esc(dateFmt(r.date))}</span></div></td>${columns.map(c=>`<td>${esc(r[c[1]])}</td>`).join('')}</tr>`).join('')}${Array.from({length:8-page.length},(_,ri)=>`<tr class="empty"><td class="first"><div class="number">${pi*8+page.length+ri+1}</div><div class="date"></div></td>${columns.map(()=>'<td></td>').join('')}</tr>`).join('')}</tbody></table><footer><span>Hyundai Cainta • TEAM RER</span><span>Page ${pi+1} of ${pages.length}</span></footer></section>`).join('');
+      const html=`<!doctype html><html><head><meta charset="utf-8"><title>Monthly CPL Print</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+      @page{size:13in 8.5in landscape;margin:.1in}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#111}.page{width:12.8in;height:8.3in;page-break-after:always;break-after:page;overflow:hidden;display:flex;flex-direction:column}.page:last-child{page-break-after:auto;break-after:auto}header h1{font-size:17pt;margin:0 0 5px;text-align:center} .meta{display:flex;justify-content:space-between;gap:5px;font-size:8pt;font-weight:bold;border:1px solid #222;padding:4px;margin-bottom:4px;flex-wrap:wrap}table{border-collapse:collapse;width:100%;table-layout:fixed;flex:1}th,td{border:1px solid #555;text-align:center;vertical-align:middle;padding:2px;overflow-wrap:anywhere;font-size:7pt}th{background:#e8e5e3;font-weight:bold}th.first,td.first{width:5.3%;padding:0}.number{height:24%;min-height:18px;font-size:10pt;font-weight:bold;border-bottom:1px solid #111;display:flex;align-items:center;justify-content:center}.date{height:76%;display:flex;align-items:center;justify-content:center;overflow:hidden}.date span{transform:rotate(-90deg);white-space:nowrap;font-size:8pt;font-weight:bold}.empty td{height:10%}tbody tr{height:12.5%}footer{font-size:7pt;display:flex;justify-content:space-between;padding-top:3px}.page table th:nth-child(2){width:6%}.page table th:nth-child(3){width:6%}.page table th:nth-child(4){width:13%}.page table th:nth-child(5){width:8%}.page table th:nth-child(6){width:9%}.page table th:nth-child(7){width:9%}.page table th:nth-child(8){width:8%}.page table th:nth-child(9){width:7%}.page table th:nth-child(10){width:7%}.page table th:nth-child(11){width:7%}.page table th:nth-child(12){width:6%}.page table th:nth-child(13){width:6%}.page table th:nth-child(14){width:7%}.page table th:nth-child(15){width:6%}@media print{html,body{width:100%;height:100%}.page{margin:0} -webkit-print-color-adjust:exact;print-color-adjust:exact}@media screen{body{background:#ddd}.page{margin:20px auto;background:#fff;box-shadow:0 2px 12px #777}}
+      </style></head><body>${pageHtml}<script>window.onload=()=>{setTimeout(()=>window.print(),350)};<\/script></body></html>`;
+      win.document.open();win.document.write(html);win.document.close();return true;
+    }
     $('cplPrintSave').addEventListener('click',()=>{
       const rows=getCplRows();
       if(!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before printing.','CPL Validation');return;}
       if(cplMonthlyRetrieved){
         const meta=cplMonthlyRetrieved,consultant=meta.consultant,generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
         const payload={date:generatedDate,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthly:true,month:meta.month,year:meta.year};
-        const printBtn=$('cplPrintSave');if(printBtn.disabled)return;printBtn.disabled=true;
-        beginCplPdfGeneration(`Generating ${rows.length} monthly CPL entries as PDF…`);
-        submitRequest('cplMonthlyPdf',{payload:JSON.stringify(payload),silent:true}).catch(err=>{printBtn.disabled=false;setCplPdfBusy(false);showTeamRerDynamicIsland('Monthly CPL PDF request failed: '+(err?.message||err));});
+        const printBtn=$('cplPrintSave');if(printBtn.disabled)return;
+        if(printCplMonthlyNative(rows,meta,generatedDate,consultant,payload.manager)){printBtn.disabled=false;setCplPdfBusy(false);}
         return;
       }
       const generatedDate=cplToday();$('cplHeaderDate').value=generatedDate;
