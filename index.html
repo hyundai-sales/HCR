@@ -2830,6 +2830,12 @@ body > main.wrap > .card > #appSection:not(.hidden) > div:not(.hidden) { max-wid
 @media (min-width:701px) { body > main.wrap > .card { padding:clamp(12px,2vw,24px) !important; } }
 @media print { html,body,body > main.wrap,body > main.wrap > .card { height:auto !important; min-height:0 !important; max-height:none !important; overflow:visible !important; display:block !important; padding:initial !important; } }
 </style>
+
+  /* TEAM RER: remove showroom cover and reclaim vertical space */
+  body > main.wrap > .card > .cover-container { display:none !important; }
+  body > main.wrap > .card { padding-top:clamp(8px,1.5vh,14px) !important; }
+  body > main.wrap { margin-top:clamp(4px,1vh,12px) !important; }
+
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
