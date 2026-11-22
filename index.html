@@ -7811,7 +7811,28 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         #quotePreview .quote-contact strong{font-size:10.5pt!important;color:#123d64!important}
         #quotePreview img{width:58px;height:34px;object-fit:contain}
         @media print{.quote-line,.quote-total,.quote-contact,.quote-terms{break-inside:avoid;page-break-inside:avoid}}
-      </style></head><body><div id="quotePreview">${html}</div></body></html>`);
+      </style></head><body><div id="quotePreview">${html}</div>
+<script id="login-screen-loading-overlay-safety-patch">
+(function(){
+  // Fail-safe: the login screen must not remain blocked by the global loader.
+  // This only acts while the login section is visible and the app section is hidden.
+  var checks=0;
+  var timer=setInterval(function(){
+    checks++;
+    var login=document.getElementById('loginSection');
+    var app=document.getElementById('appSection');
+    var overlay=document.getElementById('loadingOverlay');
+    if(login && app && overlay && !login.classList.contains('hidden') && app.classList.contains('hidden')){
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden','true');
+      overlay.style.pointerEvents='none';
+    }
+    if(checks>=20) clearInterval(timer);
+  },500);
+})();
+</script>
+
+</body></html>`);
       printWin.document.close();
       printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
     });
@@ -10364,6 +10385,27 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 </style>
 
 
+
+
+<script id="login-screen-loading-overlay-safety-patch">
+(function(){
+  // Fail-safe: the login screen must not remain blocked by the global loader.
+  // This only acts while the login section is visible and the app section is hidden.
+  var checks=0;
+  var timer=setInterval(function(){
+    checks++;
+    var login=document.getElementById('loginSection');
+    var app=document.getElementById('appSection');
+    var overlay=document.getElementById('loadingOverlay');
+    if(login && app && overlay && !login.classList.contains('hidden') && app.classList.contains('hidden')){
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden','true');
+      overlay.style.pointerEvents='none';
+    }
+    if(checks>=20) clearInterval(timer);
+  },500);
+})();
+</script>
 
 </body>
 </html>
