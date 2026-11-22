@@ -7824,7 +7824,14 @@ body > main.wrap > .card > #appSection:not(.hidden) > div:not(.hidden) { max-wid
         #quotePreview .quote-contact strong{font-size:10.5pt!important;color:#123d64!important}
         #quotePreview img{width:58px;height:34px;object-fit:contain}
         @media print{.quote-line,.quote-total,.quote-contact,.quote-terms{break-inside:avoid;page-break-inside:avoid}}
-      </style></head><body><div id="quotePreview">${html}</div></body></html>`);
+      </style></head><body><div id="quotePreview">${html}</div>
+<style id="hide-page-jump-controls-promo-audit">
+/* Hide the floating Top/Bottom controls only inside Promos & Vehicle Info and Activity Logs. */
+.wrap:has(#promoPage:not(.hidden)) .page-jump-controls,
+.wrap:has(#auditPage:not(.hidden)) .page-jump-controls { display:none !important; }
+</style>
+
+</body></html>`);
       printWin.document.close();
       printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
     });
@@ -10377,6 +10384,13 @@ body > main.wrap > .card > #appSection:not(.hidden) > div:not(.hidden) { max-wid
 </style>
 
 
+
+
+<style id="hide-page-jump-controls-promo-audit">
+/* Hide the floating Top/Bottom controls only inside Promos & Vehicle Info and Activity Logs. */
+.wrap:has(#promoPage:not(.hidden)) .page-jump-controls,
+.wrap:has(#auditPage:not(.hidden)) .page-jump-controls { display:none !important; }
+</style>
 
 </body>
 </html>
