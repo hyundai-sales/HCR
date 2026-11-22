@@ -2801,6 +2801,35 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
   body { min-height:100dvh !important; min-height:100svh !important; }
 }
 </style>
+
+<style id="teamrer-responsive-viewport-lock">
+/* TEAM RER: responsive, viewport-locked application shell */
+html, body { width:100%; height:100%; min-height:0; margin:0 !important; }
+html { overflow:hidden !important; }
+body { height:100vh !important; height:100dvh !important; min-height:0 !important; overflow:hidden !important; overscroll-behavior:none; padding:0 !important; }
+body > main.wrap { width:100% !important; max-width:none !important; height:100vh !important; height:100dvh !important; min-height:0 !important; margin:0 !important; padding:clamp(4px,1vw,12px) !important; overflow:hidden !important; display:flex !important; flex-direction:column !important; }
+body > main.wrap > .card { flex:1 1 auto !important; min-height:0 !important; height:100% !important; max-height:100% !important; display:flex !important; flex-direction:column !important; overflow:hidden !important; padding:clamp(8px,1.5vw,18px) !important; border-radius:clamp(8px,2vw,18px) !important; }
+body > main.wrap > .card > .cover-container { flex:0 0 auto !important; margin-bottom:clamp(4px,1vh,10px) !important; }
+body > main.wrap > .card > .cover-container .cover-photo { height:clamp(54px,14vh,130px) !important; }
+body > main.wrap > .card > .brand { flex:0 0 auto !important; margin:0 0 clamp(4px,1vh,10px) !important; }
+body > main.wrap > .card > .brand .logo { width:clamp(34px,7vw,66px) !important; height:clamp(24px,6vh,46px) !important; margin-bottom:2px !important; }
+body > main.wrap > .card > .brand h1 { font-size:clamp(18px,3.5vw,25px) !important; }
+body > main.wrap > .card > .brand .app-caption { margin-top:2px !important; }
+body > main.wrap > .card > #loginSection { flex:0 0 auto !important; }
+body > main.wrap > .card > #appSection:not(.hidden) { flex:1 1 auto !important; min-height:0 !important; height:auto !important; max-height:none !important; overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch !important; overscroll-behavior:contain !important; }
+body > main.wrap > .card > #appSection:not(.hidden) #appNav { min-height:0 !important; }
+/* Keep each screen/module inside the viewport while its own content can scroll. */
+body > main.wrap > .card > #appSection:not(.hidden) > section:not(.hidden),
+body > main.wrap > .card > #appSection:not(.hidden) > div:not(.hidden) { max-width:100%; }
+@media (max-width:700px) {
+ body > main.wrap > .card { padding:6px !important; }
+ body > main.wrap > .card > .cover-container .cover-photo { height:clamp(50px,12vh,100px) !important; }
+ body > main.wrap > .card > .brand { margin-bottom:4px !important; }
+ body > main.wrap > .card > #appSection:not(.hidden) { padding-bottom:max(8px,env(safe-area-inset-bottom)) !important; }
+}
+@media (min-width:701px) { body > main.wrap > .card { padding:clamp(12px,2vw,24px) !important; } }
+@media print { html,body,body > main.wrap,body > main.wrap > .card { height:auto !important; min-height:0 !important; max-height:none !important; overflow:visible !important; display:block !important; padding:initial !important; } }
+</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
