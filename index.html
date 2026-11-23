@@ -2790,6 +2790,37 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
   body { min-height:100dvh !important; min-height:100svh !important; }
 }
 </style>
+<style id="pricelist-horizontal-square-glass-fix">
+  /* Force worksheet selectors into a horizontal, separated liquid-glass row */
+  #pdfPage .pricelist-sheet-buttons {
+    display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
+    gap:12px !important; align-items:stretch !important; width:100% !important;
+  }
+  #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button {
+    display:flex !important; width:auto !important; flex:1 1 0 !important;
+    min-width:0 !important; max-width:none !important; min-height:76px !important;
+    align-items:center !important; justify-content:center !important;
+    padding:12px 8px !important; margin:0 !important;
+    border-radius:18px !important; border:1px solid rgba(180,220,255,.38) !important;
+    background:rgba(255,255,255,.075) !important; color:inherit !important;
+    text-align:center !important; white-space:normal !important; line-height:1.25 !important;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.18),0 6px 18px rgba(0,0,0,.13) !important;
+    -webkit-backdrop-filter:blur(22px) saturate(160%) !important;
+    backdrop-filter:blur(22px) saturate(160%) !important;
+  }
+  #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button.active {
+    background:rgba(40,145,230,.25) !important;border-color:rgba(145,210,255,.8) !important;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.25),0 0 0 1px rgba(105,190,255,.18) !important;
+  }
+  @media(max-width:600px) {
+    #pdfPage .pricelist-sheet-buttons { gap:10px !important; }
+    #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button {
+      flex:1 1 0 !important; min-width:0 !important; min-height:82px !important;
+      padding:10px 5px !important; font-size:clamp(12px,3.5vw,15px) !important;
+      border-radius:16px !important;
+    }
+  }
+</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
