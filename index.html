@@ -1786,6 +1786,10 @@
   
 
     .quote-color-checkboxes{display:flex;flex-wrap:wrap;gap:10px;padding:8px 2px}.quote-color-checkboxes label{display:inline-flex;align-items:center;gap:9px;padding:11px 14px;border:1px solid #49647d;border-radius:12px;background:linear-gradient(145deg,#14283a,#1b3449);color:#eaf4ff;font-weight:600;cursor:pointer;transition:all .15s ease;box-shadow:0 2px 5px rgba(0,0,0,.18);min-height:44px}.quote-color-checkboxes label:has(input:checked){border-color:#38bdf8;background:linear-gradient(145deg,#075985,#0369a1);box-shadow:0 0 0 2px rgba(56,189,248,.22)}.quote-color-checkboxes label:hover{border-color:#7dd3fc}.quote-color-checkboxes input{width:20px;height:20px;accent-color:#38bdf8;flex:0 0 auto}
+
+    /* CPL Add workspace: wait for Add Entry before exposing fields; no Client Entry numbered heading */
+    #cplPage #cplEntryRows.hidden, #cplPage .cpl-form-bottom.hidden { display:none!important; }
+    #cplPage .cpl-entry-card:not([data-retrieved]) .cpl-entry-card-head strong { display:none!important; }
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -7300,7 +7304,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       const retrieved=!!options.retrieved;
       const card=document.createElement('article');card.className='cpl-entry-card'+(retrieved?' cpl-retrieved-card is-collapsed':'');card.dataset.retrieved=retrieved?'1':'';
       const head=document.createElement('div');head.className='cpl-entry-card-head';
-      const title=document.createElement('strong');title.textContent=retrieved?(data.clientName||'Unnamed Client'):'Client Entry';
+      const title=document.createElement('strong');title.textContent=retrieved?(data.clientName||'Unnamed Client'):'';
       const actions=document.createElement('div');actions.className='cpl-entry-card-actions';
       if(retrieved){
         const view=document.createElement('button');view.type='button';view.textContent='View';view.className='cpl-view-row';
@@ -7323,7 +7327,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       renumberCplCards();
     }
     function setCplCardReadOnly(card,readonly){card.querySelectorAll('[data-key]').forEach(el=>{const k=el.dataset.key;if(k==='sc'){if(el.tagName==='SELECT'){el.disabled=!!readonly;}else el.readOnly=true;return;}if(k==='date'){el.disabled=!!readonly;return;}if(el.tagName==='SELECT')el.disabled=!!readonly;else el.readOnly=!!readonly;});}
-    function renumberCplCards(){Array.from($('cplEntryRows').children).forEach((card,i)=>{const title=card.querySelector('.cpl-entry-card-head strong');if(title&&!card.dataset.retrieved)title.textContent='Client Entry '+(i+1);if(title&&card.dataset.retrieved)title.textContent=Array.from(card.querySelectorAll('[data-key]')).find(el=>el.dataset.key==='clientName')?.value||'Unnamed Client';});}
+    function renumberCplCards(){Array.from($('cplEntryRows').children).forEach(card=>{const title=card.querySelector('.cpl-entry-card-head strong');if(title&&!card.dataset.retrieved)title.textContent='';if(title&&card.dataset.retrieved)title.textContent=Array.from(card.querySelectorAll('[data-key]')).find(el=>el.dataset.key==='clientName')?.value||'Unnamed Client';});}
     function getCplRows(){return Array.from($('cplEntryRows').children).map(card=>Object.fromEntries(Array.from(card.querySelectorAll('[data-key]')).map(el=>[el.dataset.key,el.value])));}
     function renderCplClients(){const host=$('cplClientsList');if(!host)return;host.replaceChildren();}
     let cplSavedEntryModal=null;
@@ -7550,7 +7554,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     function showCplMode(mode){
       const add=$('cplAddWorkspace'),gen=$('cplGenerateWorkspace'),selector=$('cplModeSelector');
       selector.classList.add('hidden');add.classList.toggle('hidden',mode!=='add');gen.classList.toggle('hidden',mode!=='generate');$('backToMenuFromCpl')?.classList.add('hidden');
-      if(mode==='add'){$('cplPage').classList.remove('cpl-monthly-mode');if(!$ ('cplEntryRows').children.length){if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();setCplSaveButtonVisible(true);queueCplDraftSave();}}
+      if(mode==='add'){$('cplPage').classList.remove('cpl-monthly-mode');const rows=$('cplEntryRows'),bottom=$('cplPage').querySelector('.cpl-form-bottom');if(!rows.children.length){rows.classList.add('hidden');bottom?.classList.add('hidden');setCplSaveButtonVisible(false);}}
       if(mode==='generate'){$('cplPage').classList.add('cpl-monthly-mode');setCplMonthlyActionMode(false);}
       window.scrollTo({top:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;
     }
@@ -7566,7 +7570,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     $('cplBackFromGenerate').addEventListener('click',returnCplModeSelector);
     $('cplModeGenerateBtn').addEventListener('click',()=>showCplMode('generate'));
     $('cplCancelAdd').addEventListener('click',()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();returnCplModeSelector();});
-    $('cplAddRow').addEventListener('click',()=>{$('cplPage').classList.remove('cpl-monthly-mode');if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();setCplSaveButtonVisible(true);const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});
+    $('cplAddRow').addEventListener('click',()=>{$('cplPage').classList.remove('cpl-monthly-mode');if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');$('cplEntryRows').classList.remove('hidden');$('cplPage').querySelector('.cpl-form-bottom')?.classList.remove('hidden');addCplEntryRow();setCplSaveButtonVisible(true);const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});
      $('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
      $('cplMonthlyConsultant').addEventListener('change',()=>{
        cplMonthlyRetrieved=null;
