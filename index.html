@@ -3030,7 +3030,11 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         <section id="cplPage" class="hidden">
           <button id="backToMenuFromCpl" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Client Probing Log (CPL)</h2>
-          <div class="cpl-form-shell">
+          <div id="cplModeSelector" class="cpl-mode-selector">
+            <button type="button" id="cplModeAddBtn" class="cpl-mode-card"><span class="cpl-mode-icon">＋</span><span class="cpl-mode-title">ADD</span><span class="cpl-mode-caption">Create client entries</span></button>
+            <button type="button" id="cplModeGenerateBtn" class="cpl-mode-card"><span class="cpl-mode-icon">⌕</span><span class="cpl-mode-title">GENERATE</span><span class="cpl-mode-caption">Retrieve monthly CPL</span></button>
+          </div>
+          <div class="cpl-form-shell hidden" id="cplAddWorkspace">
             <div class="cpl-form-heading"><h2>CLIENT PROBING LOG (CPL)</h2>
               <div class="cpl-meta-grid">
                 <label>DEALER <input id="cplDealerFixed" value="HCR" readonly></label>
@@ -3043,12 +3047,11 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
             <div class="cpl-entry-tools"><button id="cplAddRow" type="button">＋ Add Entry</button><button id="cplPrintBlank" type="button" class="secondary hidden" hidden>PRINT BLANK CPL FORM</button></div>
             <div id="cplConsultantSavedEntries" class="cpl-consultant-saved-list" aria-live="polite"></div>
             <div id="cplEntryRows" class="cpl-entry-cards" aria-label="Client probing entries"></div>
-            <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">Save CPL</button></div>
+            <div class="cpl-form-bottom"><button id="cplSaveForm" type="button">SAVE</button><button id="cplCancelAdd" type="button" class="secondary">CANCEL</button></div>
             <div id="cplMessage" class="message hidden" aria-live="polite"></div>
           </div>
-          <div class="cpl-saved-wrap">
-            <button type="button" id="cplMonthlyToggle" class="cpl-monthly-toggle" aria-expanded="false" aria-controls="cplMonthlyPanel">＋ MONTHLY CPL RETRIEVAL</button>
-            <div id="cplMonthlyPanel" class="cpl-monthly-retrieve hidden" data-expanded="false" hidden>
+          <div class="cpl-saved-wrap hidden" id="cplGenerateWorkspace">
+            <div id="cplMonthlyPanel" class="cpl-monthly-retrieve">
               <label>Sales Consultant<select id="cplMonthlyConsultant"><option value="">Select consultant</option></select></label>
               <label>Month<select id="cplMonthlyMonth"></select></label>
               <label>Year<select id="cplMonthlyYear"></select></label>
@@ -7542,14 +7545,24 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     $('cplTabBtn').addEventListener('click',()=>{if(!canAccessCplSession()){showAccessDenied("TEAM RER CPL access only.");return;}$('appNav').classList.add('hidden');Object.values({pdf:'pdfPage',quote:'quotePage',credit:'creditPage',history:'creditHistoryPage',promo:'promoPage',audit:'auditPage',users:'userManagementPage',org:'orgChartPage'}).forEach(id=>$(id).classList.add('hidden'));$('cplPage').classList.remove('hidden');clearLastAppView();window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;$('cplPage').scrollIntoView({block:'start',behavior:'auto'});loadCpl();});
     $('edgeCplBtn').addEventListener('click',()=>{});
     $('backToMenuFromCpl').addEventListener('click',()=>runPageTransition('Returning to Main Menu...',()=>{$('cplPage').classList.add('hidden');$('appNav').classList.remove('hidden');clearLastAppView();}));
-    $('cplAddRow').addEventListener('click',()=>{$('cplPage').classList.remove('cpl-monthly-mode');if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();setCplSaveButtonVisible(true);const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});$('cplMonthlyToggle').addEventListener('click',()=>{
-       const panel=$('cplMonthlyPanel'),toggle=$('cplMonthlyToggle');
-       const opening=!!panel.hidden;
-       panel.hidden=!opening;
-       panel.classList.toggle('hidden',!opening);
-       toggle.setAttribute('aria-expanded',String(opening));
-       toggle.textContent=opening?'− HIDE MONTHLY CPL RETRIEVAL':'＋ MONTHLY CPL RETRIEVAL';
-     });
+    function showCplMode(mode){
+      const add=$('cplAddWorkspace'),gen=$('cplGenerateWorkspace'),selector=$('cplModeSelector');
+      selector.classList.add('hidden');add.classList.toggle('hidden',mode!=='add');gen.classList.toggle('hidden',mode!=='generate');
+      if(mode==='add'){$('cplPage').classList.remove('cpl-monthly-mode');if(!$ ('cplEntryRows').children.length){if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();setCplSaveButtonVisible(true);queueCplDraftSave();}}
+      if(mode==='generate'){$('cplPage').classList.add('cpl-monthly-mode');setCplMonthlyActionMode(false);}
+      window.scrollTo({top:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;
+    }
+    function returnCplModeSelector(){
+      $('cplModeSelector').classList.remove('hidden');$('cplAddWorkspace').classList.add('hidden');$('cplGenerateWorkspace').classList.add('hidden');
+      $('cplPage').classList.remove('cpl-monthly-mode');cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);
+      if($('cplEntryRows'))$('cplEntryRows').replaceChildren();if($('cplHeaderDate'))$('cplHeaderDate').value='';setCplSaveButtonVisible(false);
+      if($('cplConsultantSavedEntries'))$('cplConsultantSavedEntries').replaceChildren();
+      if($('cplSaveForm'))$('cplSaveForm').textContent='SAVE';
+    }
+    $('cplModeAddBtn').addEventListener('click',()=>showCplMode('add'));
+    $('cplModeGenerateBtn').addEventListener('click',()=>showCplMode('generate'));
+    $('cplCancelAdd').addEventListener('click',()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();returnCplModeSelector();});
+    $('cplAddRow').addEventListener('click',()=>{$('cplPage').classList.remove('cpl-monthly-mode');if(!isSuperAdminSession()&&!String($('cplConsultantFixed').value||'').trim())$('cplConsultantFixed').value=String(authorizedUser?.name||authorizedUser?.displayName||authorizedUser?.email||'');addCplEntryRow();setCplSaveButtonVisible(true);const card=$('cplEntryRows').lastElementChild;card?.scrollIntoView({behavior:'smooth',block:'start'});queueCplDraftSave();});
      $('cplMonthlyRetrieve').addEventListener('click',retrieveCplMonthly);
      $('cplMonthlyConsultant').addEventListener('change',()=>{
        cplMonthlyRetrieved=null;
@@ -7572,10 +7585,10 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
       const copy=document.createElement('p');copy.className='credit-toast-copy';copy.textContent=message;toast.appendChild(copy);
       const actions=document.createElement('div');actions.className='credit-toast-actions';
       const ok=document.createElement('button');ok.type='button';ok.className='credit-toast-close';ok.textContent='OK';ok.onclick=hideCreditToast;
-      const another=document.createElement('button');another.type='button';another.className='credit-toast-close';another.textContent='ADD ANOTHER';another.style.background='#1769aa';another.style.color='#fff';another.onclick=()=>{hideCreditToast();if(monthly)return;const consultant=String(savedConsultant||'').trim();const page=$('cplPage'),rowsArea=$('cplEntryRows'),nav=$('appNav');if(page)page.classList.remove('hidden');page?.classList.remove('cpl-monthly-mode');if(nav)nav.classList.add('hidden');if(isCplAdminSession()&&consultant&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;if(rowsArea)rowsArea.replaceChildren();cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);addCplEntryRow({date:cplToday(),sc:consultant});$('cplHeaderDate').value=cplToday();setCplSaveButtonVisible(true);const card=rowsArea?.lastElementChild;window.scrollTo({top:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>{card?.scrollIntoView({behavior:'smooth',block:'start'});const first=card?.querySelector('[data-key="clientName"]');setTimeout(()=>first?.focus({preventScroll:true}),300);}));};
+      const another=document.createElement('button');another.type='button';another.className='credit-toast-close';another.textContent='ADD ANOTHER';another.style.background='#1769aa';another.style.color='#fff';another.onclick=()=>{hideCreditToast();if(monthly)return;const consultant=String(savedConsultant||'').trim();const page=$('cplPage'),rowsArea=$('cplEntryRows'),nav=$('appNav');if(page)page.classList.remove('hidden');page?.classList.remove('cpl-monthly-mode');showCplMode('add');if(nav)nav.classList.add('hidden');if(isCplAdminSession()&&consultant&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;if(rowsArea)rowsArea.replaceChildren();cplMonthlyRetrieved=null;setCplMonthlyActionMode(false);addCplEntryRow({date:cplToday(),sc:consultant});$('cplHeaderDate').value=cplToday();setCplSaveButtonVisible(true);const card=rowsArea?.lastElementChild;window.scrollTo({top:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>{card?.scrollIntoView({behavior:'smooth',block:'start'});const first=card?.querySelector('[data-key="clientName"]');setTimeout(()=>first?.focus({preventScroll:true}),300);}));};
       actions.append(ok,another);toast.appendChild(actions);ok.focus({preventScroll:true});
     }
-    $('cplSaveForm').addEventListener('click',()=>{if(cplSingleEntryEdit){handleCplSingleEntryEditAction();return;}const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isCplAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const enteredRows=rows.filter(r=>[r.clientName,r.phone,r.email,r.vehicle,r.source,r.specs,r.timeline,r.workProfile,r.drivingNow,r.likes,r.concerns,r.freqUsage].some(v=>String(v||'').trim()));const missingNextStep=enteredRows.some(r=>!String(r.nextStep||'').trim());if(missingNextStep){showTeamRerAlert('Next Step is required for every client entry before saving.','CPL Validation');return;}const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;setCplConsultant();renderCplConsultantSavedEntries();showCplSaveChoice(meta? (rows.length?'Monthly CPL entries replaced successfully.':'Monthly CPL entries cleared successfully.'):'CPL saved successfully.',!!meta,consultant);}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
+    $('cplSaveForm').addEventListener('click',()=>{if(cplSingleEntryEdit){handleCplSingleEntryEditAction();return;}const rows=getCplRows();const consultant=cplMonthlyRetrieved?cplMonthlyRetrieved.consultant:(isCplAdminSession()?$('cplConsultantSelect').value:$('cplConsultantFixed').value);if(!consultant){showTeamRerDynamicIsland('Select a Sales Consultant first.');return;}if(!cplMonthlyRetrieved&&!rows.some(r=>r.clientName||r.phone||r.email)){showTeamRerAlert('Enter at least a client name, phone, or email before saving.','CPL Validation');return;}const meta=cplMonthlyRetrieved;const enteredRows=rows.filter(r=>[r.clientName,r.phone,r.email,r.vehicle,r.source,r.specs,r.timeline,r.workProfile,r.drivingNow,r.likes,r.concerns,r.freqUsage].some(v=>String(v||'').trim()));const missingNextStep=enteredRows.some(r=>!String(r.nextStep||'').trim());if(missingNextStep){showTeamRerAlert('Next Step is required for every client entry before saving.','CPL Validation');return;}const payload=meta?{date:`${meta.year}-${meta.month}-01`,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows,monthlyReplace:true,month:meta.month,year:meta.year}:{date:$('cplHeaderDate').value,consultant,manager:$('cplManagerFixed').value,dealer:'HCR',type:'FIELD',rows};const saveBtn=$('cplSaveForm');if(saveBtn.disabled)return;saveBtn.disabled=true;showTeamRerDynamicIsland(meta?'Replacing saved monthly CPL entries…':'Saving CPL…',true);submitRequest('cplClientSave',{payload:JSON.stringify(payload),silent:true}).then(()=>{if(cplDraftSaveTimer){clearTimeout(cplDraftSaveTimer);cplDraftSaveTimer=null;}clearCplDraft();saveBtn.disabled=false;cplMonthlyRetrieved=null;$('cplEntryRows').replaceChildren();$('cplHeaderDate').value='';$('cplSaveForm').textContent='Save CPL';setCplSaveButtonVisible(false);if(isCplAdminSession()&&$('cplConsultantSelect'))$('cplConsultantSelect').value=consultant;setCplConsultant();renderCplConsultantSavedEntries();returnCplModeSelector();showCplSaveChoice(meta? (rows.length?'Monthly CPL entries replaced successfully.':'Monthly CPL entries cleared successfully.'):'CPL saved successfully.',!!meta,consultant);}).catch(err=>{saveBtn.disabled=false;showTeamRerDynamicIsland('CPL save failed: '+(err?.message||err));});});
     $('cplPrintBlank').addEventListener('click',async()=>{
       const consultant=isCplAdminSession()?$ ('cplConsultantSelect').value:$('cplConsultantFixed').value;
       if(!consultant){showTeamRerAlert('Select a Sales Consultant before generating the blank CPL PDF.','CPL Validation');return;}
@@ -10352,6 +10365,18 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 
 
 
+
+<style id="cpl-two-mode-liquid-glass">
+#cplPage .cpl-mode-selector{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 20px}
+#cplPage .cpl-mode-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;min-height:126px;padding:18px;border-radius:18px;border:1px solid rgba(210,235,255,.28);background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.045));color:#f1f7ff!important;box-shadow:0 8px 24px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.15);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);text-align:left}
+#cplPage .cpl-mode-icon{font-size:28px;line-height:1.1}#cplPage .cpl-mode-title{font-size:17px;font-weight:800;letter-spacing:.05em}#cplPage .cpl-mode-caption{font-size:12px;color:#c7dced!important;font-weight:500}
+#cplPage #cplAddWorkspace,#cplPage #cplGenerateWorkspace{border:1px solid rgba(205,231,250,.24)!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045))!important;box-shadow:0 12px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.13)!important;backdrop-filter:blur(18px) saturate(145%)!important;-webkit-backdrop-filter:blur(18px) saturate(145%)!important;padding:clamp(12px,2.5vw,18px)!important}
+#cplPage .cpl-form-bottom{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}#cplPage .cpl-form-bottom button{min-width:0!important;min-height:44px!important;height:auto!important;margin:0!important;border-radius:13px!important;font-size:14px!important;letter-spacing:.04em!important}
+#cplPage #cplCancelAdd{background:rgba(255,255,255,.09)!important;border:1px solid rgba(210,235,255,.24)!important;color:#eaf4ff!important}
+#cplPage #cplMonthlyPanel{display:grid!important;grid-template-columns:1fr 1fr;gap:12px;padding:0!important;background:transparent!important;border:0!important}
+#cplPage #cplMonthlyPanel label{min-width:0}#cplPage #cplMonthlyRetrieve,#cplPage #cplPrintSave{grid-column:1/-1!important;margin:0!important}
+@media(max-width:560px){#cplPage .cpl-mode-selector{gap:9px}#cplPage .cpl-mode-card{min-height:110px;padding:13px}#cplPage #cplMonthlyPanel{grid-template-columns:1fr!important}#cplPage #cplMonthlyRetrieve,#cplPage #cplPrintSave{grid-column:auto!important}}
+</style>
 </body>
 </html>
 
