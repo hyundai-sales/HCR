@@ -3881,16 +3881,8 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         document.body.appendChild(island);
       }
 
-      const rawMessage = String(message || "Update completed successfully.").replace(/\s+/g, " ").trim();
-      const isError = /\b(error|failed|failure|unable|invalid|missing|required|warning|denied|expired|not found|could not|cannot)\b/i.test(rawMessage);
-      island.classList.toggle("island-error", isError);
-      let shortMessage = rawMessage
-        .replace(/^ERROR:\s*/i, "")
-        .replace(/^WARNING:\s*/i, "")
-        .replace(/\b(request|operation|process) failed\b/gi, "Failed")
-        .replace(/\s*[:;].*$/, function(match) { return match.length > 36 ? "" : match; });
-      if (shortMessage.length > 66) shortMessage = shortMessage.slice(0, 63).trimEnd() + "…";
-      island.querySelector(".island-message").textContent = shortMessage || (isError ? "Something went wrong" : "Update completed");
+      island.querySelector(".island-message").textContent =
+        String(message || "Update completed successfully.");
 
       // Restart the icon and timer animations when a new message arrives.
       island.classList.remove("show");
@@ -7876,21 +7868,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
   .pricelist-sheet-button.active { background:linear-gradient(145deg,rgba(40,145,230,.48),rgba(70,110,175,.24)); border-color:rgba(155,215,255,.85); box-shadow:inset 0 1px rgba(255,255,255,.2),0 0 0 2px rgba(80,170,240,.14),0 6px 16px rgba(0,0,0,.15); }
   @media(max-width:600px) { .pricelist-sheet-buttons { gap:8px; } .pricelist-sheet-button { min-width:calc(50% - 4px); flex:1 1 calc(50% - 4px); padding:12px 10px; border-radius:13px; font-size:clamp(14px,4vw,17px); } }
 </style>
-</head><body><div id="quotePreview">${html}</div>
-<style id="teamRerDynamicIslandVisualPatch">
-/* Uniform island dimensions and glass animation; special CPL PDF island remains exempt. */
-#teamRerDynamicIsland:not(.cpl-pdf-ready){box-sizing:border-box!important;width:min(350px,calc(100vw - 24px))!important;height:52px!important;min-height:52px!important;max-height:52px!important;max-width:calc(100vw - 24px)!important;padding:10px 15px 11px 12px!important;gap:10px!important;overflow:hidden!important;white-space:nowrap!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:26px!important;background:linear-gradient(145deg,rgba(38,43,53,.72),rgba(9,13,21,.78))!important;-webkit-backdrop-filter:blur(32px) saturate(180%)!important;backdrop-filter:blur(32px) saturate(180%)!important;box-shadow:0 12px 36px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.24)!important;transition:opacity .24s ease,transform .42s cubic-bezier(.2,.8,.2,1),visibility .24s,box-shadow .28s ease!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready) .island-message{max-width:none!important;flex:1 1 auto!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;word-break:normal!important;font-size:12px!important;line-height:1.25!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready) .island-check{flex:0 0 25px!important;width:25px!important;height:25px!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).show{transform:translate(-50%,0) scale(1)!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).island-error{border-color:rgba(255,105,105,.48)!important;box-shadow:0 0 0 1px rgba(255,70,70,.18),0 0 18px 5px rgba(255,40,40,.34),0 14px 38px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.18)!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).island-error .island-check{background:linear-gradient(145deg,#ff6565,#c51f35)!important;box-shadow:0 0 14px rgba(255,55,55,.52)!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).island-error .island-check::after{width:9px;height:9px;margin:0;border:0;content:'×';font-size:18px;font-weight:800;line-height:9px;transform:none!important;opacity:1!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).island-error .island-progress{background:rgba(255,90,90,.2)!important}
-#teamRerDynamicIsland:not(.cpl-pdf-ready).island-error .island-progress::after{background:linear-gradient(90deg,#ff4545,#ff9a9a)!important;box-shadow:0 0 8px rgba(255,70,70,.55)!important}
-@media(prefers-reduced-motion:reduce){#teamRerDynamicIsland:not(.cpl-pdf-ready){transition:none!important}}
-</style>
-</body></html>`);
+</head><body><div id="quotePreview">${html}</div></body></html>`);
       printWin.document.close();
       printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
     });
@@ -10713,4 +10691,31 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 <style>
 #cplAddWorkspace .cpl-back-to-landing,#cplGenerateWorkspace .cpl-back-to-landing{display:block!important;width:auto!important;max-width:220px!important;margin:0 0 14px!important;min-height:42px!important;padding:9px 15px!important;border-radius:13px!important;background:rgba(120,170,210,.12)!important;border:1px solid rgba(170,220,255,.35)!important;color:#eaf6ff!important;font-size:14px!important;font-weight:650!important;box-shadow:inset 0 1px rgba(255,255,255,.12)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
 #cplPage #cplAddWorkspace,#cplPage #cplGenerateWorkspace{box-sizing:border-box!important;width:100%!important;max-width:100%!important}
+</style>
+<style id="pricelist-preview-mobile-title-clearance">
+/* Price List PDF preview: preserve the module header/title above the modal and soften page-card edges. */
+#pdfPage:not(.hidden) #previewWrap:not(.hidden){
+  align-items:flex-start!important;
+  padding-top:clamp(150px,22vh,230px)!important;
+  padding-bottom:18px!important;
+}
+#pdfPage:not(.hidden) #previewWrap .preview-dialog{
+  height:min(72vh,760px)!important;max-height:calc(100dvh - clamp(150px,22vh,230px) - 22px)!important;
+  border-radius:20px!important;
+}
+#pdfPage:not(.hidden) #previewWrap #pdfPages{
+  padding:12px!important;background:rgba(210,222,233,.12)!important;
+}
+#pdfPage:not(.hidden) #previewWrap .pdf-page-canvas{
+  box-shadow:none!important;border:0!important;border-radius:4px!important;
+}
+@media(max-width:600px){
+  #pdfPage:not(.hidden) #previewWrap:not(.hidden){
+    padding:clamp(145px,20vh,205px) 10px 12px!important;
+  }
+  #pdfPage:not(.hidden) #previewWrap .preview-dialog{
+    height:min(74vh,760px)!important;max-height:calc(100dvh - clamp(145px,20vh,205px) - 12px)!important;
+    width:100%!important;border:1px solid rgba(150,205,245,.35)!important;border-radius:18px!important;
+  }
+}
 </style>
