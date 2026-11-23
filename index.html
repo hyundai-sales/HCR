@@ -3123,9 +3123,10 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
           <button id="backToMenuFromPdf" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Price List PDF</h2>
           <div id="pdfFormFields">
-            <div class="field">
-              <label for="worksheet">Select worksheet</label>
-              <select id="worksheet"><option value="">Loading worksheets...</option></select>
+            <div class="field pricelist-sheet-picker-field">
+              <label>Select worksheet</label>
+              <div id="worksheetButtons" class="pricelist-sheet-buttons" role="group" aria-label="Select price list worksheet"></div>
+              <select id="worksheet" class="hidden" aria-hidden="true" tabindex="-1"><option value="">Loading worksheets...</option></select>
             </div>
             <div class="field hidden" id="consultantField">
               <label for="consultant">Sales consultant</label>
@@ -4245,6 +4246,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         const data = event.data.appData;
         syncUserManagementVisibility();
         fillSelect($("worksheet"), data.worksheets || [], "Choose worksheet");
+        renderPriceListWorksheetButtons(data.worksheets || []);
         // Re-apply role-based visibility after app data loads.
         syncActivityLogsVisibility();
         $("promoSrpTab").classList.toggle("hidden", !data.isAdmin);
@@ -7819,7 +7821,15 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
         #quotePreview .quote-contact strong{font-size:10.5pt!important;color:#123d64!important}
         #quotePreview img{width:58px;height:34px;object-fit:contain}
         @media print{.quote-line,.quote-total,.quote-contact,.quote-terms{break-inside:avoid;page-break-inside:avoid}}
-      </style></head><body><div id="quotePreview">${html}</div></body></html>`);
+      </style>
+<style id="pricelist-liquid-glass-worksheet-buttons">
+  .pricelist-sheet-buttons { display:flex; flex-wrap:wrap; gap:10px; align-items:stretch; }
+  .pricelist-sheet-button { appearance:none; flex:0 1 auto; min-width:120px; max-width:100%; padding:12px 18px; border-radius:15px; border:1px solid rgba(190,220,250,.32); background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045)); color:inherit; font:inherit; font-weight:600; letter-spacing:.01em; text-align:center; box-shadow:inset 0 1px rgba(255,255,255,.12),0 5px 14px rgba(0,0,0,.12); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); cursor:pointer; transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease; }
+  .pricelist-sheet-button:hover { background:linear-gradient(145deg,rgba(130,190,245,.23),rgba(255,255,255,.09)); border-color:rgba(210,235,255,.58); transform:translateY(-1px); }
+  .pricelist-sheet-button.active { background:linear-gradient(145deg,rgba(40,145,230,.48),rgba(70,110,175,.24)); border-color:rgba(155,215,255,.85); box-shadow:inset 0 1px rgba(255,255,255,.2),0 0 0 2px rgba(80,170,240,.14),0 6px 16px rgba(0,0,0,.15); }
+  @media(max-width:600px) { .pricelist-sheet-buttons { gap:8px; } .pricelist-sheet-button { min-width:calc(50% - 4px); flex:1 1 calc(50% - 4px); padding:12px 10px; border-radius:13px; font-size:clamp(14px,4vw,17px); } }
+</style>
+</head><body><div id="quotePreview">${html}</div></body></html>`);
       printWin.document.close();
       printWin.onload=()=>{printWin.focus();setTimeout(()=>{printWin.print();},350);};
     });
@@ -8145,7 +8155,38 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     // unavailable in the Price List UI: View PDF is now the single action.
     $("generateBtn").addEventListener("click", requestPriceListPdf);
 
+    function renderPriceListWorksheetButtons(worksheets) {
+      const host = $("worksheetButtons");
+      if (!host) return;
+      host.replaceChildren();
+      (worksheets || []).forEach(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pricelist-sheet-button";
+        btn.textContent = name;
+        btn.dataset.sheet = name;
+        btn.setAttribute("aria-pressed", "false");
+        btn.addEventListener("click", () => {
+          $("worksheet").value = name;
+          $("worksheet").dispatchEvent(new Event("change", { bubbles: true }));
+          host.querySelectorAll(".pricelist-sheet-button").forEach(other => {
+            const active = other.dataset.sheet === name;
+            other.classList.toggle("active", active);
+            other.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+        });
+        host.appendChild(btn);
+      });
+    }
+
     $("worksheet").addEventListener("change", () => {
+      const selected = $("worksheet").value;
+      const host = $("worksheetButtons");
+      if (host) host.querySelectorAll(".pricelist-sheet-button").forEach(btn => {
+        const active = btn.dataset.sheet === selected;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
       setCplPdfBusy(false);
       if (pendingPriceListPdfUrl) URL.revokeObjectURL(pendingPriceListPdfUrl);
       pendingPriceListPdfUrl = null;
