@@ -10693,29 +10693,32 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 #cplPage #cplAddWorkspace,#cplPage #cplGenerateWorkspace{box-sizing:border-box!important;width:100%!important;max-width:100%!important}
 </style>
 <style id="pricelist-preview-mobile-title-clearance">
-/* Price List PDF preview: preserve the module header/title above the modal and soften page-card edges. */
-#pdfPage:not(.hidden) #previewWrap:not(.hidden){
-  align-items:flex-start!important;
-  padding-top:clamp(150px,22vh,230px)!important;
-  padding-bottom:18px!important;
+/* Keep the PDF preview truly viewport-fixed, below the Price List module title on phones. */
+#appSection #pdfPage:not(.hidden) #previewWrap:not(.hidden){
+  position:fixed!important;inset:0!important;z-index:10000!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  box-sizing:border-box!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;
+  margin:0!important;padding:clamp(360px,27vh,430px) 12px 12px!important;
+  overflow:hidden!important;border:0!important;border-radius:0!important;
+  background:rgba(5,16,29,.58)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;
 }
-#pdfPage:not(.hidden) #previewWrap .preview-dialog{
-  height:min(72vh,760px)!important;max-height:calc(100dvh - clamp(150px,22vh,230px) - 22px)!important;
-  border-radius:20px!important;
+#appSection #pdfPage:not(.hidden) #previewWrap .preview-dialog{
+  position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;
+  display:flex!important;flex-direction:column!important;flex:0 1 auto!important;
+  width:min(100%,1040px)!important;height:min(58dvh,760px)!important;max-height:100%!important;min-height:0!important;
+  margin:0!important;transform:none!important;overflow:hidden!important;
+  border:1px solid rgba(140,200,245,.38)!important;border-radius:18px!important;
+  background:rgba(20,39,59,.96)!important;box-shadow:0 10px 30px rgba(0,0,0,.20)!important;
 }
-#pdfPage:not(.hidden) #previewWrap #pdfPages{
-  padding:12px!important;background:rgba(210,222,233,.12)!important;
+#appSection #pdfPage:not(.hidden) #previewWrap #pdfPages{
+  flex:1 1 auto!important;min-height:0!important;overflow:auto!important;padding:10px!important;
+  background:rgba(220,230,240,.10)!important;
 }
-#pdfPage:not(.hidden) #previewWrap .pdf-page-canvas{
-  box-shadow:none!important;border:0!important;border-radius:4px!important;
+#appSection #pdfPage:not(.hidden) #previewWrap .pdf-page-canvas{
+  box-shadow:none!important;border:0!important;border-radius:0!important;margin:0 auto 10px!important;
 }
 @media(max-width:600px){
-  #pdfPage:not(.hidden) #previewWrap:not(.hidden){
-    padding:clamp(145px,20vh,205px) 10px 12px!important;
-  }
-  #pdfPage:not(.hidden) #previewWrap .preview-dialog{
-    height:min(74vh,760px)!important;max-height:calc(100dvh - clamp(145px,20vh,205px) - 12px)!important;
-    width:100%!important;border:1px solid rgba(150,205,245,.35)!important;border-radius:18px!important;
-  }
+ #appSection #pdfPage:not(.hidden) #previewWrap:not(.hidden){padding:clamp(360px,27vh,430px) 10px 10px!important;}
+ #appSection #pdfPage:not(.hidden) #previewWrap .preview-dialog{width:100%!important;height:min(58dvh,760px)!important;border-radius:16px!important;}
 }
 </style>
