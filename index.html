@@ -2808,9 +2808,17 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
     -webkit-backdrop-filter:blur(22px) saturate(160%) !important;
     backdrop-filter:blur(22px) saturate(160%) !important;
   }
+  #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button {
+    opacity:1 !important; transition:opacity .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease !important;
+  }
+  #pdfPage .pricelist-sheet-buttons:has(.pricelist-sheet-button.active) .pricelist-sheet-button:not(.active) {
+    opacity:.38 !important; filter:saturate(.55) !important;
+  }
   #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button.active {
-    background:rgba(40,145,230,.25) !important;border-color:rgba(145,210,255,.8) !important;
-    box-shadow:inset 0 1px 1px rgba(255,255,255,.25),0 0 0 1px rgba(105,190,255,.18) !important;
+    opacity:1 !important; filter:none !important; color:#fff !important;
+    background:linear-gradient(145deg,rgba(35,155,255,.48),rgba(10,91,170,.34)) !important;
+    border-color:rgba(165,225,255,.98) !important;
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.48),0 0 0 2px rgba(95,190,255,.28),0 0 22px rgba(55,160,255,.38) !important;
   }
   @media(max-width:600px) {
     #pdfPage .pricelist-sheet-buttons { gap:10px !important; }
@@ -4292,7 +4300,7 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
           $("roleNote").textContent = "Admin access: select the sales consultant.";
         } else {
           $("consultantField").classList.add("hidden");
-          $("roleNote").textContent = "Your registered TEAM RER name will be used.";
+          $("roleNote").textContent = "";
         }
         fillSelect($("creditConsultant"), data.consultants || [], "Select Sales Consultant");
         syncCreditConsultantForRole();
