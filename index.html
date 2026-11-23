@@ -10531,3 +10531,46 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 #cplPage .cpl-saved-card-actions button:active{transform:scale(.97);}
 @media(max-width:560px){#cplPage .cpl-saved-client-card{grid-template-columns:minmax(0,1fr)!important;gap:10px!important;padding:12px 13px!important;}#cplPage .cpl-saved-card-actions{justify-content:flex-end!important;}#cplPage .cpl-saved-card-actions button{min-width:72px!important;}}
 </style>
+<style id="cpl-saved-entry-layout-unified-fix">
+/* Unified compact saved-entry row layout across desktop, tablet and mobile */
+#cplPage #cplConsultantSavedEntries .cpl-saved-client-card{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(132px,38%)!important;
+  align-items:center!important;column-gap:10px!important;row-gap:0!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  overflow:visible!important;padding:10px 12px!important;margin:0 0 7px!important;
+  border-radius:13px!important;
+}
+#cplPage #cplConsultantSavedEntries .cpl-saved-client-head{
+  min-width:0!important;display:flex!important;flex-direction:column!important;
+  align-items:flex-start!important;justify-content:center!important;gap:4px!important;
+}
+#cplPage #cplConsultantSavedEntries .cpl-saved-client-head strong{
+  font-size:clamp(13px,2.1vw,16px)!important;line-height:1.2!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;
+}
+#cplPage #cplConsultantSavedEntries .cpl-saved-client-head small{
+  display:inline-block!important;font-size:11px!important;line-height:1.2!important;
+  padding:3px 7px!important;white-space:nowrap!important;
+}
+#cplPage #cplConsultantSavedEntries .cpl-saved-card-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:5px!important;width:100%!important;min-width:0!important;
+  margin:0!important;align-items:center!important;
+}
+#cplPage #cplConsultantSavedEntries .cpl-saved-card-actions button{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  flex:initial!important;height:30px!important;min-height:30px!important;
+  padding:0 5px!important;margin:0!important;border-radius:8px!important;
+  font-size:10px!important;line-height:1!important;letter-spacing:.035em!important;
+  white-space:nowrap!important;overflow:visible!important;
+}
+@media(max-width:700px){
+ #cplPage #cplConsultantSavedEntries .cpl-saved-client-card{
+  grid-template-columns:minmax(0,1fr) minmax(116px,40%)!important;
+  gap:8px!important;padding:9px 10px!important;
+ }
+ #cplPage #cplConsultantSavedEntries .cpl-saved-card-actions{gap:4px!important;}
+ #cplPage #cplConsultantSavedEntries .cpl-saved-card-actions button{height:28px!important;min-height:28px!important;font-size:9px!important;}
+}
+</style>
