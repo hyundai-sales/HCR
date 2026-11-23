@@ -10516,4 +10516,18 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
 
 /* CPL monthly retrieval: collapse entry form workspace to conserve mobile space */
 #cplPage.cpl-monthly-mode .cpl-form-shell{display:none!important}
+
+/* CPL saved entries: minimalist liquid-glass table/list */
+#cplPage .cpl-saved-list-heading{letter-spacing:.08em;font-weight:750;color:#eaf4ff!important;text-align:left!important;margin:18px 8px 12px!important;font-size:clamp(16px,2.6vw,20px)!important;}
+#cplPage .cpl-saved-client-card{position:relative;isolation:isolate;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:12px!important;padding:14px 16px!important;margin:0 0 9px!important;border-radius:16px!important;background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.045) 55%,rgba(125,190,255,.07))!important;border:1px solid rgba(210,235,255,.22)!important;box-shadow:0 5px 16px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.13)!important;backdrop-filter:blur(18px) saturate(145%)!important;-webkit-backdrop-filter:blur(18px) saturate(145%)!important;}
+#cplPage .cpl-saved-client-card::before{content:none!important;}
+#cplPage .cpl-saved-client-head{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:5px!important;min-width:0!important;border:0!important;margin:0!important;padding:0!important;}
+#cplPage .cpl-saved-client-head strong{color:#f4f8ff!important;text-shadow:none!important;font-size:clamp(15px,3.5vw,18px)!important;font-weight:650!important;line-height:1.25!important;overflow-wrap:anywhere;}
+#cplPage .cpl-saved-client-head small{color:#c8d9e9!important;font-size:12px!important;font-weight:550!important;background:rgba(6,22,37,.32)!important;border:1px solid rgba(190,220,245,.16)!important;border-radius:8px!important;padding:3px 8px!important;}
+#cplPage .cpl-saved-card-actions{display:flex!important;gap:8px!important;margin:0!important;align-items:center!important;}
+#cplPage .cpl-saved-card-actions button{flex:0 0 auto!important;min-height:36px!important;height:36px!important;padding:0 13px!important;border-radius:11px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.04em!important;background:rgba(255,255,255,.075)!important;color:#eaf4ff!important;border:1px solid rgba(210,235,255,.23)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)!important;transition:background .15s ease,border-color .15s ease!important;}
+#cplPage .cpl-saved-card-actions .cpl-saved-edit,#cplPage .cpl-saved-card-actions button:first-child{background:rgba(95,174,236,.13)!important;border-color:rgba(126,196,245,.36)!important;color:#dff2ff!important;}
+#cplPage .cpl-saved-card-actions button:last-child{background:rgba(239,105,119,.09)!important;border-color:rgba(239,130,145,.28)!important;color:#ffd9df!important;}
+#cplPage .cpl-saved-card-actions button:active{transform:scale(.97);}
+@media(max-width:560px){#cplPage .cpl-saved-client-card{grid-template-columns:minmax(0,1fr)!important;gap:10px!important;padding:12px 13px!important;}#cplPage .cpl-saved-card-actions{justify-content:flex-end!important;}#cplPage .cpl-saved-card-actions button{min-width:72px!important;}}
 </style>
