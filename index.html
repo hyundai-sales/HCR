@@ -10519,6 +10519,66 @@ body .card :is(h1,h2,h3,h4,p,label,small),body .module-card :is(h1,h2,h3,h4,p,la
 }
 </style>
 
+
+<style id="teamrer-pricelist-selector-contrast-and-iphone-action-fix-v1">
+/* Price List: readable selector labels and reliably accessible View PDF action. */
+#appSection #pdfPage:not(.hidden){
+  box-sizing:border-box!important; width:100%!important; max-width:100%!important;
+  overflow:visible!important; min-height:0!important; height:auto!important;
+  padding-bottom:max(26px,env(safe-area-inset-bottom,0px))!important;
+}
+#appSection #pdfPage .pricelist-sheet-picker-field>label,
+#appSection #pdfPage .field.pricelist-sheet-picker-field>label,
+#appSection #pdfPage #consultantField>label,
+#appSection #pdfPage #roleNote,
+#appSection #pdfPage #roleNote.message,
+#appSection #pdfPage .pricelist-sheet-picker-field label{
+  color:#f2f8ff!important;-webkit-text-fill-color:#f2f8ff!important;
+  opacity:1!important;text-shadow:none!important;filter:none!important;
+  font-weight:750!important;font-size:clamp(15px,3.8vw,17px)!important;
+}
+#appSection #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button,
+#appSection #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button *{
+  color:#f5faff!important;-webkit-text-fill-color:#f5faff!important;
+  opacity:1!important;text-shadow:none!important;filter:none!important;font-weight:750!important;
+}
+#appSection #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button:not(.active){
+  background:linear-gradient(145deg,rgba(40,79,116,.96),rgba(23,54,86,.96))!important;
+  border:1px solid rgba(173,218,255,.68)!important;
+}
+#appSection #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button.active{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  background:linear-gradient(145deg,#087bd0,#064c91)!important;
+  border:2px solid #a6dcff!important;
+}
+#appSection #pdfPage #viewBtn{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  position:relative!important;z-index:3!important;
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  min-height:54px!important;height:auto!important;margin:16px 0 8px!important;
+  padding:14px 18px!important;font-size:17px!important;font-weight:800!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  background:linear-gradient(145deg,#087bd0,#003b70)!important;
+  border:1px solid #a8d9ff!important;border-radius:16px!important;
+  box-shadow:0 7px 18px rgba(0,24,52,.26),inset 0 1px 0 rgba(255,255,255,.22)!important;
+}
+#appSection #pdfPage #viewBtn.hidden{display:none!important;}
+@media screen and (max-width:600px){
+  #appSection #pdfPage:not(.hidden){
+    overflow:visible!important;height:auto!important;min-height:0!important;
+    max-height:none!important;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))!important;
+  }
+  #appSection #pdfPage #pdfFormFields{
+    display:block!important;overflow:visible!important;min-height:0!important;height:auto!important;
+  }
+  #appSection #pdfPage .pricelist-sheet-buttons{gap:8px!important;}
+  #appSection #pdfPage .pricelist-sheet-buttons .pricelist-sheet-button{
+    min-height:82px!important;font-size:clamp(12px,3.5vw,15px)!important;
+    line-height:1.3!important;padding:10px 6px!important;
+  }
+  #appSection #pdfPage #viewBtn{margin-top:14px!important;min-height:56px!important;}
+}
+</style>
 </body>
 </html>
 
