@@ -7868,6 +7868,22 @@ html, body { width:100%; max-width:100%; overflow-x:hidden; }
   .pricelist-sheet-button.active { background:linear-gradient(145deg,rgba(40,145,230,.48),rgba(70,110,175,.24)); border-color:rgba(155,215,255,.85); box-shadow:inset 0 1px rgba(255,255,255,.2),0 0 0 2px rgba(80,170,240,.14),0 6px 16px rgba(0,0,0,.15); }
   @media(max-width:600px) { .pricelist-sheet-buttons { gap:8px; } .pricelist-sheet-button { min-width:calc(50% - 4px); flex:1 1 calc(50% - 4px); padding:12px 10px; border-radius:13px; font-size:clamp(14px,4vw,17px); } }
 </style>
+
+<style id="teamrer-global-readable-text-contrast-fix">
+/* TEAM RER global readability patch: text contrast, ghosting and opacity only */
+:root{--rer-readable-ink:#123653;--rer-readable-muted:#425b70;--rer-readable-blue:#003b70;}
+body,body *{text-shadow:none!important;}
+body h1,body h2,body h3,body h4,body h5,body h6,body p,body label,body legend,body li,body td,body th,body small,body .subtitle,body .app-caption,body .section-title,body .module-title,body .card-title,body .field-label,body .stat-label,body .dashboard-label,body .dashboard-title,body .page-title,body .caption,body .helper-text,body .hint,body .description{color:var(--rer-readable-ink)!important;opacity:1!important;text-shadow:none!important;}
+body input,body select,body textarea,body option{color:#102f49!important;opacity:1!important;text-shadow:none!important;}
+body input::placeholder,body textarea::placeholder{color:#647b8d!important;opacity:1!important;}
+body button,body .button,body a.button,body .btn,body [role=button]{text-shadow:none!important;opacity:1!important;}
+body button:not(.google):not(.secondary),body .button:not(.secondary),body .btn-primary{color:#fff!important;}
+body .google,body .secondary,body button.secondary{color:#123653!important;}
+/* Neutralize faded/ghost headings and over-translucent text surfaces */
+body .brand h1,body .brand .subtitle,body .brand .app-caption,body .dashboard h1,body .dashboard h2,body .dashboard h3,body #dashboardPage h1,body #dashboardPage h2,body #dashboardPage h3{opacity:1!important;color:#123653!important;}
+body .card,body .module-card,body .dashboard-card,body .panel,body .section-card{color:#123653;}
+body .card :is(h1,h2,h3,h4,p,label,small),body .module-card :is(h1,h2,h3,h4,p,label,small),body .dashboard-card :is(h1,h2,h3,h4,p,label,small),body .panel :is(h1,h2,h3,h4,p,label,small){opacity:1!important;text-shadow:none!important;}
+</style>
 </head><body><div id="quotePreview">${html}</div>
 <style id="pricelist-preview-top-position-final">
 /* Correct top anchoring: title remains visible; preview floats beneath it. */
