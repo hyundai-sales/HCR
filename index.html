@@ -10983,3 +10983,37 @@ body:not(.printing-quote) .applications-dashboard label {
  #appSection .teamrer-xmas-clock small{font-size:8px!important}
 }
 </style>
+
+
+<style id="team-rer-user-role-selected-illumination-final-20261126">
+/* FINAL OVERRIDE: scoped to User Management, driven by the renderer's aria-pressed state. */
+#appSection #userManagementPage .user-control-card .user-control-groups .user-role-switches button.user-role-switch {
+  opacity:1!important; filter:none!important; color:#e8f4ff!important; -webkit-text-fill-color:#e8f4ff!important;
+  background:linear-gradient(145deg,#173a55,#0c2438)!important; border:1px solid #7194ae!important;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.3)!important; text-shadow:none!important; font-weight:750!important;
+}
+#appSection #userManagementPage .user-control-card .user-control-groups .user-role-switches button.user-role-switch[aria-pressed="true"],
+#appSection #userManagementPage .user-control-card .user-control-groups .user-role-switches button.user-role-switch.is-on {
+  opacity:1!important; filter:none!important; color:#ffffff!important; -webkit-text-fill-color:#ffffff!important;
+  font-weight:900!important; transform:translateY(-1px)!important; text-shadow:0 1px 3px rgba(0,0,0,.55)!important;
+  border:2px solid #ffffff!important;
+}
+#appSection #userManagementPage .user-control-card .user-role-switch.super[aria-pressed="true"],
+#appSection #userManagementPage .user-control-card .user-role-switch.super.is-on {
+  background:linear-gradient(135deg,#16a34a,#065f36)!important; border-color:#bbf7d0!important;
+  box-shadow:0 0 0 3px rgba(134,239,172,.42),0 0 28px rgba(34,197,94,.85),inset 0 1px 0 rgba(255,255,255,.65)!important;
+}
+#appSection #userManagementPage .user-control-card .user-role-switch.admin[aria-pressed="true"],
+#appSection #userManagementPage .user-control-card .user-role-switch.admin.is-on {
+  background:linear-gradient(135deg,#0284c7,#003b70)!important; border-color:#bae6fd!important;
+  box-shadow:0 0 0 3px rgba(125,211,252,.42),0 0 28px rgba(14,165,233,.85),inset 0 1px 0 rgba(255,255,255,.65)!important;
+}
+#appSection #userManagementPage .user-control-card .user-role-switch.user[aria-pressed="true"],
+#appSection #userManagementPage .user-control-card .user-role-switch.user.is-on {
+  background:linear-gradient(135deg,#ca8a04,#854d0e)!important; border-color:#fef08a!important;
+  box-shadow:0 0 0 3px rgba(253,224,71,.42),0 0 28px rgba(234,179,8,.8),inset 0 1px 0 rgba(255,255,255,.65)!important;
+}
+@media(max-width:600px){
+ #appSection #userManagementPage .user-control-card .user-role-switches button.user-role-switch{min-height:44px!important;font-size:12px!important;padding:8px 4px!important}
+}
+</style>
