@@ -4460,9 +4460,10 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (action === "creditHistorySave") {
         const saved = event.data.creditHistorySave || {};
         if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
-        // Keep the form open after draft save and reveal the PDF generation action.
+        // Keep the loaded form visible after draft save so the user can immediately
+        // review its values and continue to PDF generation. Do not rebuild/clear it.
         setCreditEditorStage("generate");
-        setMessage($("creditMessage"),"Application details saved. Review the form, then tap Generate Application PDF.","success");
+        setMessage($("creditMessage"),"Application details saved. Review the form values, then Generate Application PDF.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
         return;
       }
