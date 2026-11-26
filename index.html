@@ -8050,6 +8050,38 @@ body .card :is(h1,h2,h3,h4,p,label,small),body .module-card :is(h1,h2,h3,h4,p,la
 </style>
 
 
+
+<style id="team-rer-greeting-card-navy-and-true-frosted-glass-fix">
+/* Fix: navy greeting container with readable greeting and Christmas countdown */
+@media screen {
+ #appSection .dashboard-welcome {
+   background:linear-gradient(135deg,rgba(0,42,82,.97),rgba(0,59,112,.94) 58%,rgba(12,83,137,.92))!important;
+   border:1px solid rgba(255,255,255,.26)!important;
+   box-shadow:0 18px 42px rgba(0,25,60,.28),inset 0 1px 0 rgba(255,255,255,.22)!important;
+   -webkit-backdrop-filter:blur(24px) saturate(160%)!important;backdrop-filter:blur(24px) saturate(160%)!important;
+ }
+ #appSection .dashboard-welcome .welcome-eyebrow,
+ #appSection .dashboard-welcome .userline,
+ #appSection .dashboard-welcome .welcome-note {color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.28)!important}
+ #appSection .dashboard-welcome .welcome-eyebrow{color:#d9ecff!important}
+ #appSection .dashboard-welcome .welcome-note{color:rgba(255,255,255,.84)!important}
+ #appSection .teamrer-xmas-countdown{color:#fff!important;text-shadow:0 2px 7px rgba(0,0,0,.55)!important}
+ #appSection .teamrer-xmas-kicker,#appSection .teamrer-xmas-clock small,#appSection .teamrer-xmas-clock i{color:#ffe5a3!important}
+ #appSection .teamrer-xmas-year{color:#e5f2ff!important}
+ #appSection .teamrer-xmas-clock b{color:#fff!important;text-shadow:0 2px 5px rgba(0,0,0,.5)!important}
+ /* Force real translucent glass on carousel cards instead of opaque theme surfaces */
+ #appSection #teamRerModuleCarousel .rer-carousel-card{
+   background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(205,230,250,.065) 48%,rgba(0,46,91,.10))!important;
+   background-color:rgba(255,255,255,.10)!important;
+   border:1px solid rgba(255,255,255,.58)!important;
+   -webkit-backdrop-filter:blur(30px) saturate(175%) brightness(1.12)!important;
+   backdrop-filter:blur(30px) saturate(175%) brightness(1.12)!important;
+   box-shadow:0 22px 50px rgba(0,29,70,.24),inset 0 1px 2px rgba(255,255,255,.72),inset 0 -10px 25px rgba(70,150,210,.08)!important;
+ }
+ #appSection #teamRerModuleCarousel .rer-carousel-card::before{background:linear-gradient(125deg,rgba(255,255,255,.34),rgba(255,255,255,.035) 40%,transparent 62%,rgba(90,170,230,.09))!important}
+ #appSection #teamRerModuleCarousel .rer-carousel-card::after{border-color:rgba(255,255,255,.35)!important}
+}
+</style>
 </head><body><div id="quotePreview">${html}</div>
 <style id="pricelist-preview-top-position-final">
 /* Correct top anchoring: title remains visible; preview floats beneath it. */
@@ -11252,3 +11284,17 @@ body.rer-module-launching #teamRerModuleCarousel .rer-carousel-card:not(.is-acti
   display:none!important;
 }
 </style>
+
+<script id="team-rer-desktop-escape-navigation">
+(function(){
+ if(window.__teamRerEscapeNav)return;window.__teamRerEscapeNav=true;
+ const backIds=['backToMenuFromAudit','backToMenuFromUsers','backToMenuFromOrg','backToMenuFromCpl','backToMenuFromHistory','backToMenuFromCredit','backToMenuFromPdf','backToMenuFromPromo','backToMenuFromQuote'];
+ function visible(el){return !!el&&el.offsetParent!==null&&!el.closest('.hidden')&&getComputedStyle(el).visibility!=='hidden';}
+ document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape'||e.defaultPrevented)return;
+  const a=document.activeElement;if(a&&(a.matches('input,textarea,select,[contenteditable="true"]')||a.closest('[contenteditable="true"]')))return;
+  if(document.querySelector('[role="dialog"]:not(.hidden),.modal:not(.hidden),.overlay:not(.hidden)'))return;
+  for(const id of backIds){const b=document.getElementById(id);if(visible(b)){e.preventDefault();e.stopPropagation();b.click();return;}}
+ },true);
+})();
+</script>
