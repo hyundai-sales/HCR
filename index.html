@@ -2841,6 +2841,18 @@ body:not(.printing-quote) input::placeholder,body:not(.printing-quote) textarea:
 body:not(.printing-quote) .app-nav button,body:not(.printing-quote) #appNav button,body:not(.printing-quote) button.period-btn,body:not(.printing-quote) .period-buttons button,body:not(.printing-quote) .dashboard-filter button,body:not(.printing-quote) .dashboard button{color:#123b5d!important;-webkit-text-fill-color:#123b5d!important;opacity:1!important;text-shadow:none!important;filter:none!important;}
 body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .app-nav button span,body:not(.printing-quote) .app-nav button p{color:#123b5d!important;-webkit-text-fill-color:#123b5d!important;opacity:1!important;}
 </style>
+<style id="team-rer-user-management-selected-light-fix">
+/* User Management: make the selected role/status unmistakably illuminated */
+#usersPage .user-role-switch, #userManagementPage .user-role-switch, .user-control-card .user-role-switch {
+  opacity: .62 !important; color:#c8d8e8 !important; background:linear-gradient(145deg,#172b40,#102033) !important; border:1px solid rgba(160,190,215,.24) !important; box-shadow:inset 0 1px 3px rgba(0,0,0,.25) !important;
+}
+.user-role-switch.super.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#16a34a,#08743a) !important; border:2px solid #86efac !important; box-shadow:0 0 0 2px rgba(134,239,172,.24),0 0 22px rgba(34,197,94,.62),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
+.user-role-switch.admin.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#0284c7,#075985) !important; border:2px solid #7dd3fc !important; box-shadow:0 0 0 2px rgba(125,211,252,.22),0 0 22px rgba(14,165,233,.62),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
+.user-role-switch.user.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#ca8a04,#854d0e) !important; border:2px solid #fde68a !important; box-shadow:0 0 0 2px rgba(253,230,138,.22),0 0 22px rgba(234,179,8,.55),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
+.user-active-switch.on.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#16a34a,#08743a) !important; border:2px solid #86efac !important; box-shadow:0 0 0 2px rgba(134,239,172,.2),0 0 20px rgba(34,197,94,.55) !important; }
+.user-active-switch.off.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#dc2626,#991b1b) !important; border:2px solid #fca5a5 !important; box-shadow:0 0 0 2px rgba(252,165,165,.2),0 0 20px rgba(239,68,68,.5) !important; }
+.user-role-switch:not(.is-on), .user-active-switch:not(.is-on) { opacity:.48 !important; filter:saturate(.45) !important; }
+</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -7897,18 +7909,7 @@ body .card,body .module-card,body .dashboard-card,body .panel,body .section-card
 body .card :is(h1,h2,h3,h4,p,label,small),body .module-card :is(h1,h2,h3,h4,p,label,small),body .dashboard-card :is(h1,h2,h3,h4,p,label,small),body .panel :is(h1,h2,h3,h4,p,label,small){opacity:1!important;text-shadow:none!important;}
 </style>
 
-<style id="team-rer-user-management-selected-light-fix">
-/* User Management: make the selected role/status unmistakably illuminated */
-#usersPage .user-role-switch, #userManagementPage .user-role-switch, .user-control-card .user-role-switch {
-  opacity: .62 !important; color:#c8d8e8 !important; background:linear-gradient(145deg,#172b40,#102033) !important; border:1px solid rgba(160,190,215,.24) !important; box-shadow:inset 0 1px 3px rgba(0,0,0,.25) !important;
-}
-.user-role-switch.super.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#16a34a,#08743a) !important; border:2px solid #86efac !important; box-shadow:0 0 0 2px rgba(134,239,172,.24),0 0 22px rgba(34,197,94,.62),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
-.user-role-switch.admin.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#0284c7,#075985) !important; border:2px solid #7dd3fc !important; box-shadow:0 0 0 2px rgba(125,211,252,.22),0 0 22px rgba(14,165,233,.62),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
-.user-role-switch.user.is-on { color:#ffffff !important; opacity:1 !important; background:linear-gradient(135deg,#ca8a04,#854d0e) !important; border:2px solid #fde68a !important; box-shadow:0 0 0 2px rgba(253,230,138,.22),0 0 22px rgba(234,179,8,.55),inset 0 1px 0 rgba(255,255,255,.45) !important; text-shadow:0 1px 2px rgba(0,0,0,.35) !important; }
-.user-active-switch.on.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#16a34a,#08743a) !important; border:2px solid #86efac !important; box-shadow:0 0 0 2px rgba(134,239,172,.2),0 0 20px rgba(34,197,94,.55) !important; }
-.user-active-switch.off.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#dc2626,#991b1b) !important; border:2px solid #fca5a5 !important; box-shadow:0 0 0 2px rgba(252,165,165,.2),0 0 20px rgba(239,68,68,.5) !important; }
-.user-role-switch:not(.is-on), .user-active-switch:not(.is-on) { opacity:.48 !important; filter:saturate(.45) !important; }
-</style>
+
 </head><body><div id="quotePreview">${html}</div>
 <style id="pricelist-preview-top-position-final">
 /* Correct top anchoring: title remains visible; preview floats beneath it. */
