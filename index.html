@@ -11164,8 +11164,8 @@ body:not(.printing-quote) .applications-dashboard label {
 </style>
 <style id="team-rer-module-launch-transition">
 body.rer-module-launching #teamRerModuleCarousel .rer-carousel-card:not(.is-active){opacity:0!important;filter:blur(4px)!important}
-#appSection.rer-destination-reveal{animation:rerDestinationReveal .52s cubic-bezier(.18,.72,.16,1) both;transform-origin:center center}
-@keyframes rerDestinationReveal{0%{opacity:.15;filter:blur(14px);transform:scale(.82) perspective(900px) rotateX(9deg)}45%{opacity:.82;filter:blur(5px);transform:scale(.96) perspective(900px) rotateX(2deg)}100%{opacity:1;filter:blur(0);transform:scale(1) perspective(900px) rotateX(0)}}
+#appSection.rer-destination-reveal{animation:rerDestinationReveal .30s cubic-bezier(.2,.8,.2,1) both;transform-origin:center center}
+@keyframes rerDestinationReveal{0%{opacity:.35;filter:blur(7px);transform:scale(.94) perspective(900px) rotateX(5deg)}55%{opacity:.9;filter:blur(2px);transform:scale(.99) perspective(900px) rotateX(1deg)}100%{opacity:1;filter:blur(0);transform:scale(1) perspective(900px) rotateX(0)}}
 @media(prefers-reduced-motion:reduce){#appSection.rer-destination-reveal{animation:none!important}}
 </style>
 
@@ -11181,12 +11181,12 @@ body.rer-module-launching #teamRerModuleCarousel .rer-carousel-card:not(.is-acti
  function launchTransition(card,originalButton){
   try{
    const r=card.getBoundingClientRect(),overlay=card.cloneNode(true);overlay.removeAttribute('aria-label');
-   overlay.style.cssText+=';position:fixed!important;left:'+r.left+'px!important;top:'+r.top+'px!important;width:'+r.width+'px!important;height:'+r.height+'px!important;margin:0!important;z-index:999999!important;opacity:1!important;pointer-events:none!important;transform:none!important;transition:all .68s cubic-bezier(.16,.78,.18,1)!important;will-change:transform,width,height,left,top,filter,opacity!important;';
+   overlay.style.cssText+=';position:fixed!important;left:'+r.left+'px!important;top:'+r.top+'px!important;width:'+r.width+'px!important;height:'+r.height+'px!important;margin:0!important;z-index:999999!important;opacity:1!important;pointer-events:none!important;transform:none!important;transition:all .38s cubic-bezier(.2,.8,.2,1)!important;will-change:transform,width,height,left,top,filter,opacity!important;';
    document.body.appendChild(overlay);card.style.opacity='0';document.body.classList.add('rer-module-launching');window.__teamRerMacLaunchActive=true;
    requestAnimationFrame(()=>requestAnimationFrame(()=>{overlay.style.left='50%';overlay.style.top='50%';overlay.style.width='min(90vw,560px)';overlay.style.height='min(78vh,650px)';overlay.style.transform='translate(-50%,-50%) scale(1.08)';overlay.style.borderRadius='36px';overlay.style.filter='blur(1.5px) saturate(1.3)';}));
-   setTimeout(()=>{originalButton.click();const app=document.getElementById('appSection');if(app){app.classList.remove('rer-destination-reveal');void app.offsetWidth;app.classList.add('rer-destination-reveal');}},210);
-   setTimeout(()=>{overlay.style.opacity='0';overlay.style.filter='blur(16px)';overlay.style.transform='translate(-50%,-50%) scale(1.22)';},520);
-   setTimeout(()=>{overlay.remove();document.body.classList.remove('rer-module-launching');window.__teamRerMacLaunchActive=false;document.getElementById('appSection')?.classList.remove('rer-destination-reveal');},740);
+   setTimeout(()=>{originalButton.click();const app=document.getElementById('appSection');if(app){app.classList.remove('rer-destination-reveal');void app.offsetWidth;app.classList.add('rer-destination-reveal');}},115);
+   setTimeout(()=>{overlay.style.opacity='0';overlay.style.filter='blur(7px)';overlay.style.transform='translate(-50%,-50%) scale(1.12)';},285);
+   setTimeout(()=>{overlay.remove();document.body.classList.remove('rer-module-launching');window.__teamRerMacLaunchActive=false;document.getElementById('appSection')?.classList.remove('rer-destination-reveal');},430);
   }catch(err){window.__teamRerMacLaunchActive=false;originalButton.click();}
  }
  function move(delta){if(!items.length)return;idx=(idx+delta+items.length)%items.length;render();}
