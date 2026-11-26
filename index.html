@@ -2853,43 +2853,6 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
 .user-active-switch.off.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#dc2626,#991b1b) !important; border:2px solid #fca5a5 !important; box-shadow:0 0 0 2px rgba(252,165,165,.2),0 0 20px rgba(239,68,68,.5) !important; }
 .user-role-switch:not(.is-on), .user-active-switch:not(.is-on) { opacity:.48 !important; filter:saturate(.45) !important; }
 </style>
-<style id="team-rer-minimal-dashboard-redesign">
-/* TEAM RER MINIMAL DASHBOARD REDESIGN — INDEX ONLY */
-#appSection #appNav .dashboard-welcome {
-  margin:8px 0 14px!important; padding:14px 16px!important; border-radius:18px!important;
-  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(228,240,250,.86))!important;
-  border:1px solid rgba(255,255,255,.9)!important; box-shadow:0 5px 16px rgba(0,48,91,.08)!important;
-}
-#appSection #appNav .welcome-note, #appSection #appNav .welcome-eyebrow,
-#appSection #appNav .dashboard-label, #appSection #appNav .nav-description {display:none!important}
-#appSection #appNav .dashboard-welcome .userline {font-size:clamp(17px,4.5vw,21px)!important; margin:0!important}
-#appSection #appNav .applications-dashboard {margin:0 0 16px!important;padding:14px!important;border-radius:18px!important}
-#appSection #appNav .app-nav {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin:0 0 16px!important}
-#appSection #appNav .app-nav>button {
-  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-  text-align:center!important;gap:8px!important;min-width:0!important;min-height:105px!important;padding:12px 8px!important;
-  border-radius:17px!important;background:linear-gradient(145deg,#f9fcff,#e5eff8)!important;
-  border:1px solid #d4e4f2!important;box-shadow:3px 4px 10px rgba(0,48,91,.07),-2px -2px 5px rgba(255,255,255,.85)!important;
-}
-#appSection #appNav .app-nav>button .nav-icon {width:42px!important;height:42px!important;min-width:42px!important;flex-basis:42px!important;border-radius:13px!important;margin:0!important}
-#appSection #appNav .app-nav>button .nav-copy {width:100%!important;min-width:0!important}
-#appSection #appNav .app-nav>button .nav-title {font-size:12px!important;line-height:1.25!important;overflow-wrap:anywhere!important}
-#appSection #appNav .app-nav>button.active {background:linear-gradient(145deg,#0879c7,#003b70)!important;border:1px solid #64b9f0!important;box-shadow:0 0 0 2px rgba(0,123,255,.16),0 5px 14px rgba(0,59,112,.25)!important}
-#appSection #appNav .app-nav>button.active .nav-title,#appSection #appNav .app-nav>button.active .nav-icon {color:#fff!important;-webkit-text-fill-color:#fff!important}
-#appSection #appNav .app-nav>button:nth-child(n+4):nth-child(-n+5) {background:linear-gradient(145deg,#edf5ff,#dceafa)!important}
-#appSection #appNav .app-nav>button:nth-child(n+6) {background:linear-gradient(145deg,#f6f9fc,#e7eef5)!important}
-#appSection #appNav .main-menu-account-actions {margin-top:8px!important}
-#appSection #appNav #logoutBtn {min-height:40px!important;border-radius:13px!important}
-@media(max-width:560px){
-  #appSection #appNav .app-nav {grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
-  #appSection #appNav .app-nav>button {min-height:96px!important;padding:10px 7px!important}
-  #appSection #appNav .app-nav>button .nav-title {font-size:12px!important}
-  #appSection #appNav .applications-dashboard {padding:12px!important}
-}
-@media(max-width:360px){#appSection #appNav .app-nav>button{min-height:90px!important}}
-/* END MINIMAL DASHBOARD REDESIGN */
-
-</style>
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -10907,4 +10870,27 @@ body:not(.printing-quote) .section-title{color:#003b70!important;text-shadow:0 1
 body:not(.printing-quote) .message{border:1px solid rgba(255,255,255,.85)!important;border-radius:15px!important;box-shadow:inset 2px 2px 5px rgba(0,48,91,.05),inset -2px -2px 4px rgba(255,255,255,.7)!important}
 /* Preserve print behavior and all existing module/preview geometry. */
 @media(prefers-reduced-motion:reduce){body:not(.printing-quote) button,body:not(.printing-quote) .app-nav button{transition:none!important}}
+</style>
+
+
+<style id="team-rer-mobile-readability-role-glow-fix">
+/* Readability correction: high-contrast dashboard and controls */
+#appSection #appNav .app-nav>button .nav-title{color:#123b5d!important;-webkit-text-fill-color:#123b5d!important;font-size:14px!important;font-weight:650!important;line-height:1.3!important;text-shadow:none!important}
+#appSection #appNav .app-nav>button .nav-copy{color:#123b5d!important}
+#appSection #appNav .app-nav>button.active,#appSection #appNav .app-nav>button[aria-current="page"]{background:linear-gradient(145deg,#087bc5,#003b70)!important;border:2px solid #62b9f2!important;box-shadow:0 0 0 2px rgba(0,123,255,.2),0 8px 18px rgba(0,59,112,.28)!important}
+#appSection #appNav .app-nav>button.active .nav-title,#appSection #appNav .app-nav>button[aria-current="page"] .nav-title{color:#fff!important;-webkit-text-fill-color:#fff!important}
+#appSection #appNav .applications-dashboard button{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:700!important;text-shadow:0 1px 1px rgba(0,0,0,.28)!important}
+#appSection #appNav .applications-dashboard button.active,#appSection #appNav .applications-dashboard button.is-active,#appSection #appNav .applications-dashboard button[aria-pressed="true"]{background:linear-gradient(145deg,#1494e4,#004a83)!important;border:2px solid #9bd8ff!important;box-shadow:0 0 0 2px rgba(56,189,248,.2),0 0 15px rgba(14,165,233,.4)!important}
+#appSection #appNav .dashboard-welcome .userline{color:#123b5d!important;font-weight:700!important}
+#appSection #appNav .applications-dashboard,.applications-dashboard *{text-shadow:none!important}
+#appSection #appNav .applications-dashboard .subtext,#appSection #appNav .applications-dashboard small{color:#435d73!important}
+/* Minimal: remove decorative seasonal overlays that obstruct labels and controls */
+#teamRerSantaPeek,#teamRerChristmasSnow,.santa-peek,.santa-ready,#teamrerChristmasCountdown{display:none!important;visibility:hidden!important}
+/* User Management role selection: illuminate the selected role, irrespective of inline opacity */
+.user-control-card .user-role-switch.is-on,.user-role-switch.is-on{opacity:1!important;filter:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px rgba(0,0,0,.32)!important}
+.user-control-card .user-role-switch.super.is-on,.user-role-switch.super.is-on{background:linear-gradient(135deg,#16a34a,#08743a)!important;border:2px solid #86efac!important;box-shadow:0 0 0 2px rgba(134,239,172,.24),0 0 22px rgba(34,197,94,.62),inset 0 1px 0 rgba(255,255,255,.45)!important}
+.user-control-card .user-role-switch.admin.is-on,.user-role-switch.admin.is-on{background:linear-gradient(135deg,#0284c7,#075985)!important;border:2px solid #7dd3fc!important;box-shadow:0 0 0 2px rgba(125,211,252,.22),0 0 22px rgba(14,165,233,.62),inset 0 1px 0 rgba(255,255,255,.45)!important}
+.user-control-card .user-role-switch.user.is-on,.user-role-switch.user.is-on{background:linear-gradient(135deg,#ca8a04,#854d0e)!important;border:2px solid #fde68a!important;box-shadow:0 0 0 2px rgba(253,230,138,.22),0 0 22px rgba(234,179,8,.55),inset 0 1px 0 rgba(255,255,255,.45)!important}
+.user-control-card .user-role-switch:not(.is-on){opacity:.68!important;filter:saturate(.7)!important;color:#a9c2d8!important}
+@media(max-width:560px){#appSection #appNav .app-nav>button .nav-title{font-size:14px!important;line-height:1.28!important}}
 </style>
