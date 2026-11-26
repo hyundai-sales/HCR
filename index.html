@@ -11174,7 +11174,7 @@ body:not(.printing-quote) .applications-dashboard label {
  refreshItems();const observer=new MutationObserver(()=>refreshItems());observer.observe(nav,{attributes:true,attributeFilter:['class','style'],childList:true,subtree:false});
 })();
 </script>
-\n<style id="team-rer-carousel-refinement-v2">
+<style id="team-rer-carousel-refinement-v2">
 /* Refined compact, deeper glass carousel presentation */
 #appSection #teamRerModuleCarousel{max-width:620px;min-height:292px;margin:4px auto 12px!important}
 #appSection #teamRerModuleCarousel .rer-carousel-stage{height:246px!important;perspective:1800px!important}
@@ -11205,4 +11205,12 @@ body:not(.printing-quote) .applications-dashboard label {
 #appSection #teamRerModuleCarousel .rer-carousel-hint{font-size:11px!important;margin-top:5px!important;padding-bottom:5px!important}
 #appSection #teamRerModuleCarousel .rer-carousel-card.is-active::before{background:linear-gradient(115deg,rgba(255,255,255,.66),rgba(255,255,255,.12) 30%,transparent 55%,rgba(32,135,220,.22))!important}
 @media(max-width:600px){#appSection #teamRerModuleCarousel{min-height:264px!important}#appSection #teamRerModuleCarousel .rer-carousel-stage{height:220px!important}#appSection #teamRerModuleCarousel .rer-carousel-card{width:min(59vw,228px)!important;height:188px!important}#appSection #teamRerModuleCarousel .rer-card-icon{width:76px!important;height:76px!important;flex-basis:76px!important}}
+</style>
+
+<style id="credit-landing-hide-page-jump-controls-final">
+/* Hide floating Top/Bottom page-jump buttons on Credit Application landing and history screens. */
+#appSection:has(#creditPage:not(.hidden)) .page-jump-controls,
+#appSection:has(#creditHistoryPage:not(.hidden)) .page-jump-controls {
+  display:none!important;
+}
 </style>
