@@ -10894,3 +10894,61 @@ body:not(.printing-quote) .message{border:1px solid rgba(255,255,255,.85)!import
 .user-control-card .user-role-switch:not(.is-on){opacity:.68!important;filter:saturate(.7)!important;color:#a9c2d8!important}
 @media(max-width:560px){#appSection #appNav .app-nav>button .nav-title{font-size:14px!important;line-height:1.28!important}}
 </style>
+<style id="team-rer-priority-contrast-role-fix-20261126">
+/* PRIORITY FIX: readable text and visible selected role controls. CSS-only; no logic changes. */
+body:not(.printing-quote) { -webkit-font-smoothing:antialiased; }
+/* General text on pale/light module cards */
+body:not(.printing-quote) .card,
+body:not(.printing-quote) .credit-history-card,
+body:not(.printing-quote) .credit-section,
+body:not(.printing-quote) .quote-panel,
+body:not(.printing-quote) .quote-preview,
+body:not(.printing-quote) .dashboard-welcome,
+body:not(.printing-quote) .applications-dashboard {
+  color:#173b58!important;
+}
+body:not(.printing-quote) .card p,body:not(.printing-quote) .card small,
+body:not(.printing-quote) .card label,body:not(.printing-quote) .card span,
+body:not(.printing-quote) .dashboard-welcome p,body:not(.printing-quote) .dashboard-welcome small,
+body:not(.printing-quote) .applications-dashboard p,body:not(.printing-quote) .applications-dashboard small,
+body:not(.printing-quote) .applications-dashboard label {
+  opacity:1!important;text-shadow:none!important;
+}
+/* Dashboard statistic/selector text */
+#appSection #appNav .applications-dashboard,
+#appSection #appNav .applications-dashboard *:not(button):not(input):not(select):not(textarea) {
+  color:#173b58!important;-webkit-text-fill-color:#173b58!important;opacity:1!important;text-shadow:none!important;
+}
+#appSection #appNav .applications-dashboard button,
+#appSection #appNav .app-nav button { -webkit-text-fill-color:inherit!important; }
+#appSection #appNav .app-nav button .nav-title,
+#appSection #appNav .app-nav button .nav-copy {color:#123b5d!important;-webkit-text-fill-color:#123b5d!important;opacity:1!important;font-weight:650!important}
+/* Dark module shells: force supporting copy to a readable light color. */
+#appSection .section-description,#appSection .module-description,
+#appSection .page-description,#appSection .helper-text,
+#appSection .user-control-label,#appSection .user-control-empty,
+#appSection .user-control-email,#appSection .user-management-toolbar,
+#appSection #usersPage p,#appSection #userManagementPage p {
+  color:#d5e6f5!important;-webkit-text-fill-color:#d5e6f5!important;opacity:1!important;text-shadow:none!important
+}
+/* Actual selected role state uses .is-on and aria-pressed=true from the existing renderer. */
+.user-control-card .user-role-switch { opacity:1!important;filter:none!important; }
+.user-control-card .user-role-switch:not(.is-on) {background:linear-gradient(145deg,#19364f,#10263a)!important;color:#d8e7f5!important;-webkit-text-fill-color:#d8e7f5!important;border:1px solid #64829a!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.28)!important}
+.user-control-card .user-role-switch.is-on,
+.user-control-card .user-role-switch[aria-pressed="true"] {
+  opacity:1!important;filter:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;
+  border:2px solid #c7edff!important;background:linear-gradient(135deg,#087bc5,#003b70)!important;
+  box-shadow:0 0 0 2px rgba(125,211,252,.38),0 0 20px rgba(14,165,233,.7),inset 0 1px 0 rgba(255,255,255,.5)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.4)!important
+}
+.user-control-card .user-role-switch.super.is-on,.user-control-card .user-role-switch.super[aria-pressed="true"] {background:linear-gradient(135deg,#16a34a,#08743a)!important;border-color:#a7f3d0!important;box-shadow:0 0 0 2px rgba(134,239,172,.4),0 0 22px rgba(34,197,94,.7)!important}
+.user-control-card .user-role-switch.admin.is-on,.user-control-card .user-role-switch.admin[aria-pressed="true"] {background:linear-gradient(135deg,#0284c7,#075985)!important;border-color:#bae6fd!important;box-shadow:0 0 0 2px rgba(125,211,252,.4),0 0 22px rgba(14,165,233,.7)!important}
+.user-control-card .user-role-switch.user.is-on,.user-control-card .user-role-switch.user[aria-pressed="true"] {background:linear-gradient(135deg,#ca8a04,#854d0e)!important;border-color:#fde68a!important;box-shadow:0 0 0 2px rgba(253,230,138,.4),0 0 22px rgba(234,179,8,.65)!important}
+/* Ensure status controls remain legible and their selected state glows */
+.user-control-card .user-active-switch.is-on,.user-control-card .user-active-switch[aria-pressed="true"] {opacity:1!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid #b9f6d1!important;box-shadow:0 0 0 2px rgba(134,239,172,.34),0 0 18px rgba(34,197,94,.62)!important}
+@media(max-width:600px){
+  body:not(.printing-quote) .card,body:not(.printing-quote) .applications-dashboard {font-size:16px!important;line-height:1.45!important}
+  #appSection #appNav .app-nav button .nav-title {font-size:15px!important;line-height:1.35!important;font-weight:700!important}
+  .user-control-card .user-role-switch {font-size:12px!important;min-height:42px!important}
+}
+</style>
