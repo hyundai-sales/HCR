@@ -2861,6 +2861,16 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
 .user-active-switch.off.is-on { color:#fff !important; opacity:1 !important; background:linear-gradient(135deg,#dc2626,#991b1b) !important; border:2px solid #fca5a5 !important; box-shadow:0 0 0 2px rgba(252,165,165,.2),0 0 20px rgba(239,68,68,.5) !important; }
 .user-role-switch:not(.is-on), .user-active-switch:not(.is-on) { opacity:.48 !important; filter:saturate(.45) !important; }
 </style>
+
+<style id="TEAMRERCombinedCreditApplicationsUI">
+/* UI-only consolidation: retain existing history module and handler. */
+#appNav #creditHistoryTabBtn { display:none !important; }
+#creditPage .combined-credit-actions { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 14px; }
+#creditPage .combined-credit-actions button { flex:1 1 180px; min-height:44px; border-radius:14px; font-weight:700; }
+#creditPage #openSavedCreditApplications { background:linear-gradient(135deg,#0878c9,#064d85); color:#fff; border:1px solid #56b8ff; box-shadow:0 0 12px rgba(0,123,255,.28); }
+@media(max-width:600px){#creditPage .combined-credit-actions button{flex:1 1 100%;}}
+</style>
+
 </head>
 <body>
 <button id="adminManualLock" class="admin-manual-lock hidden" type="button" aria-label="Lock admin workspace" title="Lock admin workspace">
@@ -3308,6 +3318,8 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         </section>
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
+          <div class="combined-credit-actions"><button id="openSavedCreditApplications" type="button">Saved Applications</button></div>
+
           <div class="credit-module-frame">
           <div class="credit-freeze-pane">
             <p class="app-caption credit-instructions">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
@@ -3360,6 +3372,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         <section id="creditHistoryPage" class="hidden">
           <button id="backToMenuFromHistory" class="secondary" type="button">Back to Menu</button>
           <h2 class="section-title">Credit Application History</h2>
+          
           <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
           <div class="credit-section">
             <div class="credit-grid">
@@ -5210,6 +5223,9 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
       $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; creditAutoSaveLastPayload="";  syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
     }));
+
+    const combinedCreditHistoryBtn = document.getElementById("openSavedCreditApplications");
+    if (combinedCreditHistoryBtn) combinedCreditHistoryBtn.addEventListener("click", () => $("creditHistoryTabBtn").click());
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
       if (fields.some(el => String(el.value || "").trim() !== "")) return true;
