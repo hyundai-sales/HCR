@@ -10884,8 +10884,7 @@ body:not(.printing-quote) .message{border:1px solid rgba(255,255,255,.85)!import
 #appSection #appNav .dashboard-welcome .userline{color:#123b5d!important;font-weight:700!important}
 #appSection #appNav .applications-dashboard,.applications-dashboard *{text-shadow:none!important}
 #appSection #appNav .applications-dashboard .subtext,#appSection #appNav .applications-dashboard small{color:#435d73!important}
-/* Minimal: remove decorative seasonal overlays that obstruct labels and controls */
-#teamRerSantaPeek,#teamRerChristmasSnow,.santa-peek,.santa-ready,#teamrerChristmasCountdown{display:none!important;visibility:hidden!important}
+/* Restore Christmas decorations: Santa, snowfall, and countdown remain enabled. */
 /* User Management role selection: illuminate the selected role, irrespective of inline opacity */
 .user-control-card .user-role-switch.is-on,.user-role-switch.is-on{opacity:1!important;filter:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px rgba(0,0,0,.32)!important}
 .user-control-card .user-role-switch.super.is-on,.user-role-switch.super.is-on{background:linear-gradient(135deg,#16a34a,#08743a)!important;border:2px solid #86efac!important;box-shadow:0 0 0 2px rgba(134,239,172,.24),0 0 22px rgba(34,197,94,.62),inset 0 1px 0 rgba(255,255,255,.45)!important}
@@ -10951,4 +10950,18 @@ body:not(.printing-quote) .applications-dashboard label {
   #appSection #appNav .app-nav button .nav-title {font-size:15px!important;line-height:1.35!important;font-weight:700!important}
   .user-control-card .user-role-switch {font-size:12px!important;min-height:42px!important}
 }
+</style>
+
+<style id="team-rer-targeted-period-role-contrast-fix">
+/* Target the real period-button markup (data-app-period), avoiding generic button rules. */
+#appSection [data-app-period]{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px rgba(0,0,0,.4)!important;opacity:1!important;background:linear-gradient(145deg,#087bc5,#003b70)!important;border:1px solid #70c7ff!important}
+#appSection [data-app-period][aria-pressed="true"],#appSection [data-app-period].active{color:#fff!important;-webkit-text-fill-color:#fff!important;background:linear-gradient(145deg,#1494e4,#004a83)!important;border:2px solid #b8e5ff!important;box-shadow:0 0 0 2px rgba(56,189,248,.28),0 0 18px rgba(14,165,233,.55),inset 0 1px 0 rgba(255,255,255,.45)!important}
+/* Role buttons: active role is high-contrast and illuminated; inactive roles remain legible. */
+.user-role-switch{opacity:1!important;filter:none!important}
+.user-role-switch:not(.is-on){color:#e4f1fc!important;-webkit-text-fill-color:#e4f1fc!important;background:linear-gradient(145deg,#183b56,#10283c)!important;border:1px solid #6b8da7!important}
+.user-role-switch.is-on{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px rgba(0,0,0,.42)!important;border:2px solid #fff!important}
+.user-role-switch.super.is-on{background:linear-gradient(135deg,#16a34a,#08743a)!important;border-color:#b7ffd1!important;box-shadow:0 0 0 2px rgba(134,239,172,.38),0 0 24px rgba(34,197,94,.68),inset 0 1px 0 rgba(255,255,255,.5)!important}
+.user-role-switch.admin.is-on{background:linear-gradient(135deg,#0284c7,#075985)!important;border-color:#c0edff!important;box-shadow:0 0 0 2px rgba(125,211,252,.38),0 0 24px rgba(14,165,233,.68),inset 0 1px 0 rgba(255,255,255,.5)!important}
+.user-role-switch.user.is-on{background:linear-gradient(135deg,#ca8a04,#854d0e)!important;border-color:#fff0a8!important;box-shadow:0 0 0 2px rgba(253,230,138,.38),0 0 24px rgba(234,179,8,.62),inset 0 1px 0 rgba(255,255,255,.5)!important}
+@media(max-width:600px){#appSection [data-app-period]{font-size:14px!important;min-height:44px!important}}
 </style>
