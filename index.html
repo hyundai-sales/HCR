@@ -1790,6 +1790,14 @@
     /* CPL Add workspace: wait for Add Entry before exposing fields; no Client Entry numbered heading */
     #cplPage #cplEntryRows.hidden, #cplPage .cpl-form-bottom.hidden { display:none!important; }
     #cplPage .cpl-entry-card:not([data-retrieved]) .cpl-entry-card-head strong { display:none!important; }
+
+    /* Credit Application draft auto-save status */
+    .credit-autosave-status{display:block;margin:8px 4px 12px;padding:8px 12px;border-radius:12px;font-size:14px;font-weight:600;color:#003b70;background:rgba(255,255,255,.88);border:1px solid rgba(0,59,112,.18);text-align:left}
+    .credit-autosave-status[data-state="saving"]{color:#8a5200;background:#fff7e8;border-color:#e4b86b}
+    .credit-autosave-status[data-state="saved"]{color:#087443;background:#eaf8f0;border-color:#82c9a2}
+    .credit-autosave-status[data-state="error"]{color:#9b1c1c;background:#fff0f0;border-color:#e7a1a1}
+    .credit-autosave-status[data-state="idle"]{color:#003b70}
+
 </style>
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
@@ -3341,6 +3349,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
             </div>
           </div>
           </div>
+          <div id="creditAutoSaveStatus" class="credit-autosave-status" aria-live="polite">Draft auto-save is ready</div>
           <div id="creditFormFields" class="hidden"></div>
           <button id="saveCreditBtn" class="hidden" type="button">Save</button>
           <button id="cancelCreditBtn" class="hidden secondary" type="button">Cancel</button>
@@ -4129,6 +4138,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
             $("applicationsDashboardNote").textContent = error;
             return;
           }
+          if (action === "creditDraftAutoSave") { return; }
           if (["creditHistoryList","creditHistoryGet","creditHistoryPdf","creditHistorySave"].includes(action)) {
             if(action === "creditHistoryPdf") setCplPdfBusy(false);
             setMessage($("creditHistoryMessage"), error, "error");
@@ -4464,6 +4474,9 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         setMessage($("creditMessage"),"Application saved successfully.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
         return;
+      }
+      if (action === "creditDraftAutoSave") {
+        return; // Draft autosave is intentionally silent; its status is shown in the Credit Application form.
       }
 
       if (action === "auditLogsGet") {
@@ -5195,7 +5208,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     });
 
     $("creditTabBtn").addEventListener("click",()=>runPageTransition("Opening Credit Application...",()=>{
-      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId="";  syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
+      $("appNav").classList.add("hidden"); $("pdfPage").classList.add("hidden"); $("quotePage").classList.add("hidden"); $("promoPage").classList.add("hidden"); $("auditPage").classList.add("hidden"); $("creditPage").classList.remove("hidden"); currentCreditApplicationId=""; creditAutoSaveLastPayload="";  syncCreditConsultantForRole(); buildCreditForm(); $("creditApplicationMode").value="new"; syncCreditModeButtons(); $("creditPreviousApplicationWrap").classList.add("hidden"); setCreditEditorStage("closed");
     }));
     function creditFormHasEntries() {
       const fields = Array.from(document.querySelectorAll("#creditFormFields [data-cell]"));
@@ -5601,7 +5614,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     }
 
     function cancelCreditEditor() {
-      currentCreditApplicationId = "";
+      clearTimeout(creditAutoSaveTimer); creditAutoSaveLastPayload=""; currentCreditApplicationId = "";
       if ($("creditApplicationMode")) $("creditApplicationMode").value = "new";
       syncCreditModeButtons();
       $("creditPreviousApplicationWrap")?.classList.add("hidden");
@@ -5624,6 +5637,51 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     $("creditFormFields").addEventListener("input", markCreditApplicationDirty);
     $("creditFormFields").addEventListener("change", markCreditApplicationDirty);
     $("creditConsultant").addEventListener("change", markCreditApplicationDirty);
+
+    // Draft auto-save: quietly persist incomplete applications without PDF validation or revision spam.
+    let creditAutoSaveTimer = null;
+    let creditAutoSaveInFlight = false;
+    let creditAutoSavePending = false;
+    let creditAutoSaveLastPayload = "";
+    function setCreditAutoSaveStatus(state, message) {
+      const el = $("creditAutoSaveStatus"); if (!el) return;
+      el.dataset.state = state; el.textContent = message;
+    }
+    async function runCreditDraftAutoSave() {
+      if (!creditFormHasEntries() || !currentCreditApplicationId && !String(collectCreditApplication().consultant || "").trim()) {
+        setCreditAutoSaveStatus("idle", "Draft auto-save ready — enter application details to begin."); return;
+      }
+      const data = collectCreditApplication();
+      if (!String(data.consultant || "").trim()) {
+        setCreditAutoSaveStatus("idle", "Choose a Sales Consultant to auto-save this draft."); return;
+      }
+      const payload = JSON.stringify({applicationData:data,applicationId:currentCreditApplicationId});
+      if (payload === creditAutoSaveLastPayload) return;
+      if (creditAutoSaveInFlight) { creditAutoSavePending = true; return; }
+      creditAutoSaveInFlight = true; creditAutoSavePending = false;
+      setCreditAutoSaveStatus("saving", "Saving draft…");
+      try {
+        const result = await submitRequest("creditDraftAutoSave", {applicationData:data,applicationId:currentCreditApplicationId,silent:true});
+        const saved = result.creditDraftAutoSave || {};
+        if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
+        creditAutoSaveLastPayload = payload;
+        setCreditAutoSaveStatus("saved", "Draft saved automatically");
+      } catch (err) {
+        setCreditAutoSaveStatus("error", "Auto-save failed — keep this page open and retry.");
+      } finally {
+        creditAutoSaveInFlight = false;
+        if (creditAutoSavePending) scheduleCreditDraftAutoSave(250);
+      }
+    }
+    function scheduleCreditDraftAutoSave(delay=1600) {
+      clearTimeout(creditAutoSaveTimer);
+      creditAutoSaveTimer = setTimeout(runCreditDraftAutoSave, delay);
+    }
+    $("creditFormFields").addEventListener("input", () => scheduleCreditDraftAutoSave());
+    $("creditFormFields").addEventListener("change", () => scheduleCreditDraftAutoSave(500));
+    $("creditConsultant").addEventListener("change", () => scheduleCreditDraftAutoSave(500));
+    // Persist the latest value when a field is left, while keeping requests serialized.
+    $("creditFormFields").addEventListener("focusout", () => scheduleCreditDraftAutoSave(350));
 
     function resetCreditApplicationForNew() {
       currentCreditApplicationId = "";
