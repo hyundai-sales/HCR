@@ -5629,7 +5629,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       const generateBtn = $("generateCreditBtn");
       const editingForm = stage !== "closed";
       fields.classList.toggle("hidden", !editingForm);
-      if (panel) panel.classList.toggle("hidden", editingForm);
+      if (panel) panel.classList.toggle("hidden", !editingForm);
       saveBtn.classList.toggle("hidden", stage !== "save");
       cancelBtn.classList.toggle("hidden", !editingForm);
       generateBtn.classList.toggle("hidden", stage !== "generate");
