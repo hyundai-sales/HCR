@@ -11137,3 +11137,39 @@ body:not(.printing-quote) .applications-dashboard label {
  #appSection #userManagementPage .user-control-card .user-role-switches button.user-role-switch{min-height:44px!important;font-size:12px!important;padding:8px 4px!important}
 }
 </style>
+
+
+<style id="team-rer-3d-glass-carousel">
+#appSection #appNav.app-nav{display:block!important;}
+#appSection #appNav.app-nav>button{display:none!important;}
+#appSection #teamRerModuleCarousel{position:relative;margin:18px auto 22px;width:100%;max-width:760px;min-height:320px;overflow:hidden;touch-action:pan-y;user-select:none;}
+#appSection #teamRerModuleCarousel .rer-carousel-stage{position:relative;height:300px;perspective:1100px;display:flex;align-items:center;justify-content:center;}
+#appSection #teamRerModuleCarousel .rer-carousel-card{position:absolute;width:min(62vw,270px);height:245px;max-width:270px;border-radius:28px;border:1px solid rgba(255,255,255,.64);background:linear-gradient(145deg,rgba(255,255,255,.48),rgba(160,205,239,.16) 45%,rgba(14,65,115,.34));box-shadow:0 24px 45px rgba(0,35,80,.26),inset 0 1px 2px rgba(255,255,255,.75),inset 0 -1px 2px rgba(14,60,110,.18);backdrop-filter:blur(18px) saturate(1.45);-webkit-backdrop-filter:blur(18px) saturate(1.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#103e67!important;-webkit-text-fill-color:#103e67!important;transition:transform .38s cubic-bezier(.2,.8,.2,1),opacity .35s,filter .35s;cursor:pointer;}
+#appSection #teamRerModuleCarousel .rer-carousel-card.is-active{border:2px solid rgba(255,255,255,.92);box-shadow:0 0 0 3px rgba(91,190,255,.25),0 28px 60px rgba(0,40,95,.36),inset 0 1px 3px rgba(255,255,255,.8);}
+#appSection #teamRerModuleCarousel .rer-carousel-card .rer-card-icon{width:112px;height:112px;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.52),rgba(80,158,225,.2));border:1px solid rgba(255,255,255,.75);box-shadow:0 16px 30px rgba(0,40,90,.22),inset 0 2px 4px rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;}
+#appSection #teamRerModuleCarousel .rer-card-icon svg{width:78px;height:78px;stroke:#0d5c9c;stroke-width:1.8;filter:drop-shadow(0 4px 5px rgba(0,50,100,.18));}
+#appSection #teamRerModuleCarousel .rer-card-icon .nav-icon{display:none!important;}
+#appSection #teamRerModuleCarousel .rer-card-title{font-size:clamp(16px,4.3vw,22px);font-weight:800;text-align:center;color:#103e67!important;-webkit-text-fill-color:#103e67!important;text-shadow:0 1px 0 rgba(255,255,255,.65);padding:0 10px;}
+#appSection #teamRerModuleCarousel .rer-carousel-dots{display:flex;justify-content:center;gap:9px;margin-top:2px;}
+#appSection #teamRerModuleCarousel .rer-carousel-dot{width:9px;height:9px;border-radius:50%;border:0;background:rgba(17,65,108,.28);padding:0;min-width:0;box-shadow:none;}
+#appSection #teamRerModuleCarousel .rer-carousel-dot.is-active{background:#1678c8;box-shadow:0 0 0 4px rgba(22,120,200,.15);}
+#appSection #teamRerModuleCarousel .rer-carousel-hint{text-align:center;font-size:13px;opacity:.85;margin-top:13px;}
+@media(max-width:600px){#appSection #teamRerModuleCarousel{min-height:290px;margin-top:8px;}#appSection #teamRerModuleCarousel .rer-carousel-stage{height:270px;}#appSection #teamRerModuleCarousel .rer-carousel-card{height:220px;width:min(65vw,250px);}#appSection #teamRerModuleCarousel .rer-card-icon{width:96px;height:96px;}#appSection #teamRerModuleCarousel .rer-card-icon svg{width:68px;height:68px;}}
+@media(prefers-reduced-motion:reduce){#appSection #teamRerModuleCarousel .rer-carousel-card{transition:none!important;}}
+</style>
+
+
+<script id="team-rer-3d-glass-carousel">
+(function(){
+ const nav=document.getElementById('appNav'); if(!nav||window.__teamRerGlassCarousel)return;window.__teamRerGlassCarousel=true;
+ const names=['Price List','Vehicle Quotation','Credit Application','Credit Application History','Promos and Vehicle Info','Activity Logs','Organizational Chart','User Management','Client Probing Log'];
+ const host=document.createElement('div');host.id='teamRerModuleCarousel';host.setAttribute('aria-label','Swipe to select a TEAM RER module');
+ const stage=document.createElement('div');stage.className='rer-carousel-stage';const dots=document.createElement('div');dots.className='rer-carousel-dots';const hint=document.createElement('div');hint.className='rer-carousel-hint';hint.textContent='Swipe to browse • Tap the center card to open';host.append(stage,dots,hint);nav.insertBefore(host,nav.firstChild);
+ let items=[],idx=0,downX=null,downY=null,lastSwipeAt=0;
+ function refreshItems(){items=Array.from(nav.querySelectorAll(':scope > button')).filter(b=>!b.classList.contains('hidden')&&getComputedStyle(b).display!=='none'&&b.id!=='logoutBtn').map(b=>({button:b,title:(b.querySelector('.nav-title')?.textContent||b.textContent||'Module').trim(),icon:b.querySelector('.nav-icon')?.cloneNode(true)}));if(idx>=items.length)idx=Math.max(0,items.length-1);render();}
+ function render(){stage.replaceChildren();dots.replaceChildren();if(!items.length){host.classList.add('hidden');return;}host.classList.remove('hidden');items.forEach((it,i)=>{let card=document.createElement('button');card.type='button';card.className='rer-carousel-card'+(i===idx?' is-active':'');card.setAttribute('aria-label',it.title+(i===idx?' selected':''));let offset=i-idx;let wrap=Math.abs(offset)>1;card.style.opacity=wrap?'0':offset===0?'1':'.68';card.style.zIndex=String(20-Math.abs(offset));card.style.transform='translateX('+offset*72+'%) translateZ('+(-Math.abs(offset)*150)+'px) rotateY('+(offset*-28)+'deg) scale('+(offset===0?1:.78)+')';card.style.pointerEvents=wrap?'none':'auto';let iconWrap=document.createElement('div');iconWrap.className='rer-card-icon';if(it.icon){iconWrap.appendChild(it.icon);let svg=iconWrap.querySelector('svg');if(svg){svg.removeAttribute('class');svg.removeAttribute('style');}}else iconWrap.textContent='◇';let title=document.createElement('div');title.className='rer-card-title';title.textContent=it.title;card.append(iconWrap,title);card.addEventListener('click',()=>{if(Date.now()-lastSwipeAt<450)return;if(i!==idx){idx=i;render();}else{it.button.click();}});stage.append(card);let dot=document.createElement('button');dot.type='button';dot.className='rer-carousel-dot'+(i===idx?' is-active':'');dot.setAttribute('aria-label','Select '+it.title);dot.addEventListener('click',()=>{idx=i;render();});dots.append(dot);});}
+ function move(delta){if(!items.length)return;idx=(idx+delta+items.length)%items.length;render();}
+ host.addEventListener('pointerdown',e=>{downX=e.clientX;downY=e.clientY;});host.addEventListener('pointerup',e=>{if(downX===null)return;let dx=e.clientX-downX,dy=e.clientY-downY;if(Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)){lastSwipeAt=Date.now();move(dx<0?1:-1);}downX=downY=null;});host.addEventListener('pointercancel',()=>{downX=downY=null;});host.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();move(1);}else if(e.key==='ArrowLeft'){e.preventDefault();move(-1);}});
+ refreshItems();const observer=new MutationObserver(refreshItems);observer.observe(nav,{attributes:true,attributeFilter:['class','style'],childList:true});
+})();
+</script>
