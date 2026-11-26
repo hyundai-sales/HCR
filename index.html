@@ -3330,7 +3330,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
           <h2 class="section-title credit-main-title">Credit Application</h2>
           <div class="combined-credit-actions"><button id="startNewCreditApplication" type="button">New Application</button><button id="openSavedCreditApplications" type="button">Saved Applications</button></div>
 
-          <div class="credit-module-frame">
+          <div id="creditModuleFrame" class="credit-module-frame">
           <div class="credit-freeze-pane">
             <p class="app-caption credit-instructions">Complete every field before generating the application PDF. Enter N/A where a detail does not apply. Customer information is only used temporarily to generate the PDF.</p>
           </div>
@@ -5302,6 +5302,12 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
 
     $("backToMenuFromCredit").addEventListener("click", () => {
       hideCreditToast();
+      const stage = String($("creditPage")?.dataset.creditStage || "closed");
+      if (stage !== "closed") {
+        setCreditEditorStage("closed");
+        window.scrollTo({top:0,behavior:"smooth"});
+        return;
+      }
       if (creditFormHasEntries()) showCreditLeaveConfirmation();
       else returnToMainMenuFromCredit();
     });
@@ -5630,14 +5636,24 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     function setCreditEditorStage(stage) {
       const fields = $("creditFormFields");
       const panel = $("creditSelectionPanel");
+      const frame = $("creditModuleFrame");
+      const actions = document.querySelector("#creditPage .combined-credit-actions");
       const saveBtn = $("saveCreditBtn");
       const cancelBtn = $("cancelCreditBtn");
       const generateBtn = $("generateCreditBtn");
+      const backBtn = $("backToMenuFromCredit");
       const editingForm = stage !== "closed";
       const creditPage = $("creditPage");
-      if (creditPage) creditPage.classList.toggle("credit-editor-closed", !editingForm);
-      fields.classList.toggle("hidden", !editingForm);
+      if (creditPage) {
+        creditPage.classList.toggle("credit-editor-closed", !editingForm);
+        creditPage.dataset.creditStage = stage;
+      }
+      // Explicit display control prevents module styles from overriding the landing-page hide state.
+      if (frame) frame.style.setProperty("display", editingForm ? "" : "none", editingForm ? "" : "important");
+      if (actions) actions.style.setProperty("display", editingForm ? "none" : "", editingForm ? "important" : "");
+      if (fields) fields.classList.toggle("hidden", !editingForm);
       if (panel) panel.classList.toggle("hidden", !editingForm);
+      if (backBtn) backBtn.textContent = editingForm ? "Back to Credit Application" : "Back to Menu";
       saveBtn.classList.toggle("hidden", stage !== "save");
       cancelBtn.classList.toggle("hidden", !editingForm);
       generateBtn.classList.toggle("hidden", stage !== "generate");
@@ -5912,7 +5928,8 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       });
       if(data.spouseNa===true && $("credit_spouse_na")) $("credit_spouse_na").checked=true;
       const revisionSummary=(record.revisions || []).map(r=>"v"+r.revision+" • "+r.savedAt+" • "+r.changeType).join(" | ");
-      setMessage($("creditMessage"),"Application "+currentCreditApplicationId+" loaded. Review the details, make edits, then generate the updated PDF."+(revisionSummary ? " Revision history: "+revisionSummary : ""),"success");
+      setMessage($("creditMessage"),"Saved application opened. Review or edit the details, then save or generate the PDF.","success");
+      if (typeof showTeamRerDynamicIsland === "function") showTeamRerDynamicIsland("Application opened • Review / Edit");
       window.scrollTo({top:0,behavior:"smooth"});
     }
 
