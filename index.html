@@ -4460,8 +4460,9 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (action === "creditHistorySave") {
         const saved = event.data.creditHistorySave || {};
         if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
-        setCreditEditorStage("closed");
-        setMessage($("creditMessage"),"Application saved successfully.","success");
+        // Keep the form open after draft save and reveal the PDF generation action.
+        setCreditEditorStage("generate");
+        setMessage($("creditMessage"),"Application details saved. Review the form, then tap Generate Application PDF.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
         return;
       }
