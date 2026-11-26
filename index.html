@@ -2865,7 +2865,8 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
 <style id="TEAMRERCombinedCreditApplicationsUI">
 /* UI-only consolidation: retain existing history module and handler. */
 #appNav #creditHistoryTabBtn { display:none !important; }
-#creditPage .combined-credit-actions { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 14px; }
+#creditPage .credit-main-title { position:relative !important; margin:8px 0 12px !important; text-align:center !important; }
+#creditPage .combined-credit-actions { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 14px; }
 #creditPage .combined-credit-actions button { flex:1 1 180px; min-height:44px; border-radius:14px; font-weight:700; }
 #creditPage .credit-mode-field { display:none !important; }
 #creditPage #startNewCreditApplication { background:linear-gradient(135deg,#0b6eaf,#003b70); color:#fff; border:1px solid #70b9ee; }
@@ -3320,6 +3321,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         </section>
         <section id="creditPage" class="hidden">
           <button id="backToMenuFromCredit" class="secondary" type="button">Back to Menu</button>
+          <h2 class="section-title credit-main-title">Credit Application</h2>
           <div class="combined-credit-actions"><button id="startNewCreditApplication" type="button">New Application</button><button id="openSavedCreditApplications" type="button">Saved Applications</button></div>
 
           <div class="credit-module-frame">
@@ -3372,7 +3374,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
           </div>
         </section>
         <section id="creditHistoryPage" class="hidden">
-          <button id="backToMenuFromHistory" class="secondary" type="button">Back to Menu</button>
+          <button id="backToMenuFromHistory" class="secondary" type="button">Back to Credit Application</button>
           <h2 class="section-title">Credit Application History</h2>
           
           <p class="app-caption">Search saved applications. Select Review to reopen the form, make changes, and generate an updated PDF. Access is restricted by your TEAM RER role.</p>
@@ -5612,9 +5614,12 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       loadCreditHistory();
     }
     $("creditHistoryTabBtn").addEventListener("click",()=>runPageTransition("Opening Application History...",openCreditHistory));
-    $("backToMenuFromHistory").addEventListener("click",()=>{
-      $("creditHistoryPage").classList.add("hidden"); $("appNav").classList.remove("hidden");
-    });
+    $("backToMenuFromHistory").addEventListener("click",()=>runPageTransition("Returning to Credit Application...",()=>{
+      $("creditHistoryPage").classList.add("hidden");
+      $("appNav").classList.add("hidden");
+      $("creditPage").classList.remove("hidden");
+      setCreditEditorStage("closed");
+    }));
 
     function setCreditEditorStage(stage) {
       const fields = $("creditFormFields");
