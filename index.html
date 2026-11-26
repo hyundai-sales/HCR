@@ -5856,11 +5856,20 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         if(!Array.from(variant.options).some(o=>o.value===data.vehicleVariant)){const o=document.createElement("option");o.value=data.vehicleVariant;o.textContent=data.vehicleVariant;variant.appendChild(o);}
         variant.value=data.vehicleVariant;
       }
+      // Rebuild the dependent color options before restoring the saved color value.
+      refreshCreditVehicleDropdowns();
+      updateCreditColorDropdown();
+      const savedColor = String((data.values || {})["K14"] || "").trim();
       Object.entries(data.values || {}).forEach(([cell,value])=>{
-        if(cell === "E14:I14") return; // Vehicle Model is restored from the separately saved model field.
+        if(cell === "E14:I14" || cell === "K14") return; // Model and color are restored after their dependent dropdowns.
         const field=Array.from(document.querySelectorAll("#creditFormFields [data-cell]")).find(el=>el.dataset.cell===cell);
         if(field) field.value=value == null ? "" : String(value);
       });
+      const colorField=document.querySelector('#creditFormFields [data-cell="K14"]');
+      if(colorField && savedColor){
+        if(!Array.from(colorField.options).some(o=>o.value===savedColor)){const o=document.createElement("option");o.value=savedColor;o.textContent=savedColor;colorField.appendChild(o);}
+        colorField.value=savedColor;
+      }
       creditChoiceGroups.forEach((group,index)=>{
         const selected=group.options.find(([cell])=>data.checkboxes && data.checkboxes[cell]===true);
         if(selected){const radio=document.querySelector('input[name="credit_choice_'+index+'"][value="'+CSS.escape(selected[0])+'"]');if(radio)radio.checked=true;}
