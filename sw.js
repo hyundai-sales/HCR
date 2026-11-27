@@ -3468,7 +3468,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     // TEAM RER push-notification opt-in (Admin and Super Admin only).
     // Stage 1: obtains an FCM device token. Secure backend token registration/sending
     // is intentionally not embedded here and must be configured separately.
-    const TEAM_RER_FCM_VAPID_KEY = "REPLACE_WITH_FIREBASE_WEB_PUSH_VAPID_KEY";
+    const TEAM_RER_FCM_VAPID_KEY = "BJsI4CpDxMhAIt1GN_zqBhBj9OraoysPRD0l9ckbF9aMLJejNyDLWfYyEW5CJ_kvB7cnIX4D7oVjEsSTwIOD5BM";
     let teamRerMessaging = null;
     let teamRerPushMessageUnsubscribe = null;
     function teamRerRoleIsPushAdmin(role) {
