@@ -3483,8 +3483,6 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       const host = document.getElementById("appNav");
       const welcome = host && host.querySelector(".dashboard-welcome");
       if (!host || !welcome) {
-        // Retry for longer, and avoid a tight retry loop. The auth bridge may resolve
-        // before dashboard markup has finished painting.
         if (!window.__teamRerPushPanelRetryCount) window.__teamRerPushPanelRetryCount = 0;
         if (window.__teamRerPushPanelRetryCount < 120) {
           window.__teamRerPushPanelRetryCount++;
@@ -3496,65 +3494,79 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       const panel = document.createElement("div");
       panel.id = "teamRerPushOptIn";
       panel.style.cssText = "margin:12px 0;padding:14px;border:1px solid rgba(65,145,205,.45);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
-      const pushSavedToken = localStorage.getItem("TEAM_RER_FCM_PENDING_TOKEN");
-      const pushSavedEmail = localStorage.getItem("TEAM_RER_FCM_PENDING_EMAIL");
-      const pushPermissionGranted = ("Notification" in window) && Notification.permission === "granted";
-      const pushPreviouslyRegistered = !!pushSavedToken && !!pushSavedEmail && pushPermissionGranted && String(pushSavedEmail).toLowerCase() === String(authorizedUser.email || "").toLowerCase();
-      panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" role="status" aria-live="polite" style="font-size:13px;margin-bottom:9px">' + (pushPreviouslyRegistered ? 'Notifications are enabled for this browser.' : 'Device notification setup for Admin and Super Admin only.') + '</div>' + (pushPreviouslyRegistered ? '' : '<button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable Notifications</button>');
+      panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" role="status" aria-live="polite" style="font-size:13px;margin-bottom:9px">Checking notification registration...</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable / Repair Notifications</button>';
       welcome.insertAdjacentElement("afterend", panel);
       const btn = panel.querySelector("#teamRerEnablePush");
       const status = panel.querySelector("#teamRerPushStatus");
-      if (!btn) return; // Existing registration for this signed-in admin; do not re-show opt-in.
+
+      const showPushMessage = (message) => { if (status) status.textContent = message; };
+      const startPushListener = () => {
+        if (!teamRerMessaging) teamRerMessaging = getMessaging(app);
+        if (teamRerPushMessageUnsubscribe) teamRerPushMessageUnsubscribe();
+        teamRerPushMessageUnsubscribe = onMessage(teamRerMessaging, payload => {
+          const title = payload.notification && payload.notification.title || "TEAM RER";
+          const body = payload.notification && payload.notification.body || "You have a new notification.";
+          try { if (Notification.permission === "granted") new Notification(title, {body, icon:"./favicon.ico", data:payload.data || {}}); } catch (_) {}
+        });
+      };
+      const registerPushToken = async (showProgress) => {
+        if (!teamRerRoleIsPushAdmin(authorizedUser && authorizedUser.role)) throw new Error("Push setup is restricted to Admin and Super Admin.");
+        if (!window.isSecureContext) throw new Error("This app must be opened over HTTPS to enable notifications.");
+        if (!("serviceWorker" in navigator) || !("Notification" in window)) throw new Error("This browser does not support push notifications.");
+        if (!TEAM_RER_FCM_VAPID_KEY || TEAM_RER_FCM_VAPID_KEY.startsWith("REPLACE_")) throw new Error("The Firebase public Web Push key is missing.");
+        if (Notification.permission !== "granted") {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") throw new Error(permission === "denied" ? "Notifications are blocked in browser settings. Please allow them for this site." : "Notification permission was not granted.");
+        }
+        if (showProgress) showPushMessage("Checking service worker...");
+        let registration = await navigator.serviceWorker.getRegistration("./");
+        if (!registration) registration = await navigator.serviceWorker.register("./sw.js", {scope:"./"});
+        registration = await navigator.serviceWorker.ready;
+        if (!registration.active) throw new Error("The service worker is not active yet. Reload and retry.");
+        if (showProgress) showPushMessage("Refreshing Firebase device token...");
+        teamRerMessaging = getMessaging(app);
+        const token = await getToken(teamRerMessaging, {vapidKey:TEAM_RER_FCM_VAPID_KEY, serviceWorkerRegistration:registration});
+        if (!token) throw new Error("Firebase did not return a device token. Check Firebase Messaging and the service worker.");
+        const firebaseUser = auth.currentUser;
+        if (!firebaseUser) throw new Error("Firebase sign-in session is unavailable. Sign in again.");
+        const idToken = await firebaseUser.getIdToken(true);
+        if (showProgress) showPushMessage("Submitting device registration...");
+        // Apps Script web-app responses are opaque in this cross-origin setup.
+        // Persist the token only after the POST has been issued successfully.
+        await fetch(TEAM_RER_PUSH_ENDPOINT, {
+          method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify({action:"register", idToken:idToken, fcmToken:token})
+        });
+        localStorage.setItem("TEAM_RER_FCM_PENDING_TOKEN", token);
+        localStorage.setItem("TEAM_RER_FCM_PENDING_EMAIL", String(authorizedUser.email || ""));
+        localStorage.setItem("TEAM_RER_FCM_REGISTERED_AT", String(Date.now()));
+        startPushListener();
+        showPushMessage("Registration request submitted for this browser. This page will recheck and refresh the device token after sign-in.");
+        return token;
+      };
+
+      const savedToken = localStorage.getItem("TEAM_RER_FCM_PENDING_TOKEN");
+      const savedEmail = localStorage.getItem("TEAM_RER_FCM_PENDING_EMAIL");
+      const sameAccount = savedToken && savedEmail && String(savedEmail).toLowerCase() === String(authorizedUser.email || "").toLowerCase();
+      if (sameAccount && Notification.permission === "granted") {
+        try {
+          startPushListener();
+          showPushMessage("This browser has a saved notification token. Refreshing its registration...");
+          registerPushToken(false).catch(err => showPushMessage("Saved token found, but refresh failed: " + (err.message || String(err))));
+        } catch (restoreErr) {
+          showPushMessage("Unable to restore notification setup: " + (restoreErr.message || String(restoreErr)));
+        }
+      } else {
+        showPushMessage("Device notification setup for Admin and Super Admin only.");
+      }
       btn.addEventListener("click", async () => {
         btn.disabled = true;
         btn.textContent = "Setting up...";
-        status.textContent = "Checking browser and service worker...";
         try {
-          if (!teamRerRoleIsPushAdmin(authorizedUser && authorizedUser.role)) throw new Error("Push setup is restricted to Admin and Super Admin.");
-          if (!window.isSecureContext) throw new Error("This app must be opened over HTTPS to enable notifications.");
-          if (!("serviceWorker" in navigator)) throw new Error("This browser does not support service workers.");
-          if (!("Notification" in window)) throw new Error("This browser does not support notifications.");
-          if (!TEAM_RER_FCM_VAPID_KEY || TEAM_RER_FCM_VAPID_KEY.startsWith("REPLACE_")) throw new Error("The Firebase public Web Push key is missing.");
-          status.textContent = "Requesting notification permission...";
-          const permission = await Notification.requestPermission();
-          if (permission !== "granted") throw new Error(permission === "denied" ? "Notifications are blocked in browser settings. Please allow them for this site." : "Notification permission was not granted.");
-          status.textContent = "Checking service worker...";
-          let registration = await navigator.serviceWorker.getRegistration("./");
-          if (!registration) registration = await navigator.serviceWorker.register("./sw.js", {scope:"./"});
-          await navigator.serviceWorker.ready;
-          if (!registration.active && !registration.waiting && !registration.installing) throw new Error("Service worker registration is not active yet. Reload and try again.");
-          status.textContent = "Requesting Firebase device token...";
-          teamRerMessaging = getMessaging(app);
-          const token = await getToken(teamRerMessaging, {vapidKey:TEAM_RER_FCM_VAPID_KEY, serviceWorkerRegistration:registration});
-          if (!token) throw new Error("Firebase did not return a device token. Check Firebase Messaging setup and service worker.");
-          // Register this device with the Apps Script sender. The sender verifies the
-          // Firebase ID token and independently checks its admin email allowlist.
-          const firebaseUser = auth.currentUser;
-          if (!firebaseUser) throw new Error("Firebase sign-in session is unavailable. Sign in again.");
-          const idToken = await firebaseUser.getIdToken();
-          try {
-            await fetch(TEAM_RER_PUSH_ENDPOINT, {
-              method: "POST",
-              mode: "no-cors",
-              headers: {"Content-Type":"text/plain;charset=utf-8"},
-              body: JSON.stringify({action:"register", idToken:idToken, fcmToken:token})
-            });
-          } catch (sendErr) {
-            throw new Error("Could not submit device registration to the sender. Check your connection and retry.");
-          }
-          localStorage.setItem("TEAM_RER_FCM_PENDING_TOKEN", token);
-          localStorage.setItem("TEAM_RER_FCM_PENDING_EMAIL", String(authorizedUser.email || ""));
-          status.textContent = "Registration request sent. Apps Script verifies your account and allowlist; this browser cannot read the sender's confirmation.";
-          btn.textContent = "Registration Sent";
-          btn.disabled = true;
-          if (teamRerPushMessageUnsubscribe) teamRerPushMessageUnsubscribe();
-          teamRerPushMessageUnsubscribe = onMessage(teamRerMessaging, payload => {
-            const title = payload.notification && payload.notification.title || "TEAM RER";
-            const body = payload.notification && payload.notification.body || "You have a new notification.";
-            try { new Notification(title, {body, icon:"./favicon.ico", data:payload.data || {}}); } catch (_) {}
-          });
+          await registerPushToken(true);
+          btn.textContent = "Registration Submitted";
         } catch (err) {
-          status.textContent = "Setup failed: " + (err && err.message ? err.message : String(err));
+          showPushMessage("Setup failed: " + (err && err.message ? err.message : String(err)));
           btn.textContent = "Retry Enable Notifications";
           btn.disabled = false;
         }
