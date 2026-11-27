@@ -3451,6 +3451,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       initializeAuth, browserLocalPersistence, browserPopupRedirectResolver,
       GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyACEuFMX0ly0p4RpkqJCIhL6TTfIrsrEiA",
@@ -3463,6 +3464,73 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     };
 
     const app = initializeApp(firebaseConfig);
+
+    // TEAM RER push-notification opt-in (Admin and Super Admin only).
+    // Stage 1: obtains an FCM device token. Secure backend token registration/sending
+    // is intentionally not embedded here and must be configured separately.
+    const TEAM_RER_FCM_VAPID_KEY = "REPLACE_WITH_FIREBASE_WEB_PUSH_VAPID_KEY";
+    let teamRerMessaging = null;
+    let teamRerPushMessageUnsubscribe = null;
+    function teamRerRoleIsPushAdmin(role) {
+      const r = String(role || "").trim().toLowerCase().replace(/[_-]+/g," ");
+      return ["admin","super admin","superadmin","super r admin"].includes(r);
+    }
+    function teamRerInstallPushPanel() {
+      const role = authorizedUser && authorizedUser.role;
+      if (!teamRerRoleIsPushAdmin(role) || document.getElementById("teamRerPushOptIn")) return;
+      // Dashboard markup can be rendered after the authorization callback. Retry briefly
+      // and observe DOM changes so the opt-in panel is mounted when the dashboard appears.
+      const host = document.getElementById("appNav");
+      const welcome = host && host.querySelector(".dashboard-welcome");
+      if (!host || !welcome) {
+        if (!window.__teamRerPushPanelRetryCount) window.__teamRerPushPanelRetryCount = 0;
+        if (window.__teamRerPushPanelRetryCount < 40) {
+          window.__teamRerPushPanelRetryCount++;
+          setTimeout(teamRerInstallPushPanel, 250);
+        }
+        return;
+      }
+      window.__teamRerPushPanelRetryCount = 0;
+      const panel = document.createElement("div");
+      panel.id = "teamRerPushOptIn";
+      panel.style.cssText = "margin:12px 0;padding:12px;border:1px solid rgba(65,145,205,.35);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
+      panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" style="font-size:13px;margin-bottom:9px">Enable phone notifications for Admin and Super Admin updates.</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable Notifications</button>';
+      // Insert outside the welcome card so its overflow/clipping and countdown layout cannot hide it.
+      welcome.insertAdjacentElement("afterend", panel);
+      const btn = panel.querySelector("#teamRerEnablePush");
+      const status = panel.querySelector("#teamRerPushStatus");
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        status.textContent = "Requesting notification permission...";
+        try {
+          if (!teamRerRoleIsPushAdmin(authorizedUser && authorizedUser.role)) throw new Error("Push registration is restricted to Admin and Super Admin.");
+          if (!window.isSecureContext || !("serviceWorker" in navigator) || !("Notification" in window)) throw new Error("Push notifications require HTTPS and a supported browser.");
+          if (TEAM_RER_FCM_VAPID_KEY.startsWith("REPLACE_")) throw new Error("Firebase Web Push VAPID key has not been configured yet.");
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") throw new Error("Notification permission was not granted.");
+          const registration = await navigator.serviceWorker.getRegistration("./") || await navigator.serviceWorker.register("./sw.js", {scope:"./"});
+          teamRerMessaging = getMessaging(app);
+          const token = await getToken(teamRerMessaging, {vapidKey:TEAM_RER_FCM_VAPID_KEY, serviceWorkerRegistration:registration});
+          if (!token) throw new Error("Firebase did not return a device token.");
+          // Temporary local storage only; secure backend registration is Stage 2.
+          localStorage.setItem("TEAM_RER_FCM_PENDING_TOKEN", token);
+          localStorage.setItem("TEAM_RER_FCM_PENDING_EMAIL", String(authorizedUser.email || ""));
+          status.textContent = "This device has a pending push token. Backend registration is not yet connected.";
+          btn.textContent = "Notifications Enabled on This Device";
+          btn.disabled = true;
+          if (teamRerPushMessageUnsubscribe) teamRerPushMessageUnsubscribe();
+          teamRerPushMessageUnsubscribe = onMessage(teamRerMessaging, payload => {
+            const title = payload.notification && payload.notification.title || "TEAM RER";
+            const body = payload.notification && payload.notification.body || "You have a new notification.";
+            try { new Notification(title, {body, icon:"./favicon.ico", data:payload.data || {}}); } catch (_) {}
+          });
+        } catch (err) {
+          status.textContent = err && err.message || "Unable to enable notifications.";
+          btn.disabled = false;
+        }
+      });
+    }
+
     // Keep Google authentication across page refreshes and browser restarts.
     const auth = initializeAuth(app, {
       persistence: browserLocalPersistence,
@@ -4263,6 +4331,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (action === "authorize") {
         authorizationInProgress = false;
         authorizedUser = event.data.user;
+        try { teamRerInstallPushPanel(); } catch (pushUiError) { console.warn("TEAM RER notification opt-in panel:", pushUiError); }
         // Requests are serialized by bridgeRequestQueue. Strict order is still
         // enforced here: Users names first, then vehicle data.
         (async()=>{
