@@ -3468,7 +3468,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     // TEAM RER push-notification opt-in (Admin and Super Admin only).
     // Stage 1: obtains an FCM device token. Secure backend token registration/sending
     // is intentionally not embedded here and must be configured separately.
-    const TEAM_RER_FCM_VAPID_KEY = "BJsI4CpDxMhAIt1GN_zqBhBj9OraoysPRD0l9ckbF9aMLJejNyDLWfYyEW5CJ_kvB7cnIX4D7oVjEsSTwIOD5BM";
+    const TEAM_RER_FCM_VAPID_KEY = "REPLACE_WITH_FIREBASE_WEB_PUSH_VAPID_KEY";
     let teamRerMessaging = null;
     let teamRerPushMessageUnsubscribe = null;
     function teamRerRoleIsPushAdmin(role) {
@@ -3477,11 +3477,22 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     }
     function teamRerInstallPushPanel() {
       const role = authorizedUser && authorizedUser.role;
+      if (!teamRerRoleIsPushAdmin(role) || document.getElementById("teamRerPushOptIn")) return;
+      // Dashboard markup can be rendered after the authorization callback. Retry briefly
+      // and observe DOM changes so the opt-in panel is mounted when the dashboard appears.
       const host = document.querySelector(".dashboard-welcome") || document.getElementById("appNav");
-      if (!host || !teamRerRoleIsPushAdmin(role) || document.getElementById("teamRerPushOptIn")) return;
+      if (!host) {
+        if (!window.__teamRerPushPanelRetryCount) window.__teamRerPushPanelRetryCount = 0;
+        if (window.__teamRerPushPanelRetryCount < 40) {
+          window.__teamRerPushPanelRetryCount++;
+          setTimeout(teamRerInstallPushPanel, 250);
+        }
+        return;
+      }
+      window.__teamRerPushPanelRetryCount = 0;
       const panel = document.createElement("div");
       panel.id = "teamRerPushOptIn";
-      panel.style.cssText = "margin:12px 0;padding:12px;border:1px solid rgba(65,145,205,.35);border-radius:16px;background:rgba(15,65,105,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);";
+      panel.style.cssText = "margin:12px 0;padding:12px;border:1px solid rgba(65,145,205,.35);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
       panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" style="font-size:13px;margin-bottom:9px">Enable phone notifications for Admin and Super Admin updates.</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable Notifications</button>';
       host.appendChild(panel);
       const btn = panel.querySelector("#teamRerEnablePush");
