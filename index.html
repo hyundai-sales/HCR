@@ -10798,6 +10798,12 @@ body .card :is(h1,h2,h3,h4,p,label,small),body .module-card :is(h1,h2,h3,h4,p,la
 #appSection #teamRerModuleCarousel .rer-carousel-card::before{background:linear-gradient(125deg,rgba(255,255,255,.26),rgba(255,255,255,.025) 42%,transparent 64%,rgba(90,170,230,.07))!important}
 #appSection #teamRerModuleCarousel .rer-carousel-card::after{border-color:rgba(255,255,255,.3)!important;box-shadow:inset 0 0 20px rgba(255,255,255,.08)!important}
 </style>
+
+<style id="team-rer-hyundai-watermark-v1">
+#appSection{position:relative!important;isolation:isolate!important}
+#appSection::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:url("https://cdn.simpleicons.org/hyundai/003B70");background-repeat:no-repeat;background-position:center 54%;background-size:min(72vw,520px) auto;opacity:.055;filter:blur(.15px)}
+@media(max-width:700px){#appSection::before{background-size:min(88vw,420px) auto;background-position:center 54%;opacity:.06}}
+</style>
 </body>
 </html>
 
