@@ -3480,8 +3480,9 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (!teamRerRoleIsPushAdmin(role) || document.getElementById("teamRerPushOptIn")) return;
       // Dashboard markup can be rendered after the authorization callback. Retry briefly
       // and observe DOM changes so the opt-in panel is mounted when the dashboard appears.
-      const host = document.querySelector(".dashboard-welcome") || document.getElementById("appNav");
-      if (!host) {
+      const host = document.getElementById("appNav");
+      const welcome = host && host.querySelector(".dashboard-welcome");
+      if (!host || !welcome) {
         if (!window.__teamRerPushPanelRetryCount) window.__teamRerPushPanelRetryCount = 0;
         if (window.__teamRerPushPanelRetryCount < 40) {
           window.__teamRerPushPanelRetryCount++;
@@ -3494,7 +3495,8 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       panel.id = "teamRerPushOptIn";
       panel.style.cssText = "margin:12px 0;padding:12px;border:1px solid rgba(65,145,205,.35);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
       panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" style="font-size:13px;margin-bottom:9px">Enable phone notifications for Admin and Super Admin updates.</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable Notifications</button>';
-      host.appendChild(panel);
+      // Insert outside the welcome card so its overflow/clipping and countdown layout cannot hide it.
+      welcome.insertAdjacentElement("afterend", panel);
       const btn = panel.querySelector("#teamRerEnablePush");
       const status = panel.querySelector("#teamRerPushStatus");
       btn.addEventListener("click", async () => {
