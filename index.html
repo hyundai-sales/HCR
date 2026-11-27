@@ -4608,10 +4608,9 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (action === "creditHistorySave") {
         const saved = event.data.creditHistorySave || {};
         if (saved.applicationId) currentCreditApplicationId = saved.applicationId;
-        // Keep the editor open after Save so the user can continue editing or generate the PDF.
-        const saveBtn = $("saveCreditBtn");
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Save"; }
-        setMessage($("creditMessage"),"Application saved successfully. You can continue editing or generate the PDF.","success");
+        // Successful save transitions the editor to the PDF-generation stage without closing it.
+        setCreditEditorStage("generate");
+        setMessage($("creditMessage"),"Application saved successfully. You can now generate the PDF.","success");
         setMessage($("creditHistoryMessage"),"Application changes saved.","success");
         return;
       }
