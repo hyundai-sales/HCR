@@ -3466,9 +3466,10 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
     const app = initializeApp(firebaseConfig);
 
     // TEAM RER push-notification opt-in (Admin and Super Admin only).
-    // Stage 1: obtains an FCM device token. Secure backend token registration/sending
-    // is intentionally not embedded here and must be configured separately.
+    // Obtain an FCM token and submit it to the Apps Script sender for secure
+    // registration after server-side Firebase identity and allowlist verification.
     const TEAM_RER_FCM_VAPID_KEY = "BJsI4CpDxMhAIt1GN_zqBhBj9OraoysPRD0l9ckbF9aMLJejNyDLWfYyEW5CJ_kvB7cnIX4D7oVjEsSTwIOD5BM";
+    const TEAM_RER_PUSH_ENDPOINT = "https://script.google.com/macros/s/AKfycby_Cir-iZK5rTbrpbikuWNErlCpFQDmqDfNA4rfOD2Dw3U6auI4pyILeK1p7xcTZQWW9A/exec";
     let teamRerMessaging = null;
     let teamRerPushMessageUnsubscribe = null;
     function teamRerRoleIsPushAdmin(role) {
@@ -3521,10 +3522,26 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
           teamRerMessaging = getMessaging(app);
           const token = await getToken(teamRerMessaging, {vapidKey:TEAM_RER_FCM_VAPID_KEY, serviceWorkerRegistration:registration});
           if (!token) throw new Error("Firebase did not return a device token. Check Firebase Messaging setup and service worker.");
+          // Register this device with the Apps Script sender. The sender verifies the
+          // Firebase ID token and independently checks its admin email allowlist.
+          const firebaseUser = auth.currentUser;
+          if (!firebaseUser) throw new Error("Firebase sign-in session is unavailable. Sign in again.");
+          const idToken = await firebaseUser.getIdToken();
+          try {
+            await fetch(TEAM_RER_PUSH_ENDPOINT, {
+              method: "POST",
+              mode: "no-cors",
+              headers: {"Content-Type":"text/plain;charset=utf-8"},
+              body: JSON.stringify({action:"register", idToken:idToken, fcmToken:token})
+            });
+          } catch (sendErr) {
+            throw new Error("Could not submit device registration to the sender. Check your connection and retry.");
+          }
           localStorage.setItem("TEAM_RER_FCM_PENDING_TOKEN", token);
           localStorage.setItem("TEAM_RER_FCM_PENDING_EMAIL", String(authorizedUser.email || ""));
-          status.textContent = "Token generated and saved on this device. Push delivery is not connected to the backend yet.";
-          btn.textContent = "Device Registered (Pending Backend)";
+          status.textContent = "Registration request sent. Apps Script verifies your account and allowlist; this browser cannot read the sender's confirmation.";
+          btn.textContent = "Registration Sent";
+          btn.disabled = true;
           if (teamRerPushMessageUnsubscribe) teamRerPushMessageUnsubscribe();
           teamRerPushMessageUnsubscribe = onMessage(teamRerMessaging, payload => {
             const title = payload.notification && payload.notification.title || "TEAM RER";
