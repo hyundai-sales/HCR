@@ -3494,7 +3494,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       const panel = document.createElement("div");
       panel.id = "teamRerPushOptIn";
       panel.style.cssText = "margin:12px 0;padding:14px;border:1px solid rgba(65,145,205,.45);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
-      panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" role="status" aria-live="polite" style="font-size:13px;margin-bottom:9px">Checking notification registration...</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:10px 14px">Enable / Repair Notifications</button>';
+      panel.innerHTML = '<div style="font-weight:700;margin-bottom:6px">TEAM RER Push Notifications</div><div id="teamRerPushStatus" role="status" aria-live="polite" style="font-size:13px;margin-bottom:9px">Checking notification status...</div><button id="teamRerEnablePush" type="button" style="border-radius:12px;padding:8px 12px;font-size:12px">Repair Notifications</button>';
       welcome.insertAdjacentElement("afterend", panel);
       const btn = panel.querySelector("#teamRerEnablePush");
       const status = panel.querySelector("#teamRerPushStatus");
@@ -3541,7 +3541,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         localStorage.setItem("TEAM_RER_FCM_PENDING_EMAIL", String(authorizedUser.email || ""));
         localStorage.setItem("TEAM_RER_FCM_REGISTERED_AT", String(Date.now()));
         startPushListener();
-        showPushMessage("Registration request submitted for this browser. This page will recheck and refresh the device token after sign-in.");
+        showPushMessage("Registration request submitted. Notification permission is enabled; token refresh will run automatically after sign-in.");
         return token;
       };
 
@@ -3551,23 +3551,24 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       if (sameAccount && Notification.permission === "granted") {
         try {
           startPushListener();
-          showPushMessage("This browser has a saved notification token. Refreshing its registration...");
-          registerPushToken(false).catch(err => showPushMessage("Saved token found, but refresh failed: " + (err.message || String(err))));
+          showPushMessage("Notifications enabled on this browser. Refreshing device registration in the background...");
+          registerPushToken(false).catch(err => showPushMessage("Notifications permitted; background refresh needs attention. Tap Repair if needed. (" + (err.message || String(err)) + ")"));
         } catch (restoreErr) {
           showPushMessage("Unable to restore notification setup: " + (restoreErr.message || String(restoreErr)));
         }
       } else {
-        showPushMessage("Device notification setup for Admin and Super Admin only.");
+        showPushMessage(Notification.permission === "granted" ? "Notification permission is granted. If registration needs refreshing, use Repair." : "Notifications are not enabled yet. Tap Repair to enable them.");
       }
       btn.addEventListener("click", async () => {
         btn.disabled = true;
         btn.textContent = "Setting up...";
         try {
           await registerPushToken(true);
-          btn.textContent = "Registration Submitted";
+          btn.textContent = "Repair Notifications";
+          btn.disabled = false;
         } catch (err) {
           showPushMessage("Setup failed: " + (err && err.message ? err.message : String(err)));
-          btn.textContent = "Retry Enable Notifications";
+          btn.textContent = "Repair Notifications";
           btn.disabled = false;
         }
       });
