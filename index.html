@@ -12019,3 +12019,49 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
 }
 @media(prefers-reduced-motion:reduce){#creditPage .combined-credit-actions button{transition:none!important}}
 </style>
+
+
+<style id="team-rer-full-module-glass-readability-overhaul-20261128">
+/* FULL APP VISUAL CONSISTENCY PASS — styling only; no markup, IDs, handlers, or functions changed. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) { color:#edf6ff; }
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(h1,h2,h3,h4,.section-title,.page-title) {
+ color:#f4f9ff!important; -webkit-text-fill-color:#f4f9ff!important; font-weight:750!important; line-height:1.35!important; text-shadow:0 1px 3px rgba(0,12,28,.24)!important;
+}
+/* Reusable glass treatment for nested content surfaces and module workspaces. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(.card,.panel,.module-card,.workspace,.content-card,.form-section,.section-card,.editor-card,.history-card,.list-card,.table-container,.table-wrap,.preview-container,.modal-content,.dialog-content) {
+ background:linear-gradient(145deg,rgba(14,48,78,.78),rgba(5,28,51,.74))!important; border:1px solid rgba(144,198,235,.32)!important; border-radius:18px!important; box-shadow:0 10px 26px rgba(0,12,30,.16),inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(label,.field-label,.form-label,th,.table-heading,.caption,.helper-text,.description,.subtitle) {
+ color:#e4f1ff!important; -webkit-text-fill-color:#e4f1ff!important; opacity:1!important; font-size:clamp(13px,1.7vw,15px)!important; line-height:1.5!important; font-weight:600!important;
+}
+/* Form controls stay legible as light, high-contrast surfaces. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+ color:#142b40!important; -webkit-text-fill-color:#142b40!important; background:#f7fbff!important; border:1px solid #9bbbd5!important; border-radius:11px!important; font-size:15px!important; font-weight:500!important; line-height:1.45!important; min-height:42px; opacity:1!important;
+}
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(input,select,textarea)::placeholder { color:#536b80!important; -webkit-text-fill-color:#536b80!important; opacity:1!important; }
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) select option { color:#142b40!important; background:#f7fbff!important; }
+/* Buttons, tabs, segmented choices, and action controls share a glass-blue treatment. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(button,.tab,.tab-button,[role=tab]) {
+ font-size:14px!important; line-height:1.4!important; font-weight:700!important; opacity:1!important; text-shadow:none!important;
+}
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(button,.tab,.tab-button,[role=tab]):not(:disabled) {
+ border-radius:13px; transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease;
+}
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(button,.tab,.tab-button,[role=tab])[aria-selected=true],
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(button,.tab,.tab-button,[role=tab]).active {
+ color:#fff!important; -webkit-text-fill-color:#fff!important; background:linear-gradient(145deg,#1688cc,#064875)!important; border:1px solid rgba(170,224,255,.7)!important; box-shadow:0 5px 15px rgba(0,25,58,.24),inset 0 1px 0 rgba(255,255,255,.24)!important;
+}
+/* Data tables: readable contrast, spacing, and safe wrapping. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) table { border-collapse:separate!important; border-spacing:0!important; width:100%; }
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) table th { background:rgba(16,75,118,.92)!important; color:#fff!important; -webkit-text-fill-color:#fff!important; font-weight:750!important; }
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) table td { color:#eaf4ff!important; font-size:13px!important; line-height:1.5!important; overflow-wrap:anywhere; }
+/* Cards, nested detail rows, badges and helper copy cannot collapse into tiny text. */
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(small,.small,.muted,.helper,.hint,.note,.meta) { font-size:12px!important; line-height:1.5!important; opacity:1!important; }
+#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(p,span,div,label,td,th) { overflow-wrap:anywhere; }
+@media(max-width:600px){
+ #appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(input:not([type=checkbox]):not([type=radio]),select,textarea,button) { font-size:15px!important; min-height:42px; }
+ #appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(label,.field-label,.form-label,th,td) { font-size:13px!important; line-height:1.5!important; }
+ #appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) :is(.card,.panel,.workspace,.content-card,.form-section,.section-card) { border-radius:15px!important; }
+}
+@media(prefers-reduced-motion:reduce){#appSection :is(#auditPage,#userManagementPage,#orgChartPage,#cplPage,#promoPage,#pdfPage,#quotePage,#creditPage,#creditHistoryPage) *{transition:none!important;animation:none!important}}
+</style>
