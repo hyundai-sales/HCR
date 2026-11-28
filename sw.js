@@ -1,5 +1,5 @@
 /* TEAM RER PWA service worker with Firebase background push support.
-   Release marker: 2026-11-27-team-rer-push-bg-01 */
+   Release marker: 2026-11-28-team-rer-push-bg-02 */
 
 // Firebase compat SDK is used here because service workers cannot use ES module imports
 // in this classic worker file.
@@ -20,20 +20,25 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(payload => {
-  const notification = payload.notification || {};
-  const title = notification.title || 'TEAM RER';
+  // FCM webpush.notification payloads are displayed by Firebase/browser handling.
+  // Do not call showNotification() for those payloads; that creates a duplicate.
+  // Only manually display data-only payloads (which have no notification object).
+  if (payload && payload.notification) return;
+
+  const data = (payload && payload.data) || {};
+  const title = data.title || 'TEAM RER';
   const options = {
-    body: notification.body || 'You have a new notification.',
+    body: data.body || 'You have a new notification.',
     icon: './icons/team-rer-192.png',
     badge: './icons/team-rer-192.png',
-    data: payload.data || {}
+    data: data
   };
   return self.registration.showNotification(title, options);
 });
 
 /* TEAM RER service worker cache/activation behavior */
-const APP_RELEASE = '2026-11-27-team-rer-push-bg-01';
-const CACHE_NAME = 'team-rer-static-v9';
+const APP_RELEASE = '2026-11-28-team-rer-push-bg-02';
+const CACHE_NAME = 'team-rer-static-v10';
 const APP_SCOPE = new URL('./', self.location).pathname;
 const STATIC_FILES = [
   './manifest.webmanifest',
