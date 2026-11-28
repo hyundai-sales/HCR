@@ -11722,3 +11722,30 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
 #appSection #teamRerPushOptIn .teamrer-push-status:not(.hidden){display:none!important}
 #appSection #teamRerPushOptIn .teamrer-push-switch:disabled{opacity:.65!important;cursor:wait!important}
 </style>
+
+<style id="teamrer-mobile-dashboard-compact-final">
+/* Compact credit applications dashboard on small screens to reveal more of the module carousel. */
+@media (max-width:600px){
+ #appSection #applicationsDashboard{padding:12px 13px!important;margin:10px 0 12px!important;border-radius:18px!important;gap:8px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-head{margin:0 0 5px!important;gap:8px!important;align-items:center!important;}
+ #appSection #applicationsDashboard .applications-dashboard-kicker{font-size:9px!important;letter-spacing:1.5px!important;margin:0 0 2px!important;}
+ #appSection #applicationsDashboard h2{font-size:17px!important;line-height:1.2!important;margin:0!important;}
+ #appSection #applicationsDashboard .applications-dashboard-period{font-size:10px!important;padding:5px 9px!important;}
+ #appSection #applicationsDashboardConsultantWrap{margin:5px 0!important;gap:5px!important;}
+ #appSection #applicationsDashboardConsultantWrap label{font-size:12px!important;margin:0!important;}
+ #appSection #applicationsDashboardConsultantWrap select{min-height:38px!important;padding:7px 10px!important;font-size:13px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-filters{gap:6px!important;margin:7px 0!important;}
+ #appSection #applicationsDashboard .applications-dashboard-filters button{min-height:40px!important;padding:7px 4px!important;font-size:13px!important;border-radius:12px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-total{margin:5px 0 2px!important;gap:7px!important;align-items:baseline!important;}
+ #appSection #applicationsDashboard .applications-dashboard-total strong{font-size:28px!important;line-height:1!important;}
+ #appSection #applicationsDashboard .applications-dashboard-total span{font-size:12px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-date-range{font-size:11px!important;line-height:1.25!important;margin:4px 0!important;}
+ #appSection #applicationsDashboard .applications-dashboard-note{font-size:10px!important;line-height:1.25!important;margin:4px 0 0!important;}
+ #appSection .dashboard-label{font-size:12px!important;line-height:1.25!important;margin:8px 0 5px!important;}
+}
+@media(max-width:390px){
+ #appSection #applicationsDashboard{padding:10px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-filters button{min-height:37px!important;font-size:12px!important;}
+ #appSection #applicationsDashboard .applications-dashboard-note{font-size:9.5px!important;}
+}
+</style>
