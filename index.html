@@ -3494,7 +3494,7 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
       const panel = document.createElement("div");
       panel.id = "teamRerPushOptIn";
       panel.style.cssText = "margin:12px 0;padding:14px;border:1px solid rgba(65,145,205,.45);border-radius:16px;background:rgba(15,65,105,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:inherit;";
-      panel.innerHTML = '<div class="teamrer-push-compact"><button id="teamRerEnablePush" type="button" class="teamrer-push-bell" aria-label="Repair or enable notifications" title="Repair or enable notifications"><span aria-hidden="true">🔔</span></button><span class="teamrer-push-label">Push Notifications</span><button id="teamRerPushInfo" type="button" class="teamrer-push-info" aria-label="Notification information" title="Notification information">i</button></div><div id="teamRerPushStatus" role="status" aria-live="polite" class="teamrer-push-status hidden">Checking notification status...</div>';
+      panel.innerHTML = '<div class="teamrer-push-compact"><span class="teamrer-push-label">Push Notifications</span><button id="teamRerEnablePush" type="button" class="teamrer-push-switch" role="switch" aria-checked="false" aria-label="Enable or repair push notifications"><span class="teamrer-push-switch-knob" aria-hidden="true"></span></button><button id="teamRerPushInfo" type="button" class="teamrer-push-info" aria-label="Notification information" title="Notification information">i</button></div><div id="teamRerPushStatus" role="status" aria-live="polite" class="teamrer-push-status hidden">Checking notification status...</div>';
       welcome.insertAdjacentElement("afterend", panel);
       const btn = panel.querySelector("#teamRerEnablePush");
       const status = panel.querySelector("#teamRerPushStatus");
@@ -3503,7 +3503,8 @@ body:not(.printing-quote) .app-nav button .nav-title,body:not(.printing-quote) .
         if (status) status.textContent = message;
         const active = Notification.permission === "granted" && !!localStorage.getItem("TEAM_RER_FCM_PENDING_TOKEN") && String(localStorage.getItem("TEAM_RER_FCM_PENDING_EMAIL") || "").toLowerCase() === String(authorizedUser && authorizedUser.email || "").toLowerCase();
         panel.classList.toggle("push-enabled", active);
-        btn.setAttribute("aria-label", active ? "Notifications enabled. Tap to repair registration." : "Enable or repair notifications");
+        btn.setAttribute("aria-checked", String(active));
+        btn.setAttribute("aria-label", active ? "Notifications enabled. Tap to refresh registration." : "Enable push notifications");
       };
       infoBtn.addEventListener("click", () => {
         status.classList.toggle("hidden");
@@ -11658,4 +11659,66 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
 @media(prefers-reduced-motion:reduce){
   #appSection #teamRerModuleCarousel .rer-carousel-card{transition:none!important;will-change:auto}
 }
+</style>
+
+
+<style id="teamrer-mobile-welcome-and-push-switch-final-fix">
+/* MOBILE: separate greeting note from the countdown; prevent any overlap. */
+@media(max-width:560px){
+  #appSection .dashboard-welcome{
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    gap:7px!important;min-height:0!important;height:auto!important;
+    padding:14px!important;padding-right:14px!important;overflow:hidden!important;
+  }
+  #appSection .dashboard-welcome .welcome-eyebrow,
+  #appSection .dashboard-welcome .userline,
+  #appSection .dashboard-welcome .welcome-note{
+    position:relative!important;inset:auto!important;transform:none!important;
+    width:100%!important;max-width:100%!important;
+  }
+  #appSection .dashboard-welcome .userline{font-size:clamp(15px,4.4vw,18px)!important;line-height:1.3!important}
+  #appSection .dashboard-welcome .welcome-note{
+    display:block!important;font-size:12px!important;line-height:1.45!important;
+    margin:2px 0 4px!important;overflow-wrap:anywhere!important;
+  }
+  #appSection .teamrer-xmas-countdown{
+    position:relative!important;inset:auto!important;transform:none!important;
+    width:100%!important;max-width:none!important;min-width:0!important;
+    margin:5px 0 0!important;box-sizing:border-box!important;
+  }
+}
+/* Slim, horizontal Push Notifications row with a switch at the right. */
+#appSection #teamRerPushOptIn{
+  margin:9px 0 14px!important;padding:9px 13px!important;border-radius:15px!important;
+}
+#appSection #teamRerPushOptIn .teamrer-push-compact{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:12px!important;min-height:32px!important;
+}
+#appSection #teamRerPushOptIn .teamrer-push-label{
+  flex:1 1 auto!important;margin:0!important;font-size:15px!important;
+  font-weight:600!important;line-height:1.3!important;
+}
+#appSection #teamRerPushOptIn .teamrer-push-switch{
+  position:relative!important;display:inline-flex!important;align-items:center!important;
+  justify-content:flex-start!important;width:54px!important;height:31px!important;
+  flex:0 0 54px!important;padding:3px!important;border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.48)!important;
+  background:rgba(55,75,95,.52)!important;box-shadow:inset 0 1px 4px rgba(0,0,0,.24)!important;
+  cursor:pointer!important;transition:background .22s ease,box-shadow .22s ease!important;
+}
+#appSection #teamRerPushOptIn .teamrer-push-switch-knob{
+  display:block!important;width:23px!important;height:23px!important;border-radius:50%!important;
+  background:#fff!important;box-shadow:0 2px 5px rgba(0,0,0,.25)!important;
+  transform:translateX(0)!important;transition:transform .22s ease!important;
+}
+#appSection #teamRerPushOptIn.push-enabled .teamrer-push-switch{
+  background:#16865a!important;border-color:rgba(255,255,255,.65)!important;
+  box-shadow:0 0 12px rgba(46,220,150,.32),inset 0 1px 3px rgba(0,0,0,.15)!important;
+}
+#appSection #teamRerPushOptIn.push-enabled .teamrer-push-switch-knob{transform:translateX(23px)!important}
+#appSection #teamRerPushOptIn .teamrer-push-info{display:none!important}
+#appSection #teamRerPushOptIn .teamrer-push-status{display:none!important}
+#appSection #teamRerPushOptIn .teamrer-push-status:not(.hidden){display:none!important}
+#appSection #teamRerPushOptIn .teamrer-push-switch:disabled{opacity:.65!important;cursor:wait!important}
 </style>
