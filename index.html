@@ -11841,3 +11841,31 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
 }
 
 </style>
+
+<style id="teamrer-welcome-glossy-glass-clean-edge-final">
+/* Final welcome-card treatment: clean edge and transparent glossy glass. */
+#appSection .dashboard-welcome{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ background:linear-gradient(135deg,rgba(5,48,86,.78) 0%,rgba(11,72,117,.62) 52%,rgba(4,39,73,.72) 100%)!important;
+ border:1px solid rgba(226,246,255,.62)!important;border-radius:22px!important;
+ box-shadow:0 16px 36px rgba(0,25,58,.22),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.14)!important;
+ -webkit-backdrop-filter:blur(26px) saturate(175%) brightness(1.13)!important;
+ backdrop-filter:blur(26px) saturate(175%) brightness(1.13)!important;
+}
+/* Keep the subtle highlight orb, but remove the unwanted thick vertical accent. */
+#appSection .dashboard-welcome::after{content:none!important;display:none!important;}
+#appSection .dashboard-welcome::before{
+ content:""!important;position:absolute!important;top:-62px!important;right:-46px!important;left:auto!important;bottom:auto!important;
+ width:176px!important;height:176px!important;border:1px solid rgba(255,255,255,.35)!important;border-radius:50%!important;
+ background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.28),rgba(255,255,255,.05) 44%,transparent 72%)!important;
+ box-shadow:0 0 0 12px rgba(255,255,255,.035),0 0 0 26px rgba(255,255,255,.025)!important;pointer-events:none!important;
+}
+#appSection .dashboard-welcome .welcome-eyebrow,#appSection .dashboard-welcome .userline,#appSection .dashboard-welcome .welcome-note{
+ color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.22)!important;
+}
+#appSection .dashboard-welcome>*{position:relative;z-index:1;}
+@media(max-width:560px){
+ #appSection .dashboard-welcome{padding:12px!important;border-radius:18px!important;}
+ #appSection .dashboard-welcome::before{width:145px!important;height:145px!important;top:-52px!important;right:-42px!important;}
+}
+</style>
