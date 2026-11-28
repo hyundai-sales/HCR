@@ -11554,3 +11554,47 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
   #appSection :is(table,table *,[role="grid"],[role="grid"] *) { font-size: 13px!important; }
 }
 </style>
+
+
+<style id="team-rer-contrast-font-fix-20261128">
+/* TARGETED CONTRAST FIX: CPL labels/title and quotation color swatches shown dark-on-dark */
+#appSection #cplPage :is(.section-title,h1,h2,h3,h4,.cpl-title,.page-title),
+#appSection #cplPage :is(label,.field label,.cpl-field label,.cpl-meta-grid label) {
+  color:#f2f7fc!important;
+  -webkit-text-fill-color:#f2f7fc!important;
+  opacity:1!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.24)!important;
+}
+/* Maintain contrast for labels inside the dark CPL workspace; inputs remain light surfaces. */
+#appSection #cplPage :is(.field,label,.cpl-field,.cpl-meta-grid) label {
+  color:#eaf4ff!important;
+  -webkit-text-fill-color:#eaf4ff!important;
+  opacity:1!important;
+}
+/* Quotation available-color chips have dark glass backgrounds: force legible light text. */
+#appSection #quotePage .quote-color-checkboxes label,
+#appSection #quotePage #quoteColor label,
+#appSection #quoteColor.quote-color-checkboxes label {
+  color:#f4f9ff!important;
+  -webkit-text-fill-color:#f4f9ff!important;
+  opacity:1!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.42)!important;
+  font-size:14px!important;
+  line-height:1.4!important;
+  font-weight:700!important;
+}
+/* Preserve contrast and sizing of swatch labels when selected, hovered, or nested. */
+#appSection #quoteColor label *,
+#appSection #quotePage .quote-color-checkboxes label * {
+  color:#f4f9ff!important;
+  -webkit-text-fill-color:#f4f9ff!important;
+}
+/* CPL page heading text in the overlapping glass title pill. */
+#appSection #cplPage .section-title,
+#appSection #cplPage .cpl-heading,
+#appSection #cplPage [class*="title"] {
+  color:#f2f7fc!important;
+  -webkit-text-fill-color:#f2f7fc!important;
+  opacity:1!important;
+}
+</style>
