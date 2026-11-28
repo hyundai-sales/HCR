@@ -11749,3 +11749,42 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
  #appSection #applicationsDashboard .applications-dashboard-note{font-size:9.5px!important;}
 }
 </style>
+
+<style>
+
+/* TEAM RER: ultra-compact mobile dashboard spacing */
+@media (max-width: 600px) {
+  #teamRerPushOptIn { margin: 5px 0 8px !important; padding: 6px 10px !important; border-radius: 12px !important; min-height: 0 !important; }
+  #teamRerPushOptIn .teamrer-push-compact { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; min-height:28px !important; }
+  #teamRerPushOptIn .teamrer-push-label { font-size:12px !important; line-height:1.15 !important; margin:0 !important; padding:0 !important; font-weight:500 !important; }
+  #teamRerPushOptIn .teamrer-push-switch { transform:scale(.72) !important; transform-origin:right center !important; margin:0 -5px 0 0 !important; }
+  #teamRerPushOptIn .teamrer-push-info { width:20px !important; height:20px !important; min-width:20px !important; min-height:20px !important; padding:0 !important; font-size:10px !important; margin:0 !important; }
+  #teamRerPushOptIn .teamrer-push-status:not(.hidden) { font-size:10px !important; line-height:1.25 !important; padding:4px 2px 2px !important; margin:2px 0 0 !important; }
+  .applications-dashboard { padding:12px !important; margin:8px 0 10px !important; }
+  .applications-dashboard-head { margin-bottom:5px !important; gap:5px !important; }
+  .applications-dashboard-head h2 { font-size:16px !important; line-height:1.2 !important; margin:0 !important; }
+  .applications-dashboard-kicker { font-size:9px !important; letter-spacing:1.5px !important; margin:0 0 2px !important; }
+  .applications-dashboard-period { font-size:10px !important; padding:4px 7px !important; }
+  .applications-dashboard-consultant-wrap { gap:5px !important; margin:4px 0 !important; }
+  .applications-dashboard-consultant-wrap label { font-size:11px !important; line-height:1.15 !important; }
+  .applications-dashboard-consultant-wrap select { min-height:34px !important; padding:5px 8px !important; font-size:12px !important; }
+  .applications-dashboard-filters { gap:5px !important; margin:6px 0 !important; }
+  .applications-dashboard-filters button { min-height:34px !important; padding:5px 4px !important; font-size:12px !important; }
+  .applications-dashboard-count, #applicationsDashboardCount, .applications-dashboard-stat { margin:4px 0 !important; font-size:12px !important; line-height:1.15 !important; }
+  .applications-dashboard-date-range { font-size:10px !important; line-height:1.2 !important; margin:4px 0 !important; }
+  .applications-dashboard-note { font-size:9px !important; line-height:1.2 !important; margin:4px 0 0 !important; }
+  .dashboard-label { font-size:12px !important; letter-spacing:1.4px !important; margin:8px 0 3px !important; line-height:1.2 !important; }
+  .app-nav { gap:5px !important; margin:5px 0 8px !important; }
+  .app-nav button { min-height:48px !important; padding:6px 5px !important; }
+  .app-nav .nav-title { font-size:12px !important; line-height:1.15 !important; }
+  .app-nav .nav-description { font-size:9px !important; line-height:1.15 !important; }
+}
+@media (max-width: 600px) and (max-height: 780px) {
+  .dashboard-welcome { padding:12px !important; margin:8px 0 !important; }
+  .dashboard-welcome .welcome-note { font-size:12px !important; margin:5px 0 !important; line-height:1.2 !important; }
+  .teamrer-xmas-countdown { padding:8px !important; margin:6px 0 0 !important; }
+  .teamrer-xmas-kicker, .teamrer-xmas-year { font-size:9px !important; line-height:1.1 !important; margin:2px 0 !important; }
+  .teamrer-xmas-clock b { font-size:16px !important; }
+}
+
+</style>
