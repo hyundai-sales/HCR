@@ -11377,7 +11377,7 @@ body.rer-module-launching #teamRerModuleCarousel .rer-carousel-card:not(.is-acti
  let items=[],idx=0,downX=null,downY=null,lastSwipeAt=0;
  function refreshItems(){items=Array.from(nav.querySelectorAll(':scope > button')).filter(b=>b.id!=='creditHistoryTabBtn'&&!b.classList.contains('hidden')&&b.getAttribute('aria-hidden')!=='true').map(b=>({button:b,title:(b.querySelector('.nav-title')?.textContent||b.textContent||'Module').trim(),icon:b.querySelector('.nav-icon')?.cloneNode(true)}));if(idx>=items.length)idx=Math.max(0,items.length-1);render();}
  function render(){stage.replaceChildren();dots.replaceChildren();if(!items.length){host.classList.add('hidden');return;}host.classList.remove('hidden');
- items.forEach((it,i)=>{let card=document.createElement('button');card.type='button';card.className='rer-carousel-card'+(i===idx?' is-active':'');card.setAttribute('aria-label',it.title+(i===idx?' selected':''));let raw=i-idx,offset=raw;if(items.length>2){if(raw>items.length/2)offset=raw-items.length;if(raw<-items.length/2)offset=raw+items.length;}let dist=Math.abs(offset),visible=dist<=1;card.style.opacity=visible?(dist===0?'1':'.62'):'0';card.style.zIndex=String(10-dist);card.style.pointerEvents=visible?'auto':'none';card.style.transform='translate(-50%,-50%) translateX('+offset*78+'%) translateZ('+(-dist*145)+'px) rotateY('+(offset*-58)+'deg) scale('+(dist===0?1:.74)+')';if(it.icon){let iw=document.createElement('div');iw.className='rer-card-icon';iw.appendChild(it.icon);iw.querySelectorAll('.nav-copy').forEach(e=>e.remove());let svg=iw.querySelector('svg');if(svg){svg.removeAttribute('class');svg.removeAttribute('style');}card.append(iw);}else{let iw=document.createElement('div');iw.className='rer-card-icon';iw.textContent='◇';card.append(iw);}let title=document.createElement('div');title.className='rer-card-title';title.textContent=it.title;card.append(title);card.addEventListener('click',()=>{if(Date.now()-lastSwipeAt<450)return;if(i!==idx){idx=i;render();return;}if(card.dataset.launching==='1')return;card.dataset.launching='1';launchTransition(card,it.button);});stage.append(card);let dot=document.createElement('button');dot.type='button';dot.className='rer-carousel-dot'+(i===idx?' is-active':'');dot.setAttribute('aria-label','Select '+it.title);dot.addEventListener('click',()=>{idx=i;render();});dots.append(dot);});}
+ items.forEach((it,i)=>{let card=document.createElement('button');card.type='button';card.className='rer-carousel-card'+(i===idx?' is-active':'');card.setAttribute('aria-label',it.title+(i===idx?' selected':''));let raw=i-idx,offset=raw;if(items.length>2){if(raw>items.length/2)offset=raw-items.length;if(raw<-items.length/2)offset=raw+items.length;}let dist=Math.abs(offset),visible=dist<=1;card.style.opacity=visible?(dist===0?'1':'.62'):'0';card.style.zIndex=String(10-dist);card.style.pointerEvents=visible?'auto':'none';card.style.transform='translate(-50%,-50%) translateX('+offset*72+'%) translateZ('+(-dist*105)+'px) rotateY('+(offset*-32)+'deg) scale('+(dist===0?1:.86)+')';if(it.icon){let iw=document.createElement('div');iw.className='rer-card-icon';iw.appendChild(it.icon);iw.querySelectorAll('.nav-copy').forEach(e=>e.remove());let svg=iw.querySelector('svg');if(svg){svg.removeAttribute('class');svg.removeAttribute('style');}card.append(iw);}else{let iw=document.createElement('div');iw.className='rer-card-icon';iw.textContent='◇';card.append(iw);}let title=document.createElement('div');title.className='rer-card-title';title.textContent=it.title;card.append(title);card.addEventListener('click',()=>{if(Date.now()-lastSwipeAt<450)return;if(i!==idx){idx=i;render();return;}if(card.dataset.launching==='1')return;card.dataset.launching='1';launchTransition(card,it.button);});stage.append(card);let dot=document.createElement('button');dot.type='button';dot.className='rer-carousel-dot'+(i===idx?' is-active':'');dot.setAttribute('aria-label','Select '+it.title);dot.addEventListener('click',()=>{idx=i;render();});dots.append(dot);});}
  function launchTransition(card,originalButton){
   try{
    const pageMap={pdfTabBtn:'pdfPage',quoteTabBtn:'quotePage',creditTabBtn:'creditPage',creditHistoryTabBtn:'creditHistoryPage',promoTabBtn:'promoPage',auditTabBtn:'auditPage',userManagementTabBtn:'userManagementPage',orgChartTabBtn:'orgChartPage',cplTabBtn:'cplPage'};
@@ -11596,5 +11596,37 @@ body:has(#creditHistoryPage:not(.hidden)) .page-jump-controls { display:none!imp
   color:#f2f7fc!important;
   -webkit-text-fill-color:#f2f7fc!important;
   opacity:1!important;
+}
+</style>
+
+<style id="team-rer-carousel-clickarea-desktop-smooth-v1">
+/* Carousel interaction and desktop/mobile hit-area refinement: CSS-only */
+#appSection #teamRerModuleCarousel .rer-carousel-card{
+  transition:transform .62s cubic-bezier(.22,.78,.18,1),opacity .48s ease,filter .48s ease,box-shadow .48s ease!important;
+  will-change:transform,opacity;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:pan-y;
+}
+#appSection #teamRerModuleCarousel .rer-carousel-card>*{pointer-events:none!important}
+#appSection #teamRerModuleCarousel .rer-carousel-card::after{
+  pointer-events:none!important;
+}
+/* Expanded invisible click target around card edges without changing card visuals */
+#appSection #teamRerModuleCarousel .rer-carousel-card{
+  padding:clamp(18px,2.4vw,28px)!important;
+}
+@media (min-width:601px){
+  #appSection #teamRerModuleCarousel{max-width:760px!important;min-height:330px!important;margin:12px auto 22px!important}
+  #appSection #teamRerModuleCarousel .rer-carousel-stage{height:285px!important;perspective:1700px!important}
+  #appSection #teamRerModuleCarousel .rer-carousel-card{width:min(40vw,300px)!important;height:238px!important;border-radius:30px!important}
+  #appSection #teamRerModuleCarousel .rer-carousel-card:not(.is-active){cursor:pointer!important}
+  #appSection #teamRerModuleCarousel .rer-carousel-card:hover{filter:brightness(1.06)!important}
+  #appSection #teamRerModuleCarousel .rer-carousel-card.is-active:hover{box-shadow:0 0 0 4px rgba(93,190,255,.30),0 30px 64px rgba(0,40,95,.32),inset 0 2px 4px rgba(255,255,255,.95)!important}
+}
+@media(max-width:600px){
+  #appSection #teamRerModuleCarousel .rer-carousel-card{transition:transform .48s cubic-bezier(.22,.78,.18,1),opacity .4s ease,filter .4s ease!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #appSection #teamRerModuleCarousel .rer-carousel-card{transition:none!important;will-change:auto}
 }
 </style>
